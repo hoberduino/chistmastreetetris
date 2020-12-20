@@ -1567,16 +1567,22 @@ void display_mario_run()
 
 #define NUM_GHOSTS 3
 
+#define GHOST_HOUSE_ROW 10
+#define GHOST_HOUSE_COL 10
+
+#define PAC_START_ROW 12
+#define PAC_START_COL 1
+
 // Assume 22 rows, 22 columns
 // Assume start top left
-unsigned char current_pac_row = 12;
-unsigned char current_pac_col = 1;
-unsigned char current_ghost_row[NUM_GHOSTS] = {10, 10, 10};
-unsigned char current_ghost_col[NUM_GHOSTS] = {7, 10, 13};
-unsigned char previous_pac_row = 12;
-unsigned char previous_pac_col = 1;
-unsigned char previous_ghost_row[NUM_GHOSTS] = {10, 10, 10};
-unsigned char previous_ghost_col[NUM_GHOSTS] = {7, 10, 13};
+unsigned char current_pac_row = PAC_START_ROW;
+unsigned char current_pac_col = PAC_START_COL;
+unsigned char current_ghost_row[NUM_GHOSTS] = {GHOST_HOUSE_ROW, GHOST_HOUSE_ROW, GHOST_HOUSE_ROW};
+unsigned char current_ghost_col[NUM_GHOSTS] = {GHOST_HOUSE_COL - 3, GHOST_HOUSE_COL, GHOST_HOUSE_COL + 3};
+unsigned char previous_pac_row = PAC_START_ROW;
+unsigned char previous_pac_col = PAC_START_COL;
+unsigned char previous_ghost_row[NUM_GHOSTS] = {GHOST_HOUSE_ROW, GHOST_HOUSE_ROW, GHOST_HOUSE_ROW};
+unsigned char previous_ghost_col[NUM_GHOSTS] = {GHOST_HOUSE_COL - 3, GHOST_HOUSE_COL, GHOST_HOUSE_COL + 3};
 
 #define GHOST_MODE_CHASE    0
 #define GHOST_MODE_SCATTER  1
@@ -2142,7 +2148,7 @@ bool move_pac_man(unsigned char loaded_move_dir, unsigned char pac_move_options)
   return (initial_move_direction != pac_current_dir); /* Changed Direction */
 }
 
-
+/* Looks at input speed and current counter to determine if it is time for the caller to move */
 bool time_to_move(unsigned char input_speed)
 {
   bool it_is_time_to_move = false;
@@ -2166,6 +2172,8 @@ bool time_to_move(unsigned char input_speed)
   return it_is_time_to_move;
 }
 
+/* Returns true if Pac and Ghost occupy same spot */
+/* Considers if same pixel location, or if one pixel off based on Pac Direction (one in front but not behind) */
 bool occupy_same_spot(unsigned char ghost_num)
 {
   bool same_spot = false;
@@ -2196,15 +2204,15 @@ void new_pac_level()
   ghost_current_dir[0] = MOVE_RIGHT;
   ghost_current_dir[1] = MOVE_UP;
   ghost_current_dir[2] = MOVE_LEFT;
-  current_ghost_row[0] = 10;
-  current_ghost_col[0] = 7;
-  current_ghost_row[1] = 10;
-  current_ghost_col[1] = 10;
-  current_ghost_row[2] = 10;
-  current_ghost_col[2] = 13;
+  current_ghost_row[0] = GHOST_HOUSE_ROW;
+  current_ghost_col[0] = GHOST_HOUSE_COL - 3;
+  current_ghost_row[1] = GHOST_HOUSE_ROW;
+  current_ghost_col[1] = GHOST_HOUSE_COL;
+  current_ghost_row[2] = GHOST_HOUSE_ROW;
+  current_ghost_col[2] = GHOST_HOUSE_COL + 3;
   /* Reset Pac position */
-  current_pac_row = 12;
-  current_pac_col = 1;
+  current_pac_row = PAC_START_ROW;
+  current_pac_col = PAC_START_COL;
   /* Reset background display of maze */
   init_pac_display();
   delay(500);
@@ -2315,8 +2323,9 @@ void play_pac_man()
       {
         if (ghost_mode == GHOST_MODE_FRIGHT)
         {
-          current_ghost_row[i] = 10;
-          current_ghost_col[i] = 10;
+          /* Just place in middle of ghost house */
+          current_ghost_row[i] = GHOST_HOUSE_ROW;
+          current_ghost_col[i] = GHOST_HOUSE_COL;
         }
         else
           pac_man_over = true;
