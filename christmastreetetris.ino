@@ -1084,6 +1084,8 @@ void play_tetris()
     /* TODO Fix to only look at rows 0 and 1 */
     if ((( gameBoard[0] & 0x1FF8) > 0) || (( gameBoard[1] & 0x1FF8) > 0) || (( gameBoard[2] & 0x1FF8) > 0) || (( gameBoard[3] & 0x1FF8) > 0))
       gameEnd = true;
+
+    delay(20);
       
   }
    /* if end of game, display score */ 
@@ -1485,8 +1487,9 @@ const unsigned char marioDispSix[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
   }
 
   displayLEDs(true);
-  //displayBigBoardTwoTwo();
 }
+
+#define MARIO_DELAY_TIME 100
 
 unsigned char run_move_dir = MOVE_NONE;
 unsigned char disp_mario_luigi = 0; // 0 - Mario, 1 - Luigi
@@ -1505,7 +1508,7 @@ void display_mario_run()
  delay(delay_time - 20);
 
   {
-    delay_time = 200;
+    delay_time = MARIO_DELAY_TIME;
     if (mario_run_timer > 0)
       mario_run_timer--;
 
