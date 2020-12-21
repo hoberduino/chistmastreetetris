@@ -1886,7 +1886,7 @@ unsigned char get_ghost_mode()
 {
   unsigned char ghost_mode;
   /* Determine Ghost Mode */
-  if ((pac_counter / 1000) < 7)
+  if ((pac_counter % 100) < 70)
     ghost_mode = GHOST_MODE_CHASE;
   else
     ghost_mode = GHOST_MODE_SCATTER;
