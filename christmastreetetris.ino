@@ -752,6 +752,10 @@ void displayGameBoard(bool slow)
 
   const unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_TETRIS) / 2;
   const unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_TETRIS) / 2;
+
+  /* Clear top row of bigDispBoard */
+  for(j = 0; j < NUM_DISP_ROWS; j++)
+    bigDispBoard[0][j] = DISP_COLOR_BLACK;
   
 
   for(i = PIECE_LENGTH - 1; i >= 0; i--)
@@ -886,7 +890,7 @@ byte updateGameBoard()
     }
   }
   if (numLines > 0)
-    delay(500);
+    delay(250);
 
   /* Check for complete rows */
   for(i = 0; i < NUM_ROWS - 2; i++)
@@ -1078,7 +1082,7 @@ void play_tetris()
       if (digitalRead(RESET_SWITCH_IN) == HIGH)
         gameEnd = true;
 
-      delay(10);
+      delay(60);
     }
     /* Check for Game End */
     /* TODO Fix to only look at rows 0 and 1 */
@@ -1515,7 +1519,10 @@ void display_mario_run()
     /* look for movements */
     move_dir = getMove();
     if (move_dir == MOVE_SELECT)
+    {
       disp_mario_luigi = (disp_mario_luigi + 1) % 2;
+      delay(500); /* Try to avoid entering Pac Man with SELECT */
+    }
     else if (((move_dir & 0xF) == MOVE_RIGHT) || ((move_dir & 0xF) == MOVE_LEFT))
     {
       if ((mario_run_timer > 0) && ((run_move_dir & 0xF) != (move_dir & 0xF)))
@@ -1565,13 +1572,16 @@ void display_mario_run()
 
 /* PAC-MAN Functions */
 
+#define NUM_PAC_LIVES_START 3
+unsigned char num_pac_lives = NUM_PAC_LIVES_START;
+
 #define NUM_GHOSTS 3
 
 #define GHOST_HOUSE_ROW 10
 #define GHOST_HOUSE_COL 10
 
-#define PAC_START_ROW 12
-#define PAC_START_COL 1
+#define PAC_START_ROW 19
+#define PAC_START_COL 11
 
 // Assume 22 rows, 22 columns
 // Assume start top left
@@ -1661,7 +1671,7 @@ unsigned int big_dot_eaten_counter = 0;
 unsigned int dot_eaten_counter = 0;
 
 #define DOT_TIME_EFFECT_PAC 15
-#define BIG_DOT_TIME_EFFECT_GHOST 70
+#define BIG_DOT_TIME_EFFECT_GHOST 100
 
 #define GHOST_TWO_TIME_START 100 /* BIG_DOT_TIME_EFFECT_GHOST + 30 */
 #define GHOST_THREE_TIME_START 130 /* BIG_DOT_TIME_EFFECT_GHOST + 60 */
@@ -1709,13 +1719,18 @@ void displayPacStart()
    {3,3,3,5,0,5,1,0,1,0},
    {3,0,3,5,5,5,1,0,1,0},
    {3,0,3,5,0,5,1,0,1,0},
-   {3,0,3,5,0,5,1,0,1,0},{0,0,0,0,0,0,0,0,0,0},
+   {3,0,3,5,0,5,1,0,1,0},
+   {0,0,0,0,0,0,0,0,0,0},
    {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
    {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
   
   /* PAC MAN Splash Screen */
   /* Use Tetris Playfield to display Pac Man Start screen */
   unsigned int i, j;
+  for(i = 0; i < NUM_DISP_ROWS; i++)
+    for(j = 0; j < NUM_DISP_COLS; j++)
+      bigDispBoard[i][j] = DISP_COLOR_BLACK;
+    
   for(i = 0; i < NUM_DISP_ROWS_TETRIS; i++)
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
       bigDispBoard[i + unused_rows_top][j + unused_cols_left] = tetrisStartDisp[i][j];
@@ -1877,7 +1892,14 @@ void display_dots()
 
 }
 
-
+/* Display the current Pac lives on to bigDispBoard */
+void display_pac_lives()
+{
+  if (num_pac_lives > 2)
+    bigDispBoard[8][8] = DISP_COLOR_YELLOW;
+  if (num_pac_lives > 1)
+    bigDispBoard[8][7] = DISP_COLOR_YELLOW;
+}
 
 
 
@@ -1886,10 +1908,10 @@ unsigned char get_ghost_mode()
 {
   unsigned char ghost_mode;
   /* Determine Ghost Mode */
-  if ((pac_counter % 100) < 70)
-    ghost_mode = GHOST_MODE_CHASE;
-  else
+  if ((pac_counter % 1000) < 250)
     ghost_mode = GHOST_MODE_SCATTER;
+  else
+    ghost_mode = GHOST_MODE_CHASE;
   if ((pac_counter - big_dot_eaten_counter) <= BIG_DOT_TIME_EFFECT_GHOST)
     ghost_mode = GHOST_MODE_FRIGHT;
     
@@ -2160,12 +2182,12 @@ bool time_to_move(unsigned char input_speed)
   //timer_80 = pac_counter % 5 == 0; // 20 Hz -> (mod 5) == 0
   //timer_90 = (pac_counter % 5 == 0) || (pac_counter % 40 == 19); // 22.5 Hz ((mod 5) == 0 || (mod 40) == 19 
   //timer_100 = pac_counter % 4 == 0; // 25 Hz -> (mod 4) == 0
-  timer_50 = pac_counter % 16 == 0; // 12.5 Hz -> 100 (mod 8) == 0
-  timer_60 = pac_counter % 14 == 0; // 15 Hz -> 100 (mod 7) == 0
-  timer_70 = (pac_counter % 12 == 0) || (pac_counter % 100) == 1; // 17.5 Hz -> 100 (mod 6) == 0 || 100 (mod 100) == 1
-  timer_80 = pac_counter % 10 == 0; // 20 Hz -> 100 (mod 5) == 0
-  timer_90 = (pac_counter % 9 == 0) || (pac_counter % 40 == 19); // 22.5 Hz (100 (mod 5) == 0 || 100 (mod 40) == 19 
-  timer_100 = pac_counter % 8 == 0; // 25 Hz -> 100 (mod 4) == 0
+  timer_50 = pac_counter % 9 == 0; // 12.5 Hz -> 100 (mod 8) == 0
+  timer_60 = pac_counter % 8 == 0; // 15 Hz -> 100 (mod 7) == 0
+  timer_70 = pac_counter % 7 == 0; // 17.5 Hz -> 100 (mod 6) == 0 || 100 (mod 100) == 1
+  timer_80 = pac_counter % 6 == 0; // 20 Hz -> 100 (mod 5) == 0
+  timer_90 = pac_counter % 5 == 0; // 22.5 Hz (100 (mod 5) == 0 || 100 (mod 40) == 19 
+  timer_100 = pac_counter % 4 == 0; // 25 Hz -> 100 (mod 4) == 0
 
   it_is_time_to_move =
        (((input_speed == PAC_SPEED_50) && (timer_50 == true)) ||
@@ -2194,18 +2216,12 @@ bool occupy_same_spot(unsigned char ghost_num)
 
 }
 
-
-/* Called each time there is a new level to re-init stuff */
-void new_pac_level()
+void reset_positions_counters_display()
 {
-  unsigned char i = 0;
-  /* Reset dots */
-  for (i = 0; i < NUM_DOTS_ROWS; i++)
-    current_dots[i] = 0x7F; /* Full row of dots */
-  current_dots[2] = 0x63; // no dots in ghost home
   big_dot_eaten_counter = 0;
   /* Reset Counter */
   pac_counter = BIG_DOT_TIME_EFFECT_GHOST;
+  
   /* Reset Ghost directions, positions */
   ghost_current_dir[0] = MOVE_RIGHT;
   ghost_current_dir[1] = MOVE_UP;
@@ -2224,6 +2240,18 @@ void new_pac_level()
   delay(500);
 }
 
+
+/* Called each time there is a new level to re-init stuff */
+void new_pac_level()
+{
+  unsigned char i = 0;
+  /* Reset dots */
+  for (i = 0; i < NUM_DOTS_ROWS; i++)
+    current_dots[i] = 0x7F; /* Full row of dots */
+  current_dots[2] = 0x63; // no dots in ghost home
+  reset_positions_counters_display();
+}
+
 void play_pac_man()
 {
   bool pac_man_over = false;
@@ -2232,6 +2260,11 @@ void play_pac_man()
   unsigned char ghost_mode;
   /* allow for "cornering", press button ahead of move */
   unsigned char loaded_move_dir = MOVE_NONE; 
+
+  /* Reset the score */
+  current_pac_level = 0;
+
+  num_pac_lives = NUM_PAC_LIVES_START; 
 
   /* Defines allowable movements for Pac, Ghosts based on current location */
   // 0x1 - move left, 0x2 - move right
@@ -2261,11 +2294,12 @@ void play_pac_man()
    {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}, // 20
    {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}};// 21
 
+  /* Display Splash Screen */
+  displayPacStart();
+  
   /* Initialized to new level */
   new_pac_level();
 
-  /* Display Splash Screen */
-  displayPacStart();
   delay(2500);
 
   while (pac_man_over == false)
@@ -2322,6 +2356,15 @@ void play_pac_man()
       current_pac_level++;
     }
 
+    
+    /* Update display items */
+    clear_ghosts_pac();
+    display_dots();
+    display_pac_lives();
+    display_pac_man();
+    display_ghosts();
+    displayLEDs(true);
+
     /* If ghost catches you, quit or eat*/
     for (i = 0; i < NUM_GHOSTS; i++)
     {
@@ -2334,8 +2377,14 @@ void play_pac_man()
           current_ghost_col[i] = GHOST_HOUSE_COL;
         }
         else
-          pac_man_over = true;
-        delay(1000);
+        {
+          num_pac_lives--;
+          if (num_pac_lives > 0)
+            reset_positions_counters_display();
+          else
+            pac_man_over = true;
+        }
+        delay(500);
       }
     }
 
@@ -2343,12 +2392,7 @@ void play_pac_man()
     if (current_pac_level > NUM_PAC_LEVELS)
       pac_man_over = true;
 
-    /* Update display items */
-    clear_ghosts_pac();
-    display_dots();
-    display_pac_man();
-    display_ghosts();
-    displayLEDs(true);
+    
     delay(5);
   }
   /* Display Splash Screen */
