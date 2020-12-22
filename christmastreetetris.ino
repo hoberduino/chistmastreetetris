@@ -1,5 +1,6 @@
 #include <FastLED.h>
 #include <EEPROM.h>
+#include <avr/pgmspace.h>
 
 /* TODO: */
 /* Test on Tree (Determine Spacing, Lag?) */
@@ -167,14 +168,14 @@ const int RIGHT_BUTTON     = 7;
 #define MUSIC_PIN        (22)
 
 /* Number of "unused" LEDs before rows, starting at top*/
-const unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE + 1] =
+const unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE + 1] PROGMEM =
 {0,0,0,0,0,0,
  7,6,8,9,
  9,12,10,12,
  13,15,18,20,
  22,13};
 /* Number of "unused" LEDs after rows, starting at top */
-const unsigned char ledsAfterRows[NUM_DISP_ROWS_TREE + 1] =
+const unsigned char ledsAfterRows[NUM_DISP_ROWS_TREE + 1] PROGMEM =
 {0,0,0,0,0,0,
  0,8,8,9,
  10,10,12,13,
@@ -196,6 +197,28 @@ unsigned char bigDispBoard[NUM_DISP_ROWS][NUM_DISP_COLS] =
  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
+
+/* Tetris Start Screen Display */
+const unsigned char PROGMEM tetrisStartDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TETRIS] =
+  {{6,6,6,4,4,4,8,8,8,0},
+   {0,6,0,4,0,0,0,8,0,0},
+   {0,6,0,4,4,4,0,8,0,0},
+   {0,6,0,4,0,0,0,8,0,0},
+   {0,6,0,4,4,4,0,8,0,0},
+   {0,0,0,0,0,0,0,0,0,0},
+   {3,3,3,5,5,5,1,1,1,0},
+   {3,0,3,0,5,0,1,0,0,0},
+   {3,3,0,0,5,0,1,1,1,0},
+   {3,3,0,0,5,0,0,0,1,0},
+   {3,0,3,5,5,5,1,1,1,0},{0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
+
+//{{0,0,0,0,0,0,0,0,0,0},{6,6,6,0,0,0,0,0,0,0},{0,6,0,0,0,0,0,0,0,0},{0,6,4,4,0,0,0,0,0,0},
+  // {0,6,4,0,0,0,0,0,0,0},{0,6,4,4,0,0,0,0,0,0},{0,0,4,8,8,8,0,0,0,0},{0,0,4,4,8,0,0,0,0,0},
+  // {0,0,0,0,8,3,3,3,0,0},{0,0,0,0,8,3,0,3,0,0},{0,0,0,0,8,3,3,0,0,0},{0,0,0,0,0,3,3,0,0,0},
+  // {0,0,0,0,0,3,0,3,0,0},{0,0,0,0,0,5,5,5,0,0},{0,0,0,0,0,0,5,1,1,1},{0,0,0,0,0,0,5,1,0,0},
+  // {0,0,0,0,0,0,5,1,1,1},{0,0,0,0,0,5,5,5,0,1},{0,0,0,0,0,0,0,1,1,1},{0,0,0,0,0,0,0,0,0,0}};
 
 
 
@@ -235,7 +258,7 @@ unsigned long gameBoard[NUM_ROWS] =
 
 /* Tetris 7 shapes */
 /* listed as row, row, row, row (LSB) from top to bottom, left to right */
-const unsigned int shapeMove[NUM_SHAPES][NUM_TURNS] = 
+const unsigned int PROGMEM shapeMove[NUM_SHAPES][NUM_TURNS] = 
 {
 /* Shape 0 - I */
 {0x0F00, 0x2222, 0x00F0, 0x4444},
@@ -280,7 +303,7 @@ void setup() {
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.setBrightness(  BRIGHTNESS );
   
-  Serial.begin(9600);
+  //Serial.begin(9600);
 
   /* Change to seed when user presses START */
   randomSeed(analogRead(0));
@@ -348,7 +371,7 @@ void displayBigBoardTwoTwo(bool showLed)
 /* showLed is used in case of Castle Display or similar where only desire to 
  * display non-black pixels and not call FastLED.show()
  */
-void displayLEDBoardTwentyTen(bool showLed)
+/*void displayLEDBoardTwentyTen(bool showLed)
 {
   unsigned int i, j;
   
@@ -356,7 +379,7 @@ void displayLEDBoardTwentyTen(bool showLed)
     if (showLed == true)
       leds[i] = CRGB::Black;
   
-  /* bottom row to top, right to left */
+  // bottom row to top, right to left
   for(i = 0; i < NUM_DISP_ROWS_TETRIS; i++)
   {
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
@@ -374,7 +397,7 @@ void displayLEDBoardTwentyTen(bool showLed)
   if (showLed == true)
     FastLED.show();
 }
-
+*/
 
 // TREE (Start at bottom right and wind around the tree upward)
 // Row  13: BeforeLEDs, leftmost, ..., rightmost, AfterLEDs
@@ -404,6 +427,7 @@ void displayLEDTree(bool showLed)
   {
     //Serial.println("New Row");
     //Serial.println(i);
+    
     for(j = ledsBeforeRows[i] - 1; j >= 0; j--)
     {      
       if (showLed == true)
@@ -646,6 +670,7 @@ unsigned int getMove() {
 /* TETRIS Display Functions */
 
 
+/*
 void displayGameBoardSerial()
 {
   int i, j;
@@ -676,6 +701,7 @@ void displayGameBoardSerial()
     Serial.println();
   }
 }
+*/
 
 
 void displayFullRow(int rowNum)
@@ -702,28 +728,6 @@ void displayTetrisStart()
   unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_TETRIS) / 2;
   unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_TETRIS) / 2;
   
-  /* Tetris Start Screen Display */
-  const unsigned char tetrisStartDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TETRIS] =
-  {{6,6,6,4,4,4,8,8,8,0},
-   {0,6,0,4,0,0,0,8,0,0},
-   {0,6,0,4,4,4,0,8,0,0},
-   {0,6,0,4,0,0,0,8,0,0},
-   {0,6,0,4,4,4,0,8,0,0},
-   {0,0,0,0,0,0,0,0,0,0},
-   {3,3,3,5,5,5,1,1,1,0},
-   {3,0,3,0,5,0,1,0,0,0},
-   {3,3,0,0,5,0,1,1,1,0},
-   {3,3,0,0,5,0,0,0,1,0},
-   {3,0,3,5,5,5,1,1,1,0},{0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
-
-  //{{0,0,0,0,0,0,0,0,0,0},{6,6,6,0,0,0,0,0,0,0},{0,6,0,0,0,0,0,0,0,0},{0,6,4,4,0,0,0,0,0,0},
-  // {0,6,4,0,0,0,0,0,0,0},{0,6,4,4,0,0,0,0,0,0},{0,0,4,8,8,8,0,0,0,0},{0,0,4,4,8,0,0,0,0,0},
-  // {0,0,0,0,8,3,3,3,0,0},{0,0,0,0,8,3,0,3,0,0},{0,0,0,0,8,3,3,0,0,0},{0,0,0,0,0,3,3,0,0,0},
-  // {0,0,0,0,0,3,0,3,0,0},{0,0,0,0,0,5,5,5,0,0},{0,0,0,0,0,0,5,1,1,1},{0,0,0,0,0,0,5,1,0,0},
-  // {0,0,0,0,0,0,5,1,1,1},{0,0,0,0,0,5,5,5,0,1},{0,0,0,0,0,0,0,1,1,1},{0,0,0,0,0,0,0,0,0,0}};
-  
   // TETRIS Splash Screen
   unsigned int i, j;
   for(i = 0; i < NUM_DISP_ROWS_TETRIS; i++)
@@ -733,6 +737,9 @@ void displayTetrisStart()
   displayLEDs(true);
 }
 
+const unsigned int PROGMEM shapeToColor[NUM_SHAPES] = 
+   {DISP_COLOR_PURPLE, DISP_COLOR_BLUE, DISP_COLOR_ORANGE, DISP_COLOR_YELLOW,
+    DISP_COLOR_RED, DISP_COLOR_GREEN, DISP_COLOR_CYAN};
 
 void displayGameBoard(bool slow)
 {
@@ -745,10 +752,6 @@ void displayGameBoard(bool slow)
   unsigned int shape_color = 0;
   
   unsigned long displayPieceBoard[PIECE_LENGTH] = {0,0,0,0};
-
-  const unsigned int shapeToColor[NUM_SHAPES] = 
-   {DISP_COLOR_PURPLE, DISP_COLOR_BLUE, DISP_COLOR_ORANGE, DISP_COLOR_YELLOW,
-    DISP_COLOR_RED, DISP_COLOR_GREEN, DISP_COLOR_CYAN};
 
   const unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_TETRIS) / 2;
   const unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_TETRIS) / 2;
@@ -986,6 +989,10 @@ bool attemptMovePiece(unsigned int moveDir)
   return true;
 }
 
+/* Tetris Time spent per row by level */
+const unsigned int PROGMEM millisPerRow[NUM_LEVELS] = 
+  {1000, 793, 618, 473, 355, 262, 190, 135, 94, 64};
+
 void play_tetris()
 {
   byte numNewLines = 0;
@@ -1001,12 +1008,7 @@ void play_tetris()
 
   /* Tetris Current game level, 0 - 9 */
   byte gameLevel = 0;
-
-  /* Tetris Time spent per row by level */
-  const unsigned int millisPerRow[NUM_LEVELS] = 
-  {1000, 793, 618, 473, 355, 262, 190, 135, 94, 64};
   
-  Serial.println("TETRIS");
   init_tetris();
   
   /* If new tetris game, Loop */
@@ -1254,6 +1256,14 @@ void display_juggle()
   delay(50);
 }
 
+/* Castle Display */
+const unsigned char PROGMEM castleDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TETRIS] =
+  {{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,9,0,0,0},{0,0,0,0,0,0,9,0,0,0},{0,0,0,0,0,1,11,0,0,0},{0,0,0,9,0,11,11,1,0,0},
+   {0,0,0,1,0,11,11,11,0,0},{0,0,0,11,11,11,11,11,0,0},{0,0,0,11,11,11,11,11,0,0},{1,0,1,11,10,10,11,1,0,1},
+   {12,0,12,11,12,12,11,12,0,12},{12,12,12,12,12,12,12,12,12,12},{12,12,12,12,0,0,12,12,12,12},{12,12,12,12,0,0,12,12,12,12}};
+
 void display_castle()
 {
   unsigned int i, j;
@@ -1261,14 +1271,6 @@ void display_castle()
   unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_TETRIS) / 2;
   unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_TETRIS) / 2;
 
-  
-  /* Castle Display */
-  const unsigned char castleDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TETRIS] =
-  {{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,9,0,0,0},{0,0,0,0,0,0,9,0,0,0},{0,0,0,0,0,1,11,0,0,0},{0,0,0,9,0,11,11,1,0,0},
-   {0,0,0,1,0,11,11,11,0,0},{0,0,0,11,11,11,11,11,0,0},{0,0,0,11,11,11,11,11,0,0},{1,0,1,11,10,10,11,1,0,1},
-   {12,0,12,11,12,12,11,12,0,12},{12,12,12,12,12,12,12,12,12,12},{12,12,12,12,0,0,12,12,12,12},{12,12,12,12,0,0,12,12,12,12}};
 
   // Tree Calibration Example
   //const unsigned char castleDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TETRIS] =
@@ -1313,19 +1315,8 @@ void display_castle()
 /* MARIO Functions */
 
 
-/* Only called in 22x22 mode at the moment */
-/* Frames numbered 1-6 */
-/* disp_mario_luigi: 0 - Mario, 1 - Luigi */
-void displayLEDBoardMarioRun(unsigned char mario_frame, unsigned char mario_dir, unsigned char disp_mario_luigi)
-{
-  unsigned int i, j;
-  unsigned int unused_cols_left = 2;
-  unsigned int unused_rows_top = 2;
-  unsigned int color_index = 0;
-  unsigned int column_idx = 0;
-
   /* Mario Left Standing Display */
-const unsigned char marioDispOne[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
+const unsigned char PROGMEM marioDispOne[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
 {{10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10}, // 0
  {10,10,10,10,10,04,04,04,04,04,04,10,10,10,10,10,10}, // 1
  {10,10,04,04,04,04,04,04,04,04,04,04,10,10,10,10,10}, // 2
@@ -1346,7 +1337,7 @@ const unsigned char marioDispOne[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
  };
 
  /* Mario Left Running One Display */
-const unsigned char marioDispTwo[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
+const unsigned char PROGMEM marioDispTwo[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
 {{10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10}, // 0
  {10,10,10,10,10,04,04,04,04,04,04,10,10,10,10,10,10}, // 1
  {10,10,04,04,04,04,04,04,04,04,04,04,10,10,10,10,10}, // 2
@@ -1367,7 +1358,7 @@ const unsigned char marioDispTwo[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
  };
 
  /* Mario Left Running Two Display */
-const unsigned char marioDispThree[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
+const unsigned char PROGMEM marioDispThree[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
 {{10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10}, // 0
  {10,10,10,10,10,04,04,04,04,04,04,10,10,10,10,10,10}, // 1
  {10,10,04,04,04,04,04,04,04,04,04,04,10,10,10,10,10}, // 2
@@ -1388,7 +1379,7 @@ const unsigned char marioDispThree[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
  };
 
  /* Mario Left Running Three Display */
-const unsigned char marioDispFour[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
+const unsigned char PROGMEM marioDispFour[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
 {{10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10}, // 0
  {10,10,10,10,10,04,04,04,04,04,04,10,10,10,10,10,10}, // 1
  {10,10,04,04,04,04,04,04,04,04,04,04,10,10,10,10,10}, // 2
@@ -1409,7 +1400,7 @@ const unsigned char marioDispFour[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
  };
 
  /* Mario Left Skid Display */
-const unsigned char marioDispFive[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
+const unsigned char PROGMEM marioDispFive[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
 {{10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10}, // 0
  {10,10,10,10,10,04,04,04,04,04,04,10,10,10,10,10,10}, // 1
  {10,10,10,04,04,04,04,04,04,04,04,13,13,10,10,10,10}, // 2
@@ -1430,7 +1421,7 @@ const unsigned char marioDispFive[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
  };
 
  /* Mario Left Jump Display */
-const unsigned char marioDispSix[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
+const unsigned char PROGMEM marioDispSix[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
 {{11,11,11,10,10,10,10,10,10,10,10,10,10,10,10,10,10}, // 0
  {11,11,11,10,10,04,04,04,04,04,04,10,10,10,10,10,10}, // 1
  {11,11,04,04,04,04,04,04,04,04,04,04,10,10,10,10,10}, // 2
@@ -1449,6 +1440,18 @@ const unsigned char marioDispSix[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
  {10,10,10,10,10,10,10,10,01,01,01,01,01,10,13,13,10}, // 15
  {10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10}, // 16
  };
+
+
+/* Only called in 22x22 mode at the moment */
+/* Frames numbered 1-6 */
+/* disp_mario_luigi: 0 - Mario, 1 - Luigi */
+void displayLEDBoardMarioRun(unsigned char mario_frame, unsigned char mario_dir, unsigned char disp_mario_luigi)
+{
+  unsigned int i, j;
+  unsigned int unused_cols_left = 2;
+  unsigned int unused_rows_top = 2;
+  unsigned int color_index = 0;
+  unsigned int column_idx = 0;
   
     
   for(i = 0; i < NUM_DISP_ROWS; i++)
@@ -1699,16 +1702,8 @@ bool ghost_face_right[NUM_GHOSTS] = {true, true, true};
 unsigned char previous_ghost_mode = GHOST_MODE_CHASE;
 
 
-
-
-void displayPacStart()
-{
-  /* Use Tetris Playfield to display Pac Man Start screen */
-  unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_TETRIS) / 2;
-  unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_TETRIS) / 2;
-  
-  /* Tetris Start Screen Display */
-  const unsigned char tetrisStartDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TETRIS] =
+/* Tetris Start Screen Display */
+const unsigned char PROGMEM pacStartDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TETRIS] =
   {{6,6,6,4,4,4,0,8,8,0},
    {6,0,6,4,0,4,8,0,0,0},
    {6,6,6,4,4,4,8,0,0,0},
@@ -1723,6 +1718,12 @@ void displayPacStart()
    {0,0,0,0,0,0,0,0,0,0},
    {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
    {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
+
+void displayPacStart()
+{
+  /* Use Tetris Playfield to display Pac Man Start screen */
+  unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_TETRIS) / 2;
+  unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_TETRIS) / 2;
   
   /* PAC MAN Splash Screen */
   /* Use Tetris Playfield to display Pac Man Start screen */
@@ -1733,18 +1734,12 @@ void displayPacStart()
     
   for(i = 0; i < NUM_DISP_ROWS_TETRIS; i++)
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
-      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = tetrisStartDisp[i][j];
+      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pacStartDisp[i][j];
 
   displayLEDs(true);
 }
 
-
-/* Display the background as defined in pac_back */
-void init_pac_display()
-{
-  unsigned int i, j;
-
-  const unsigned char pac_back[NUM_DISP_ROWS][NUM_DISP_COLS] =
+const unsigned char PROGMEM pac_back[NUM_DISP_ROWS][NUM_DISP_COLS] =
   {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // 0
    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}, // 1
    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1}, // 2
@@ -1767,6 +1762,11 @@ void init_pac_display()
    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1}, // 19
    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}, // 20
    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};// 21
+
+/* Display the background as defined in pac_back */
+void init_pac_display()
+{
+  unsigned int i, j;
   
   /* bottom row to top, right to left */
   for(i = 0; i < NUM_DISP_ROWS; i++)
@@ -2252,25 +2252,11 @@ void new_pac_level()
   reset_positions_counters_display();
 }
 
-void play_pac_man()
-{
-  bool pac_man_over = false;
-  unsigned int move_dir = MOVE_NONE;
-  unsigned int i, j;
-  unsigned char ghost_mode;
-  /* allow for "cornering", press button ahead of move */
-  unsigned char loaded_move_dir = MOVE_NONE; 
-
-  /* Reset the score */
-  current_pac_level = 0;
-
-  num_pac_lives = NUM_PAC_LIVES_START; 
-
-  /* Defines allowable movements for Pac, Ghosts based on current location */
+/* Defines allowable movements for Pac, Ghosts based on current location */
   // 0x1 - move left, 0x2 - move right
   // 0x4 - move up, 0x8 - move down
   // Assume bottom left corner of 2x2 sprite
-  const unsigned char pac_move[NUM_DISP_ROWS][NUM_DISP_COLS] =
+const unsigned char PROGMEM pac_move[NUM_DISP_ROWS][NUM_DISP_COLS] =
   {{0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}, // 0
    {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}, // 1
    {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}, // 2
@@ -2293,6 +2279,20 @@ void play_pac_man()
    {0x0,0x6,0x3,0x3,0x3,0x3,0x7,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x7,0x3,0x3,0x3,0x3,0x5,0x0,0x0}, // 19
    {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}, // 20
    {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}};// 21
+
+void play_pac_man()
+{
+  bool pac_man_over = false;
+  unsigned int move_dir = MOVE_NONE;
+  unsigned int i, j;
+  unsigned char ghost_mode;
+  /* allow for "cornering", press button ahead of move */
+  unsigned char loaded_move_dir = MOVE_NONE; 
+
+  /* Reset the score */
+  current_pac_level = 0;
+
+  num_pac_lives = NUM_PAC_LIVES_START; 
 
   /* Display Splash Screen */
   displayPacStart();
