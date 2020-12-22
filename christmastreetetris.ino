@@ -474,16 +474,17 @@ void displayLEDs(bool showLed)
   #endif
 }
 
+// Descriptions of pixel representations of digits 0 - 9
+unsigned const char PROGMEM left_column [10] =   {0x1F, 0x00, 0x1D, 0x15, 0x07, 0x17, 0x1F, 0x01, 0x1F, 0x07}; // top is LSB, bottom is MSB
+unsigned const char PROGMEM middle_column [10] = {0x11, 0x00, 0x15, 0x15, 0x04, 0x15, 0x15, 0x01, 0x15, 0x05}; // top is LSB, bottom is MSB
+unsigned const char PROGMEM right_column [10] =  {0x1F, 0x1F, 0x17, 0x1F, 0x1F, 0x1D, 0x1D, 0x1F, 0x1F, 0x1F}; // top is LSB, bottom is MSB
+
 /* Generic Number Display (0-199) */
 void displayScore(unsigned int totalScore)
 {
   unsigned int j;
   unsigned int tens_digit = (totalScore % 100) / 10;
   unsigned int ones_digit = totalScore % 10;
-  // Descriptions of pixel representations of digits 0 - 9
-  unsigned int left_column [10] =   {0x1F, 0x00, 0x1D, 0x15, 0x07, 0x17, 0x1F, 0x01, 0x1F, 0x07}; // top is LSB, bottom is MSB
-  unsigned int middle_column [10] = {0x11, 0x00, 0x15, 0x15, 0x04, 0x15, 0x15, 0x01, 0x15, 0x05}; // top is LSB, bottom is MSB
-  unsigned int right_column [10] =  {0x1F, 0x1F, 0x17, 0x1F, 0x1F, 0x1D, 0x1D, 0x1F, 0x1F, 0x1F}; // top is LSB, bottom is MSB
 
   /* Display Score (number of lines) */
   for(j = 0; j < 5; j++) // for each column
@@ -491,17 +492,17 @@ void displayScore(unsigned int totalScore)
     if (totalScore > 99)
       bigDispBoard[14+j][1] = 5; // Green
       
-    if (((left_column[tens_digit] >> j) & 0x1) > 0)
+    if (((pgm_read_byte(&left_column[tens_digit]) >> j) & 0x1) > 0)
       bigDispBoard[14+j][9] = 4; // Red
-    if (((middle_column[tens_digit] >> j) & 0x1) > 0)
+    if (((pgm_read_byte(&middle_column[tens_digit]) >> j) & 0x1) > 0)
       bigDispBoard[14+j][10] = 4; // Red
-    if (((right_column[tens_digit] >> j) & 0x1) > 0)
+    if (((pgm_read_byte(&right_column[tens_digit]) >> j) & 0x1) > 0)
       bigDispBoard[14+j][11] = 4; // Red
-    if (((left_column[ones_digit] >> j) & 0x1) > 0)
+    if (((pgm_read_byte(&left_column[ones_digit]) >> j) & 0x1) > 0)
       bigDispBoard[14+j][13] = 5; // Green
-    if (((middle_column[ones_digit] >> j) & 0x1) > 0)
+    if (((pgm_read_byte(&middle_column[ones_digit]) >> j) & 0x1) > 0)
       bigDispBoard[14+j][14] = 5; // Green
-    if (((right_column[ones_digit] >> j) & 0x1) > 0)
+    if (((pgm_read_byte(&right_column[ones_digit]) >> j) & 0x1) > 0)
       bigDispBoard[14+j][15] = 5; // Green 
   }
      
