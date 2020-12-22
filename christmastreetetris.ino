@@ -4,11 +4,13 @@
 
 /* TODO: */
 /* Test on Tree (Determine Spacing, Lag?) */
-/* Tweak Game Speed */
 /* Mario */
 /* Fire Effect */
 /* Debug */
-/* Determine Proper Volume */
+/* Play 3 songs */
+/* Output to 2 displays (Tree and 22x22) */
+/* Add calibration program (store in EEPROM) */
+/* Add game menu */
 
 
 /*  Display everything on a 22x22 board, top left is 0  
