@@ -2346,6 +2346,16 @@ void play_pac_man()
           big_dot_eaten_counter = pac_counter; /* Big Dot takes effect next cycle */
       }
 
+    
+    
+    /* Update display items */
+    clear_ghosts_pac();
+    display_dots();
+    display_pac_lives();
+    display_pac_man();
+    display_ghosts();
+    displayLEDs(true);
+
     /* Look to see if all dots eaten and start new level if needed */
     j = 0; /* used to add up remaining dots on all rows */
     for (i = 0; i < NUM_DOTS_ROWS; i++)
@@ -2355,15 +2365,6 @@ void play_pac_man()
       new_pac_level();
       current_pac_level++;
     }
-
-    
-    /* Update display items */
-    clear_ghosts_pac();
-    display_dots();
-    display_pac_lives();
-    display_pac_man();
-    display_ghosts();
-    displayLEDs(true);
 
     /* If ghost catches you, quit or eat*/
     for (i = 0; i < NUM_GHOSTS; i++)
