@@ -428,7 +428,7 @@ void displayLEDTree(bool showLed)
     //Serial.println("New Row");
     //Serial.println(i);
     
-    for(j = ledsBeforeRows[i] - 1; j >= 0; j--)
+    for(j = pgm_read_byte_near(&ledsBeforeRows[i]) - 1; j >= 0; j--)
     {      
       if (showLed == true)
         leds[currentLED] = CRGB::Black;
@@ -441,7 +441,7 @@ void displayLEDTree(bool showLed)
       currentLED++;
     }
     //Serial.println(currentLED);
-    for(j = ledsAfterRows[i] - 1; j >= 0; j--)
+    for(j = pgm_read_byte_near(&ledsAfterRows[i]) - 1; j >= 0; j--)
     {      
       if (showLed == true)
         leds[currentLED] = CRGB::Black;
@@ -674,7 +674,7 @@ unsigned int getMove() {
 void displayGameBoardSerial()
 {
   int i, j;
-  unsigned int curShape = shapeMove[next7[curShapeIter]][curShapeRot];
+  unsigned int curShape = pgm_read_word_near(&shapeMove[next7[curShapeIter]][curShapeRot]);
   unsigned int rightAlignedPieceRow = 0;
   
   unsigned long displayBoard[PIECE_LENGTH] = {0,0,0,0};
@@ -732,7 +732,7 @@ void displayTetrisStart()
   unsigned int i, j;
   for(i = 0; i < NUM_DISP_ROWS_TETRIS; i++)
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
-      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = tetrisStartDisp[i][j];
+      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&tetrisStartDisp[i][j]);
 
   displayLEDs(true);
 }
@@ -746,7 +746,7 @@ void displayGameBoard(bool slow)
   //displayGameBoardSerial();
 
   int i, j;
-  unsigned int curShape = shapeMove[next7[curShapeIter]][curShapeRot];
+  unsigned int curShape = pgm_read_word_near(&shapeMove[next7[curShapeIter]][curShapeRot]);
   unsigned int rightAlignedPieceRow = 0;
   bool somethingThisRow = false;
   unsigned int shape_color = 0;
@@ -792,7 +792,7 @@ void displayGameBoard(bool slow)
   }
   firstRow = 99;
 
-  shape_color = shapeToColor[next7[curShapeIter]];
+  shape_color = pgm_read_byte_near(&shapeToColor[next7[curShapeIter]]);
 
   for(i = blockLoc[ROW]; i < blockLoc[ROW] + 4; i++)
   {
@@ -873,7 +873,7 @@ byte updateGameBoard()
 {
   int i, j;
   byte numLines = 0;
-  unsigned int newShape = shapeMove[next7[curShapeIter]][curShapeRot];
+  unsigned int newShape = pgm_read_word_near(&shapeMove[next7[curShapeIter]][curShapeRot]);
   unsigned int rightAlignedPieceRow = 0;
   for(i = PIECE_LENGTH - 1; i >= 0; i--)
   {
@@ -933,7 +933,7 @@ bool canMove(byte moveDir)
   else
     return false;
 
-  newShape = shapeMove[next7[curShapeIter]][shapeRot];
+  newShape = pgm_read_word_near(&shapeMove[next7[curShapeIter]][shapeRot]);
 
   /* Compare each constructed row of piece to complete row of gameboard */
   for(i = PIECE_LENGTH - 1; i >= 0; i--)
@@ -1063,7 +1063,7 @@ void play_tetris()
       }
     
       /* Check if can drop */
-      if ((currentMillis - timePieceStartRow) > millisPerRow[gameLevel])
+      if ((currentMillis - timePieceStartRow) > pgm_read_byte_near(&millisPerRow[gameLevel]))
       {
         if (!attemptMovePiece(MOVE_DOWN))
         {
@@ -1301,7 +1301,7 @@ void display_castle()
   
   for(i = 0; i < NUM_DISP_ROWS_TETRIS; i++)
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
-      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = castleDisp[i][j];
+      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&castleDisp[i][j]);
 
   displayLEDs(false);
 
@@ -1474,17 +1474,17 @@ void displayLEDBoardMarioRun(unsigned char mario_frame, unsigned char mario_dir,
         column_idx = NUM_COLS_MARIO_RUN - j - 1;
         
       if (mario_frame == 1)
-        color_index = marioDispOne[i][column_idx];
+        color_index = pgm_read_byte_near(&marioDispOne[i][column_idx]);
       else if (mario_frame == 2)
-        color_index = marioDispTwo[i][column_idx];
+        color_index = pgm_read_byte_near(&marioDispTwo[i][column_idx]);
       else if (mario_frame == 3)
-        color_index = marioDispThree[i][column_idx];
+        color_index = pgm_read_byte_near(&marioDispThree[i][column_idx]);
       else if (mario_frame == 4)
-        color_index = marioDispFour[i][column_idx];
+        color_index = pgm_read_byte_near(&marioDispFour[i][column_idx]);
       else if (mario_frame == 5)
-        color_index = marioDispFive[i][column_idx];
+        color_index = pgm_read_byte_near(&marioDispFive[i][column_idx]);
       else if (mario_frame == 6)
-        color_index = marioDispSix[i][column_idx];
+        color_index = pgm_read_byte_near(&marioDispSix[i][column_idx]);
       
       if ((disp_mario_luigi == 1) and (color_index == DISP_COLOR_RED))
         color_index = DISP_COLOR_GREEN;
@@ -1734,7 +1734,7 @@ void displayPacStart()
     
   for(i = 0; i < NUM_DISP_ROWS_TETRIS; i++)
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
-      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pacStartDisp[i][j];
+      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&pacStartDisp[i][j]);//pacStartDisp[i][j];
 
   displayLEDs(true);
 }
@@ -1773,7 +1773,7 @@ void init_pac_display()
   {
     for(j = 0; j < NUM_DISP_COLS; j++)
     {      
-      if(pac_back[i][j] > 0)
+      if(pgm_read_byte_near(&pac_back[i][j]))//(pac_back[i][j] > 0)
         bigDispBoard[i][j] = DISP_COLOR_HALF_BLUE;
       else
         bigDispBoard[i][j] = DISP_COLOR_BLACK;
@@ -2319,7 +2319,7 @@ void play_pac_man()
     /* Update Pac Man location */
     if (time_to_move(get_pac_speed()))
     {
-      if (move_pac_man(loaded_move_dir, pac_move[current_pac_row][current_pac_col])) /* if direction changed */
+      if (move_pac_man(loaded_move_dir, pgm_read_byte_near(&pac_move[current_pac_row][current_pac_col]))) /* if direction changed */
         loaded_move_dir = MOVE_NONE;
     }
 
@@ -2330,7 +2330,7 @@ void play_pac_man()
     if (time_to_move(get_ghost_speed()))
     {
       for (i = 0; i < NUM_GHOSTS; i++)
-        move_ghost(i, pac_move[current_ghost_row[i]][current_ghost_col[i]]);
+        move_ghost(i, pgm_read_byte_near(&pac_move[current_ghost_row[i]][current_ghost_col[i]]));
       previous_ghost_mode = ghost_mode;
     }
 
