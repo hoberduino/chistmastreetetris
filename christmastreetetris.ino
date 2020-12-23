@@ -1528,7 +1528,7 @@ boolean mario_move = false; // if moving this iteration
 unsigned char mario_frame = 1; // 1-6: 1-Stand, 2-Run1, 3-Run2, 4-Run3, 5-Skid, 6-Jump
 unsigned char mario_run_timer = 0; // TODO: Provide description
 unsigned int delay_time = 100;
-void display_mario_run()
+bool display_mario_run()
 {
   unsigned int i, j;
   unsigned int move_dir = MOVE_NONE;
@@ -1548,7 +1548,6 @@ void display_mario_run()
     if (move_dir == MOVE_SELECT)
     {
       disp_mario_luigi = (disp_mario_luigi + 1) % 2;
-      delay(500); /* Try to avoid entering Pac Man with SELECT */
     }
     else if (move_dir == MOVE_START)
     {
@@ -1592,11 +1591,111 @@ void display_mario_run()
     delay(20);
   }
 
+  return (disp_mario_luigi == 1);
 }
 
 
-void play_mario()
+
+
+
+
+void disp_mario_back()
 {
+  unsigned char i,j;
+  
+  for(i = 0; i < NUM_DISP_ROWS; i++)
+  {
+    for(j = 0; j < NUM_DISP_COLS; j++)
+    {
+      if (i < NUM_DISP_ROWS - 1)
+        bigDispBoard[i][j] = DISP_COLOR_LIGHT_BLUE;
+      else
+        bigDispBoard[i][j] = DISP_COLOR_HALF_RED;
+    }
+  }
+  
+}
+
+
+#define MARIO_FACE_COLOR DISP_COLOR_PEACH
+#define MARIO_HAT_COLOR DISP_COLOR_RED
+#define LUIGI_HAT_COLOR DISP_COLOR_GREEN
+#define MARIO_PANTS_COLOR DISP_COLOR_BLUE
+#define MARIO_SHOE_COLOR DISP_COLOR_BROWN
+#define MARIO_FIRE_HAT_COLOR DISP_COLOR_WHITE
+#define MARIO_FIRE_PANTS_COLOR DISP_COLOR_RED
+
+unsigned char current_mario_row = NUM_DISP_ROWS - 2; /* bottom left of mario */
+unsigned int current_mario_col = 3; /* (0 - 438), bottom left of mario */
+unsigned int current_display_col = 0; /* leftmost column of display as level column */
+
+bool mario_face_right = true;
+bool mario_is_big = false;
+bool mario_is_fire = false;
+bool mario_is_luigi = false;
+char current_mario_speed = 0; /* (-4,4) */
+unsigned int mario_time = 0;
+unsigned int mario_run_time = 0; /* time when mario most recently started running */
+
+
+void disp_mario()
+{
+  unsigned char mario_col_now = current_mario_col - current_display_col;
+
+  if (mario_is_big == false)
+  {
+    if (mario_face_right == true)
+    {
+      bigDispBoard[current_mario_row - 1][mario_col_now] = MARIO_HAT_COLOR; // top left pixel
+      bigDispBoard[current_mario_row - 1][mario_col_now + 1] = MARIO_FACE_COLOR; // top right pixel
+      /* blink front shoe depending on speed */
+      if (current_mario_speed == 0)
+        bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_PANTS_COLOR; // bottom right pixel
+      else if ((mario_time % (8 / current_mario_speed)) < (4 / current_mario_speed))
+        bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_PANTS_COLOR; // bottom right pixel
+      else
+        bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_SHOE_COLOR; // bottom right pixel
+      bigDispBoard[current_mario_row][mario_col_now] = MARIO_PANTS_COLOR; // bottom left pixel
+    }
+    else
+    {
+      bigDispBoard[current_mario_row - 1][mario_col_now] = MARIO_FACE_COLOR; // top left pixel
+      bigDispBoard[current_mario_row - 1][mario_col_now + 1] = MARIO_HAT_COLOR; // top right pixel
+      /* blink front shoe depending on speed */
+      if (current_mario_speed == 0)
+        bigDispBoard[current_mario_row][mario_col_now] = MARIO_PANTS_COLOR; // bottom left pixel
+      else if ((mario_time % (8 / current_mario_speed)) < (4 / current_mario_speed))
+        bigDispBoard[current_mario_row][mario_col_now] = MARIO_PANTS_COLOR; // bottom left pixel
+      else
+        bigDispBoard[current_mario_row][mario_col_now] = MARIO_SHOE_COLOR; // bottom left pixel
+      bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_PANTS_COLOR; // bottom right pixel
+    }
+
+  }
+}
+
+void play_mario(bool mario_is_green)
+{
+  bool mario_over = false;
+  unsigned int move_dir = MOVE_NONE;
+
+  mario_is_luigi = mario_is_green;
+
+  // while (mario_over == false)
+  {
+    /* look for movements */
+    move_dir = getMove();
+
+    if ((move_dir & 0xF) == MOVE_RIGHT)
+    {
+      
+    }
+
+  }
+
+
+  disp_mario_back();
+  disp_mario();
   
 }
 
@@ -2527,8 +2626,8 @@ void start_menu()
     play_tetris();
   else if (game_selection == 3)
   {
-    display_mario_run();
-    play_mario();
+    bool mario_is_green = display_mario_run();
+    play_mario(mario_is_green);
   }
   delay(300);
   
