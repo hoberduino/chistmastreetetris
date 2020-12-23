@@ -5,12 +5,8 @@
 /* TODO: */
 /* Test on Tree (Determine Spacing, Lag?) */
 /* Mario */
-/* Fire Effect */
-/* Debug */
 /* Play 3 songs */
 /* Output to 2 displays (Tree and 22x22) */
-/* Add calibration program (store in EEPROM) */
-/* Add game menu */
 
 
 /*  Display everything on a 22x22 board, top left is 0  
@@ -43,14 +39,8 @@
 #define DISP_JUGGLE    3
 #define DISP_CASTLE    4
 #define DISP_ONE_COLOR 5
-
-#ifdef TWOTWO_X_TWOTWO
-#define PLAY_MARIO     6
-#define DISP_SNAKE     7
-#define NUM_DISP_MODES 8
-#else
-#define NUM_DISP_MODES 6
-#endif
+#define DISP_SNAKE     6
+#define NUM_DISP_MODES 7
 
 
 
@@ -73,6 +63,10 @@
 #define NUM_DISP_ROWS_TETRIS 20 /*middle twenty are visible */
 // NUM_DISP_ROWS 20 for full tetris
 #define NUM_DISP_COLS_TETRIS 10 /* middle ten are visible */
+
+#define NUM_DISP_ROWS_MENU 20 /*middle twenty are visible */
+// NUM_DISP_ROWS 20 for full tetris
+#define NUM_DISP_COLS_MENU 12 /* middle ten are visible */
 
 #define NUM_ROWS_MARIO_RUN 17 
 #define NUM_COLS_MARIO_RUN 17 
@@ -170,19 +164,12 @@ const int RIGHT_BUTTON     = 7;
 #define MUSIC_PIN        (22)
 
 /* Number of "unused" LEDs before rows, starting at top*/
-const unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE + 1] PROGMEM =
-{0,0,0,0,0,0,
- 7,6,8,9,
- 9,12,10,12,
- 13,15,18,20,
- 22,13};
-/* Number of "unused" LEDs after rows, starting at top */
-const unsigned char ledsAfterRows[NUM_DISP_ROWS_TREE + 1] PROGMEM =
-{0,0,0,0,0,0,
- 0,8,8,9,
- 10,10,12,13,
- 14,15,16,17,
- 20,21};
+unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
+{0,0,0,0,0,
+ 15,14,17,19,
+ 19,24,23,26,
+ 28,30,35,40,
+ 43,13};
 
 
 /* Big LED Display Board (22x22) */
@@ -296,6 +283,16 @@ unsigned int firstRow = 99;
 
 // All those LEDs
 CRGB leds[NUM_LEDS];
+
+/* Number of display rows on tree */
+#define NUM_ROWS_EEPROM_ADDRESS 0 
+/* Number of display cols on tree */
+#define NUM_COLS_EEPROM_ADDRESS 1 
+/* Number of LEDs before given row on tree */
+/* Max number of 22 rows (NUM_DISP_ROWS) */
+#define ROW_OFFSET_EEPROM_ADDRESS 2 
+
+#define MAX_LED_OFFSET 50
 
 
 
@@ -420,17 +417,22 @@ void displayLEDTree(bool showLed)
 {
   int i, j;
   unsigned int currentLED = 0;
-  const unsigned int unused_cols_left = (NUM_DISP_ROWS - NUM_DISP_ROWS_TETRIS) / 2;
-  const unsigned int unused_rows_top = (NUM_DISP_COLS - NUM_DISP_COLS_TETRIS) / 2;
+  const unsigned char num_rows = EEPROM.read(NUM_ROWS_EEPROM_ADDRESS); /* num rows to display */
+  //const unsigned char num_cols = EEPROM.read(NUM_COLS_EEPROM_ADDRESS); /* num cols to display */
+  
+  unsigned int unused_cols_left = (NUM_DISP_ROWS - NUM_DISP_ROWS_TETRIS) / 2;
+  unsigned int unused_rows_top = (NUM_DISP_COLS - NUM_DISP_COLS_TETRIS) / 2 + (NUM_DISP_ROWS_TETRIS - num_rows);
+  
   //Serial.println("TREE");
   
   /* bottom row to top, right to left */
-  for(i = NUM_DISP_ROWS_TETRIS - 1; i >= 0; i--)
+  //for(i = NUM_DISP_ROWS_TETRIS - 1; i >= 0; i--)
+  for(i = num_rows - 1; i >= 0; i--)
   {
     //Serial.println("New Row");
     //Serial.println(i);
     
-    for(j = pgm_read_byte_near(&ledsBeforeRows[i]) - 1; j >= 0; j--)
+    for(j = ledsBeforeRows[i + (NUM_DISP_ROWS_TETRIS - num_rows)] - 1; j >= 0; j--)
     {      
       if (showLed == true)
         leds[currentLED] = CRGB::Black;
@@ -442,14 +444,6 @@ void displayLEDTree(bool showLed)
       leds[currentLED] = numToColor[bigDispBoard[i + unused_rows_top][j + unused_cols_left]];
       currentLED++;
     }
-    //Serial.println(currentLED);
-    for(j = pgm_read_byte_near(&ledsAfterRows[i]) - 1; j >= 0; j--)
-    {      
-      if (showLed == true)
-        leds[currentLED] = CRGB::Black;
-      currentLED++;
-    }
-    //Serial.println(currentLED);
   }
   //Serial.println(currentLED);
   for(i = currentLED; i < NUM_LEDS; i++)
@@ -1513,11 +1507,12 @@ void display_mario_run()
   unsigned int i, j;
   unsigned int move_dir = MOVE_NONE;
   unsigned int button_press;
+  bool mario_over = false;
   
-
- delay(delay_time - 20);
-
+  while (mario_over == false)
   {
+    delay(delay_time - 20);
+    
     delay_time = MARIO_DELAY_TIME;
     if (mario_run_timer > 0)
       mario_run_timer--;
@@ -1528,6 +1523,10 @@ void display_mario_run()
     {
       disp_mario_luigi = (disp_mario_luigi + 1) % 2;
       delay(500); /* Try to avoid entering Pac Man with SELECT */
+    }
+    else if (move_dir == MOVE_START)
+    {
+      mario_over = true;
     }
     else if (((move_dir & 0xF) == MOVE_RIGHT) || ((move_dir & 0xF) == MOVE_LEFT))
     {
@@ -1569,6 +1568,11 @@ void display_mario_run()
 
 }
 
+
+void play_mario()
+{
+  
+}
 
 
 
@@ -1705,7 +1709,7 @@ bool ghost_face_right[NUM_GHOSTS] = {true, true, true};
 unsigned char previous_ghost_mode = GHOST_MODE_CHASE;
 
 
-/* Tetris Start Screen Display */
+/* Pac Man Start Screen Display */
 const unsigned char PROGMEM pacStartDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TETRIS] =
   {{6,6,6,4,4,4,0,8,8,0},
    {6,0,6,4,0,4,8,0,0,0},
@@ -2406,14 +2410,270 @@ void play_pac_man()
 }
 
 
+/* Game Menu */
+
+
+/* Game Menu Display */
+const unsigned char PROGMEM gameMenuDisp[NUM_DISP_ROWS_MENU][NUM_DISP_COLS_MENU] =
+  {{0,0,0,5,5,5,4,4,4,0,5,5},
+   {0,0,0,5,0,5,4,0,4,5,0,0},
+   {0,0,0,5,5,5,4,4,4,5,0,0},
+   {0,0,0,5,0,0,4,0,4,5,0,0},
+   {0,0,0,5,0,0,4,0,4,0,5,5},
+   {0,0,0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,5,5,5,4,4,4,5,5,5},
+   {0,0,0,0,5,0,4,0,0,0,5,0},
+   {0,0,0,0,5,0,4,4,4,0,5,0},
+   {0,0,0,0,5,0,4,0,0,0,5,0},
+   {0,0,0,0,5,0,4,4,4,0,5,0},
+   {0,0,0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,5,0,5,4,4,4,5,5,5},
+   {0,0,0,5,5,5,4,0,4,5,0,5},
+   {0,0,0,5,0,5,4,4,4,5,5,0},
+   {0,0,0,5,0,5,4,0,4,5,5,5},
+   {0,0,0,5,0,5,4,0,4,5,0,5},
+   {0,0,0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0,0,0}};
+
+void displayGameMenu()
+{
+  const unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_MENU) / 2;
+  const unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_MENU) / 2;
+  unsigned int i, j;
+  
+  for(i = 0; i < NUM_DISP_ROWS; i++)
+    for(j = 0; j < NUM_DISP_COLS; j++)
+      bigDispBoard[i][j] = DISP_COLOR_BLACK;
+    
+  for(i = 0; i < NUM_DISP_ROWS_MENU; i++)
+    for(j = 0; j < NUM_DISP_COLS_MENU; j++)
+      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&gameMenuDisp[i][j]);//pacStartDisp[i][j];
+
+  displayLEDs(true);
+}
+
+
+void start_menu()
+{
+  const unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_MENU) / 2;
+  const unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_MENU) / 2;
+  unsigned char game_selection = 0; /* game selected: 0 - PAC, 1 - TET, 2 - MAR */
+  bool game_selected = false; 
+  unsigned int move_dir = MOVE_NONE;
+
+  displayGameMenu();
+
+  while (game_selected == false)
+  {
+    move_dir = getMove();
+
+    if (move_dir == MOVE_UP)
+      game_selection = (game_selection + 2) % 3;
+    else if (move_dir == MOVE_DOWN)
+      game_selection = (game_selection + 1) % 3;
+    else if ((move_dir >> 4) == MOVE_ROTATE_RIGHT)
+      game_selected = true;
+    else if (( move_dir >> 4) == MOVE_ROTATE_LEFT)
+      game_selected = true;
+
+    /* Re-display background */
+    displayGameMenu();
+    /* Display Selection Cursor */
+    bigDispBoard[unused_rows_top + 1 + 6 * game_selection][unused_cols_left] = DISP_COLOR_YELLOW;
+    bigDispBoard[unused_rows_top + 2 + 6 * game_selection][unused_cols_left + 1] = DISP_COLOR_YELLOW;
+    bigDispBoard[unused_rows_top + 1 + 6 * game_selection][unused_cols_left] = DISP_COLOR_YELLOW;
+    bigDispBoard[unused_rows_top + 2 + 6 * game_selection][unused_cols_left + 1] = DISP_COLOR_YELLOW;
+
+
+    delay(20);
+  }
+
+  if (game_selection == 1)
+    play_pac_man(); 
+  else if (game_selection == 2)
+    play_tetris();
+  else if (game_selection == 3)
+  {
+    display_mario_run();
+    play_mario();
+  }
+  delay(300);
+  
+}
+
+/* Calibration Num Rows Display */
+const unsigned char PROGMEM calNumRowsDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TETRIS] =
+  {{5,5,5,4,0,4,5,0,5,0},
+   {5,0,5,4,0,4,5,5,5,0},
+   {5,0,5,4,0,4,5,0,5,0},
+   {5,0,5,4,0,4,5,0,5,0},
+   {5,0,5,4,4,4,5,0,5,0},
+   {0,0,0,0,0,0,0,0,0,0},
+   {5,5,5,4,4,4,5,0,5,0},
+   {5,0,5,4,0,4,5,0,5,0},
+   {5,5,0,4,0,4,5,0,5,0},
+   {5,5,5,4,0,4,5,5,5,0},
+   {5,0,5,4,4,4,5,0,5,0},
+   {0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
+
+/* Calibration Num Cols Display */
+const unsigned char PROGMEM calNumColsDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TETRIS] =
+  {{5,5,5,4,0,4,5,0,5,0},
+   {5,0,5,4,0,4,5,5,5,0},
+   {5,0,5,4,0,4,5,0,5,0},
+   {5,0,5,4,0,4,5,0,5,0},
+   {5,0,5,4,4,4,5,0,5,0},
+   {0,0,0,0,0,0,0,0,0,0},
+   {5,5,5,4,4,4,5,0,0,0},
+   {5,0,0,4,0,4,5,0,0,0},
+   {5,0,0,4,0,4,5,0,0,0},
+   {5,0,0,4,0,4,5,0,0,0},
+   {5,5,5,4,4,4,5,5,5,0},
+   {0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
+
+void dispCalNumRowsCols(bool isRows) /* isRows=true => Rows, else Cols */
+{
+  /* Use Tetris Playfield to display Pac Man Start screen */
+  unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_TETRIS) / 2;
+  unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_TETRIS) / 2;
+  unsigned char i,j;
+  
+  for(i = 0; i < NUM_DISP_ROWS; i++)
+    for(j = 0; j < NUM_DISP_COLS; j++)
+      bigDispBoard[i][j] = DISP_COLOR_BLACK;
+    
+  for(i = 0; i < NUM_DISP_ROWS_TETRIS; i++)
+    for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
+    { 
+      if (isRows == true)
+        bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&calNumRowsDisp[i][j]);
+      else
+        bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&calNumColsDisp[i][j]);
+    }
+
+  displayLEDs(true);
+}
+
+
+void dispLedsCal(unsigned char row_num)
+{
+  
+}
+
+
+void calibrate_tree()
+{
+  bool cal_complete = false;
+  unsigned int move_dir = MOVE_NONE;
+  unsigned char num_rows = EEPROM.read(NUM_ROWS_EEPROM_ADDRESS); /* num rows to be stored at address 0 */
+  unsigned char num_cols = EEPROM.read(NUM_COLS_EEPROM_ADDRESS); /* num cols to be stored at address 0 */
+  unsigned char i;
+  unsigned char num_leds;
+  
+  /* First, determine number of display rows */
+  while (cal_complete == false)
+  {
+    move_dir = getMove();
+
+    if (move_dir == MOVE_UP)
+      num_rows = (num_rows + 1) % NUM_DISP_ROWS;
+    else if (move_dir == MOVE_DOWN)
+      num_rows = (num_rows + NUM_DISP_ROWS - 1) % NUM_DISP_ROWS;
+    else if (move_dir == MOVE_START)
+      cal_complete = true;
+
+    /* Re-display background */
+    dispCalNumRowsCols(true);
+    /* Display Num Rows (stored in EEPROM) */
+    displayScore(num_rows);
+
+    delay(20);
+  }
+  /* write num_rows to EEPROM */
+  EEPROM.write(NUM_ROWS_EEPROM_ADDRESS, num_rows);
+  delay(250);
+  cal_complete = false;
+
+  /* Next, determine number of display columns */
+  while (cal_complete == false)
+  {
+    move_dir = getMove();
+
+    if (move_dir == MOVE_UP)
+      num_cols = (num_cols + 1) % NUM_DISP_COLS;
+    else if (move_dir == MOVE_DOWN)
+      num_cols = (num_cols + NUM_DISP_COLS - 1) % NUM_DISP_COLS;
+    else if (move_dir == MOVE_SELECT)
+      cal_complete = true;
+
+    /* Re-display background */
+    dispCalNumRowsCols(false);
+    /* Display Num Cols (stored in EEPROM) */
+    displayScore(num_cols);
+
+    delay(20);
+  }
+  /* write num_cols to EEPROM */
+  EEPROM.write(NUM_COLS_EEPROM_ADDRESS, num_cols);
+  delay(250);
+  cal_complete = false;
+
+  /* Finally get offsets for each row (number of down-spiral leds from end of last row */
+  for(i = 0; i < num_rows; i++)
+  {
+    num_leds = EEPROM.read(ROW_OFFSET_EEPROM_ADDRESS + i);
+    cal_complete = false;
+    while (cal_complete == false)
+    {
+      move_dir = getMove();
+
+      if (move_dir == MOVE_UP)
+        num_leds = (num_leds + 1) % MAX_LED_OFFSET;
+      else if (move_dir == MOVE_DOWN)
+        num_leds = (num_leds + MAX_LED_OFFSET - 1) % MAX_LED_OFFSET;
+      else if (((i % 2) == 0) && (move_dir == MOVE_START))
+        cal_complete = true;
+      else if (((i % 2) == 1) && (move_dir == MOVE_SELECT))
+        cal_complete = true;
+
+      /* Re-display background */
+      dispLedsCal(i);
+      /* Display Num Cols (stored in EEPROM) */
+      displayScore(num_leds);
+
+      delay(20);
+    } /* end while loop for this row */
+    /* Write EEPROM led offset value for this row */
+    EEPROM.write(ROW_OFFSET_EEPROM_ADDRESS + i, num_leds);
+    delay(250);
+  }
+  
+}
 
 /* Main Function */
 
 
 unsigned char display_mode = DISP_LIGHT;
+unsigned char calibration_mode = 0;
 void loop() {
   unsigned int moveDir = MOVE_NONE;
+  unsigned char i;
+  unsigned char num_leds = 0;
   digitalWrite(MUSIC_PIN, LOW);
+
+  /* Update ledsBeforeRows values if something stored there > 0 */
+  /* Right now these are stored from top to bottom */
+  for (i = 0; i < NUM_DISP_ROWS_TREE; i++);
+  {
+    num_leds = EEPROM.read(ROW_OFFSET_EEPROM_ADDRESS + i);
+    if (num_leds > 0)
+      ledsBeforeRows[i] = num_leds;
+  }
   
   /* Monitor Inputs */
   moveDir = getMove();
@@ -2427,9 +2687,16 @@ void loop() {
   /* Update display for current selection */
   /* If tetris, init and kick out of loop */
   if ((moveDir == MOVE_START) || (digitalRead(RESET_SWITCH_IN) == HIGH))
-    play_tetris();
-  else if (moveDir == MOVE_SELECT)
-    play_pac_man(); 
+    start_menu();
+  else if (moveDir == MOVE_SELECT) /* Calibrate if SELECT, A, B pressed in order */
+    calibration_mode = 1;
+  else if ((moveDir >> 4 == MOVE_ROTATE_RIGHT) && (calibration_mode == 1))
+    calibration_mode++;
+  else if ((moveDir >> 4 == MOVE_ROTATE_LEFT) && (calibration_mode == 2))
+  {
+    calibrate_tree();
+    calibration_mode = 0;
+  }
   else if (display_mode == DISP_GR)
     display_green_red();
   else if (display_mode == DISP_LIGHT)
@@ -2446,8 +2713,6 @@ void loop() {
     display_castle();  
   else if (display_mode == DISP_SNAKE)
     play_snake();
-  else if (display_mode == PLAY_MARIO)
-    display_mario_run(); 
     
   delay(50);
 
