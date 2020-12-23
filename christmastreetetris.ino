@@ -1265,6 +1265,7 @@ void display_juggle()
   fadeToBlackBy( leds, NUM_LEDS, 20);
   fadeToBlackBy( leds_tree, NUM_TREE_LEDS, 20);
   byte dothue = 0;
+  
   for( int i = 0; i < 8; i++) {
     leds[beatsin16( i+7, 0, NUM_LEDS-1 )] |= CHSV(dothue, 200, 255);
     leds_tree[beatsin16( i+7, 0, NUM_TREE_LEDS-1 )] |= CHSV(dothue, 200, 255);
