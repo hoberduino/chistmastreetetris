@@ -14,28 +14,18 @@
  *  or xmas tree as dictated by #define display mode below
  */
 
-/* DISPLAY MODES */
-//#define XMAS_TREE        1  // SPIRAL
-//#define TEN_X_TWENTY     2  // 10 COL, 20 ROW SNAKE
-#define TWOTWO_X_TWOTWO  3  // 22X22 ARRAY SNAKE
+#define NUM_TREE_LEDS    550
 
-#ifdef XMAS_TREE
-#define NUM_LEDS    550
-#endif
+//#ifdef TEN_X_TWENTY
+//#define NUM_LEDS    200
+//#endif
 
-#ifdef TEN_X_TWENTY
-#define NUM_LEDS    200
-#endif
-
-#ifdef TWOTWO_X_TWOTWO
 #define NUM_LEDS    484
-#endif
 
 /* CONTROL MODES */
 #define DISP_LIGHT     0
 #define DISP_GR        1
 #define DISP_RAINBOW   2
-//#define DISP_SINELON   3
 #define DISP_JUGGLE    3
 #define DISP_CASTLE    4
 #define DISP_ONE_COLOR 5
@@ -157,6 +147,7 @@ const int RIGHT_BUTTON     = 7;
 #define NES_CLOCK          2    // The clock pin for the NES controller
 #define NES_LATCH          3    // The latch pin for the NES controller
 #define LED_PIN            5
+#define LED_TREE_PIN       6
 #define RESET_SWITCH_IN    8
 #define RESET_SWITCH_OUT   9
 #define POWER_SWITCH_IN   10
@@ -283,6 +274,7 @@ unsigned int firstRow = 99;
 
 // All those LEDs
 CRGB leds[NUM_LEDS];
+CRGB leds_tree[NUM_LEDS];
 
 /* Number of display rows on tree */
 #define NUM_ROWS_EEPROM_ADDRESS 0 
@@ -300,6 +292,7 @@ void setup() {
   
   delay( 3000 ); // power-up safety delay
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<LED_TYPE, LED_TREE_PIN, COLOR_ORDER>(leds, NUM_TREE_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.setBrightness(  BRIGHTNESS );
   
   //Serial.begin(9600);
@@ -435,20 +428,20 @@ void displayLEDTree(bool showLed)
     for(j = ledsBeforeRows[i + (NUM_DISP_ROWS_TETRIS - num_rows)] - 1; j >= 0; j--)
     {      
       if (showLed == true)
-        leds[currentLED] = CRGB::Black;
+        leds_tree[currentLED] = CRGB::Black;
       currentLED++;
     }
     //Serial.println(currentLED);
     for(j = NUM_DISP_COLS_TETRIS - 1; j >= 0; j--)
     {      
-      leds[currentLED] = numToColor[bigDispBoard[i + unused_rows_top][j + unused_cols_left]];
+      leds_tree[currentLED] = numToColor[bigDispBoard[i + unused_rows_top][j + unused_cols_left]];
       currentLED++;
     }
   }
   //Serial.println(currentLED);
-  for(i = currentLED; i < NUM_LEDS; i++)
+  for(i = currentLED; i < NUM_TREE_LEDS; i++)
     if (showLed == true)
-        leds[currentLED] = CRGB::Black;
+        leds_tree[currentLED] = CRGB::Black;
 
   if (showLed == true)
     FastLED.show();
@@ -457,15 +450,11 @@ void displayLEDTree(bool showLed)
 /* Switch between displaying LED Board and LED Tree */
 void displayLEDs(bool showLed)
 {
-  #ifdef TWOTWO_X_TWOTWO
     displayBigBoardTwoTwo(showLed);
-  #endif
-  #ifdef TEN_X_TWENTY
-    displayLEDBoardTwentyTen(showLed);
-  #endif
-  #ifdef XMAS_TREE
     displayLEDTree(showLed);
-  #endif
+//  #ifdef TEN_X_TWENTY
+//    displayLEDBoardTwentyTen(showLed);
+//  #endif
 }
 
 // Descriptions of pixel representations of digits 0 - 9
@@ -1159,6 +1148,13 @@ void play_snake()
       else
         leds[i] = CRGB::Black;
     }
+    for(i = 0; i < NUM_TREE_LEDS; i++)
+    {
+      if ((i == snake_leds[0]) || (i == snake_leds[1]) || (i == snake_leds[2]) || (i == snake_leds[3]) || (i == snake_leds[4]) || (i == snake_leds[5]) || (i == snake_leds[6]) || (i == snake_leds[7]) || (i == snake_leds[8]) || (i == snake_leds[9]))
+        leds_tree[i] = numToSnakeColor[snake_color_idx];
+      else
+        leds_tree[i] = CRGB::Black;
+    }
     FastLED.show();
     delay(20);
 }
@@ -1183,6 +1179,16 @@ void display_green_red()
     else
       leds[i] = CRGB::White;
   }
+  for(i = 0; i < NUM_TREE_LEDS; i++)
+  {
+    /* LEDS snake from 1 row to next */
+    if (((i + light_twinkle / 100) % 3) == 0)
+      leds_tree[i] = CRGB::Red;
+    else if (((i + light_twinkle / 100) % 3) == 1)
+      leds_tree[i] = CRGB::Green;
+    else
+      leds_tree[i] = CRGB::White;
+  }
   
   if (light_twinkle < 300)
     light_twinkle++;
@@ -1198,8 +1204,10 @@ void display_rainbow()
 {
 
   fill_rainbow( leds, NUM_LEDS, gHue, 7); 
+  fill_rainbow( leds_tree, NUM_TREE_LEDS, gHue, 7); 
   if( random8() < CHANCE_OF_TWINKLE) {
     leds[ random16(NUM_LEDS) ] += CRGB::White;
+    leds_tree[ random16(NUM_TREE_LEDS) ] += CRGB::White;
   }
      
   FastLED.show();
@@ -1212,8 +1220,11 @@ void display_lights()
 {
   // random colored speckles that blink in and fade smoothly
   fadeToBlackBy( leds, NUM_LEDS, 10);
+  fadeToBlackBy( leds_tree, NUM_TREE_LEDS, 10);
   int pos = random16(NUM_LEDS);
   leds[pos] += CHSV( gHue + random8(64), 200, 255);
+  pos = random16(NUM_TREE_LEDS);
+  leds_tree[pos] += CHSV( gHue + random8(64), 200, 255);
   
   gHue++;
   FastLED.show();
@@ -1224,6 +1235,8 @@ void display_one_color()
 {
   for(int i = 0; i < NUM_LEDS; i++)
     leds[i] = CHSV( gHue, 200, 255);
+  for(int i = 0; i < NUM_TREE_LEDS; i++)
+    leds_tree[i] = CHSV( gHue, 200, 255);
   gHue++;
   FastLED.show();
   delay(500);
@@ -1233,8 +1246,11 @@ void display_sinelon()
 {
   // a colored dot sweeping back and forth, with fading trails
   fadeToBlackBy( leds, NUM_LEDS, 20);
+  fadeToBlackBy( leds_tree, NUM_TREE_LEDS, 20);
   int pos = beatsin16( 13, 0, NUM_LEDS-1 );
   leds[pos] += CHSV( gHue, 255, 192);
+  pos = beatsin16( 13, 0, NUM_TREE_LEDS-1 );
+  leds_tree[pos] += CHSV( gHue, 255, 192);
   FastLED.show();
   delay(50);
 }
@@ -1243,9 +1259,11 @@ void display_juggle()
 {
   // eight colored dots, weaving in and out of sync with each other
   fadeToBlackBy( leds, NUM_LEDS, 20);
+  fadeToBlackBy( leds_tree, NUM_TREE_LEDS, 20);
   byte dothue = 0;
   for( int i = 0; i < 8; i++) {
     leds[beatsin16( i+7, 0, NUM_LEDS-1 )] |= CHSV(dothue, 200, 255);
+    leds_tree[beatsin16( i+7, 0, NUM_TREE_LEDS-1 )] |= CHSV(dothue, 200, 255);
     dothue += 32;
   }
 
@@ -1280,15 +1298,20 @@ void display_castle()
 
   // random colored speckles that blink in and fade smoothly
   fadeToBlackBy( leds, NUM_LEDS, 5);
+  fadeToBlackBy( leds_tree, NUM_TREE_LEDS, 5);
   if( random8() < CHANCE_OF_TWINKLE) 
   {
     pos = random16(NUM_LEDS);
     leds[pos] += CHSV( 150, 200, 255);
+    pos = random16(NUM_TREE_LEDS);
+    leds_tree[pos] += CHSV( 150, 200, 255);
   }
   if( random8() < CHANCE_OF_TWINKLE) 
   {
     pos = random16(NUM_LEDS);
     leds[pos] += CRGB::White;
+    pos = random16(NUM_TREE_LEDS);
+    leds_tree[pos] += CRGB::White;
   }
   
   for(i = 0; i < NUM_DISP_ROWS; i++)
@@ -2705,8 +2728,6 @@ void loop() {
     display_one_color();
   else if (display_mode == DISP_RAINBOW)
     display_rainbow();
-  //else if (display_mode == DISP_SINELON)
-  //  display_sinelon();
   else if (display_mode == DISP_JUGGLE)
     display_juggle();
   else if (display_mode == DISP_CASTLE)
