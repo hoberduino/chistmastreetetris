@@ -3,7 +3,6 @@
 #include <avr/pgmspace.h>
 
 /* TODO: */
-/* Test on Tree (Determine Spacing, Lag?) */
 /* Mario */
 
 
@@ -1277,12 +1276,19 @@ void display_juggle()
 }
 
 /* Castle Display */
-const unsigned char PROGMEM castleDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TETRIS] =
-  {{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,9,0,0,0},{0,0,0,0,0,0,9,0,0,0},{0,0,0,0,0,1,11,0,0,0},{0,0,0,9,0,11,11,1,0,0},
-   {0,0,0,1,0,11,11,11,0,0},{0,0,0,11,11,11,11,11,0,0},{0,0,0,11,11,11,11,11,0,0},{1,0,1,11,10,10,11,1,0,1},
-   {12,0,12,11,12,12,11,12,0,12},{12,12,12,12,12,12,12,12,12,12},{12,12,12,12,0,0,12,12,12,12},{12,12,12,12,0,0,12,12,12,12}};
+const unsigned char PROGMEM castleDisp[12][NUM_DISP_COLS_TETRIS] =
+  {{0,0,0,0,0,0,9,0,0,0},
+   {0,0,0,0,0,0,9,0,0,0},
+   {0,0,0,0,0,1,11,0,0,0},
+   {0,0,0,9,0,11,11,1,0,0},
+   {0,0,0,1,0,11,11,11,0,0},
+   {0,0,0,11,11,11,11,11,0,0},
+   {0,0,0,11,11,11,11,11,0,0},
+   {1,0,1,11,10,10,11,1,0,1},
+   {12,0,12,11,12,12,11,12,0,12},
+   {12,12,12,12,12,12,12,12,12,12},
+   {12,12,12,12,0,0,12,12,12,12},
+   {12,12,12,12,0,0,12,12,12,12}};
 
 void display_castle()
 {
@@ -1290,15 +1296,6 @@ void display_castle()
   int pos;
   unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_TETRIS) / 2;
   unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_TETRIS) / 2;
-
-
-  // Tree Calibration Example
-  //const unsigned char castleDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TETRIS] =
-  //{{4,4,4,4,4,4,4,4,4,4},{5,5,5,5,5,5,5,5,5,5},{4,4,4,4,4,4,4,4,4,4},{5,5,5,5,5,5,5,5,5,5},
-  // {4,4,4,4,4,4,4,4,4,4},{5,5,5,5,5,5,5,5,5,5},{4,4,4,4,4,4,4,4,4,4},{5,5,5,5,5,5,5,5,5,5},
-  // {4,4,4,4,4,4,4,4,4,4},{5,5,5,5,5,5,5,5,5,5},{4,4,4,4,4,4,4,4,4,4},{5,5,5,5,5,5,5,5,5,5},
-  // {4,4,4,4,4,4,4,4,4,4},{5,5,5,5,5,5,5,5,5,5},{4,4,4,4,4,4,4,4,4,4},{5,5,5,5,5,5,5,5,5,5},
-  // {4,4,4,4,4,4,4,4,4,4},{5,5,5,5,5,5,5,5,5,5},{4,4,4,4,4,4,4,4,4,4},{5,5,5,5,5,5,5,5,5,5}};
 
 
   // random colored speckles that blink in and fade smoothly
@@ -1324,9 +1321,9 @@ void display_castle()
       bigDispBoard[i][j] = DISP_COLOR_BLACK;
 
   
-  for(i = 0; i < NUM_DISP_ROWS_TETRIS; i++)
+  for(i = 0; i < 12; i++)
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
-      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&castleDisp[i][j]);
+      bigDispBoard[i + unused_rows_top + 8][j + unused_cols_left] = pgm_read_byte_near(&castleDisp[i][j]);
 
   displayLEDs(false);
 
@@ -1738,7 +1735,7 @@ unsigned char previous_ghost_mode = GHOST_MODE_CHASE;
 
 
 /* Pac Man Start Screen Display */
-const unsigned char PROGMEM pacStartDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TETRIS] =
+const unsigned char PROGMEM pacStartDisp[11][NUM_DISP_COLS_TETRIS] =
   {{6,6,6,4,4,4,0,8,8,0},
    {6,0,6,4,0,4,8,0,0,0},
    {6,6,6,4,4,4,8,0,0,0},
@@ -1749,10 +1746,7 @@ const unsigned char PROGMEM pacStartDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TET
    {3,3,3,5,0,5,1,0,1,0},
    {3,0,3,5,5,5,1,0,1,0},
    {3,0,3,5,0,5,1,0,1,0},
-   {3,0,3,5,0,5,1,0,1,0},
-   {0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
+   {3,0,3,5,0,5,1,0,1,0}};
 
 void displayPacStart()
 {
@@ -1767,9 +1761,9 @@ void displayPacStart()
     for(j = 0; j < NUM_DISP_COLS; j++)
       bigDispBoard[i][j] = DISP_COLOR_BLACK;
     
-  for(i = 0; i < NUM_DISP_ROWS_TETRIS; i++)
+  for(i = 0; i < 11; i++)
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
-      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&pacStartDisp[i][j]);//pacStartDisp[i][j];
+      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&pacStartDisp[i][j]);
 
   displayLEDs(true);
 }
@@ -2485,7 +2479,7 @@ void displayGameMenu()
     
   for(i = 0; i < NUM_DISP_ROWS_MENU; i++)
     for(j = 0; j < NUM_DISP_COLS_MENU; j++)
-      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&gameMenuDisp[i][j]);//pacStartDisp[i][j];
+      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&gameMenuDisp[i][j]);
 
   displayLEDs(true);
 }
