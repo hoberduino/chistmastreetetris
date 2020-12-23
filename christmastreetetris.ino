@@ -6,7 +6,6 @@
 /* Test on Tree (Determine Spacing, Lag?) */
 /* Mario */
 /* Play 3 songs */
-/* Output to 2 displays (Tree and 22x22) */
 
 
 /*  Display everything on a 22x22 board, top left is 0  
@@ -2526,7 +2525,7 @@ void start_menu()
 }
 
 /* Calibration Num Rows Display */
-const unsigned char PROGMEM calNumRowsDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TETRIS] =
+const unsigned char PROGMEM calNumRowsDisp[11][NUM_DISP_COLS_TETRIS] =
   {{5,5,5,4,0,4,5,0,5,0},
    {5,0,5,4,0,4,5,5,5,0},
    {5,0,5,4,0,4,5,0,5,0},
@@ -2537,13 +2536,10 @@ const unsigned char PROGMEM calNumRowsDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_T
    {5,0,5,4,0,4,5,0,5,0},
    {5,5,0,4,0,4,5,0,5,0},
    {5,5,5,4,0,4,5,5,5,0},
-   {5,0,5,4,4,4,5,0,5,0},
-   {0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
+   {5,0,5,4,4,4,5,0,5,0}};
 
 /* Calibration Num Cols Display */
-const unsigned char PROGMEM calNumColsDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_TETRIS] =
+const unsigned char PROGMEM calNumColsDisp[11][NUM_DISP_COLS_TETRIS] =
   {{5,5,5,4,0,4,5,0,5,0},
    {5,0,5,4,0,4,5,5,5,0},
    {5,0,5,4,0,4,5,0,5,0},
@@ -2554,10 +2550,7 @@ const unsigned char PROGMEM calNumColsDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_T
    {5,0,0,4,0,4,5,0,0,0},
    {5,0,0,4,0,4,5,0,0,0},
    {5,0,0,4,0,4,5,0,0,0},
-   {5,5,5,4,4,4,5,5,5,0},
-   {0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
+   {5,5,5,4,4,4,5,5,5,0}};
 
 void dispCalNumRowsCols(bool isRows) /* isRows=true => Rows, else Cols */
 {
@@ -2570,7 +2563,7 @@ void dispCalNumRowsCols(bool isRows) /* isRows=true => Rows, else Cols */
     for(j = 0; j < NUM_DISP_COLS; j++)
       bigDispBoard[i][j] = DISP_COLOR_BLACK;
     
-  for(i = 0; i < NUM_DISP_ROWS_TETRIS; i++)
+  for(i = 0; i < 11; i++)
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
     { 
       if (isRows == true)
@@ -2582,11 +2575,52 @@ void dispCalNumRowsCols(bool isRows) /* isRows=true => Rows, else Cols */
   displayLEDs(true);
 }
 
+/* Calibration Num Cols Display */
+const unsigned char PROGMEM calRowOffset[5][NUM_DISP_COLS_TETRIS] =
+  {{5,5,5,4,4,4,5,0,5,0},
+   {5,0,5,4,0,4,5,0,5,0},
+   {5,5,0,4,0,4,5,0,5,0},
+   {5,5,5,4,0,4,5,5,5,0},
+   {5,0,5,4,4,4,5,0,5,0}};
 
 void dispLedsCal(unsigned char row_num)
 {
+  unsigned char i,j;
+  unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_TETRIS) / 2;
+  unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_TETRIS) / 2;
+  unsigned int tens_digit = (row_num % 100) / 10;
+  unsigned int ones_digit = row_num % 10;
   
+  for(i = 0; i < NUM_DISP_ROWS; i++)
+    for(j = 0; j < NUM_DISP_COLS; j++)
+      bigDispBoard[i][j] = DISP_COLOR_BLACK;
+    
+  for(i = 0; i < 5; i++)
+    for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
+      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&calRowOffset[i][j]);
+
+  /* Display row number */
+  /* Display Score (number of lines) */
+  for(j = 0; j < 5; j++) // for each column
+  {
+    if (((pgm_read_byte(&left_column[tens_digit]) >> j) & 0x1) > 0)
+      bigDispBoard[7+j][9] = 4; // Red
+    if (((pgm_read_byte(&middle_column[tens_digit]) >> j) & 0x1) > 0)
+      bigDispBoard[7+j][10] = 4; // Red
+    if (((pgm_read_byte(&right_column[tens_digit]) >> j) & 0x1) > 0)
+      bigDispBoard[7+j][11] = 4; // Red
+    if (((pgm_read_byte(&left_column[ones_digit]) >> j) & 0x1) > 0)
+      bigDispBoard[7+j][13] = 5; // Green
+    if (((pgm_read_byte(&middle_column[ones_digit]) >> j) & 0x1) > 0)
+      bigDispBoard[7+j][14] = 5; // Green
+    if (((pgm_read_byte(&right_column[ones_digit]) >> j) & 0x1) > 0)
+      bigDispBoard[7+j][15] = 5; // Green 
+  }
+
+  displayLEDs(true);
 }
+
+
 
 
 void calibrate_tree()
