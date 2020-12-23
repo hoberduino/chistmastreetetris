@@ -5,7 +5,6 @@
 /* TODO: */
 /* Test on Tree (Determine Spacing, Lag?) */
 /* Mario */
-/* Play 3 songs */
 
 
 /*  Display everything on a 22x22 board, top left is 0  
@@ -151,7 +150,9 @@ const int RIGHT_BUTTON     = 7;
 #define RESET_SWITCH_OUT   9
 #define POWER_SWITCH_IN   10
 #define POWER_SWITCH_OUT  11
-#define MUSIC_PIN        (22)
+#define MUSIC_PIN_TETRIS (22)
+#define MUSIC_PIN_PAC    (24)
+#define MUSIC_PIN_MARIO  (26)
 
 /* Number of "unused" LEDs before rows, starting at top*/
 unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
@@ -309,14 +310,19 @@ void setup() {
   pinMode(RESET_SWITCH_OUT, OUTPUT);
   pinMode(POWER_SWITCH_IN, INPUT);
   pinMode(POWER_SWITCH_OUT, OUTPUT);
-  pinMode(MUSIC_PIN, OUTPUT);
+  pinMode(MUSIC_PIN_TETRIS, OUTPUT);
+  pinMode(MUSIC_PIN_PAC, OUTPUT);
+  pinMode(MUSIC_PIN_MARIO, OUTPUT);
+
   
   // Set initial states
   digitalWrite(NES_CLOCK, LOW);
   digitalWrite(NES_LATCH, LOW);
   digitalWrite(RESET_SWITCH_OUT, HIGH);
   digitalWrite(POWER_SWITCH_OUT, HIGH);
-  digitalWrite(MUSIC_PIN, LOW);
+  digitalWrite(MUSIC_PIN_TETRIS, LOW);
+  digitalWrite(MUSIC_PIN_PAC, LOW);
+  digitalWrite(MUSIC_PIN_MARIO, LOW);
 }
 
 
@@ -812,7 +818,7 @@ void init_tetris()
   digitalWrite(NES_LATCH, LOW);
   digitalWrite(RESET_SWITCH_OUT, HIGH);
   digitalWrite(POWER_SWITCH_OUT, HIGH);
-  digitalWrite(MUSIC_PIN, LOW);
+  digitalWrite(MUSIC_PIN_TETRIS, LOW);
 
   for(i = 0; i < NUM_ROWS - 2; i++)
     gameBoard[i] = EMPTY_BOARD_ROW;
@@ -828,7 +834,7 @@ void init_tetris()
 
   blockLoc[0] = 0;
   blockLoc[1] = 0;
-  digitalWrite(MUSIC_PIN, HIGH);
+  digitalWrite(MUSIC_PIN_TETRIS, HIGH);
   randomSeed(millis());
   displayTetrisStart();
   delay(3000);
@@ -1042,9 +1048,9 @@ void play_tetris()
       {
         playMusic = !playMusic;
         if (playMusic)
-          digitalWrite(MUSIC_PIN, HIGH);
+          digitalWrite(MUSIC_PIN_TETRIS, HIGH);
         else
-          digitalWrite(MUSIC_PIN, LOW);
+          digitalWrite(MUSIC_PIN_TETRIS, LOW);
       }
     
       /* Check if can drop */
@@ -2317,6 +2323,7 @@ void play_pac_man()
   unsigned char ghost_mode;
   /* allow for "cornering", press button ahead of move */
   unsigned char loaded_move_dir = MOVE_NONE; 
+  bool play_music = false;
 
   /* Reset the score */
   current_pac_level = 0;
@@ -2337,6 +2344,14 @@ void play_pac_man()
     /* exit game on START */
     if (move_dir == MOVE_START)
       pac_man_over = true;
+    else if (move_dir == MOVE_SELECT)
+    {
+      play_music = !play_music;
+      if (play_music)
+        digitalWrite(MUSIC_PIN_PAC, HIGH);
+      else
+        digitalWrite(MUSIC_PIN_PAC, LOW);
+    }
 
     /* Update Pac Counter */
     pac_counter++;
@@ -2721,7 +2736,9 @@ void loop() {
   unsigned int moveDir = MOVE_NONE;
   unsigned char i;
   unsigned char num_leds = 0;
-  digitalWrite(MUSIC_PIN, LOW);
+  digitalWrite(MUSIC_PIN_TETRIS, LOW);
+  digitalWrite(MUSIC_PIN_PAC, LOW);
+  digitalWrite(MUSIC_PIN_MARIO, LOW);
 
   /* Update ledsBeforeRows values if something stored there > 0 */
   /* Right now these are stored from top to bottom */
