@@ -422,10 +422,10 @@ void displayBigBoardTwoTwo(bool showLed)
 */
 
 // TREE (Start at bottom right and wind around the tree upward)
-// Row  13: BeforeLEDs, leftmost, ..., rightmost, AfterLEDs
-// Row ...: BeforeLEDs, leftmost, ..., rightmost, AfterLEDs
-// Row   1: BeforeLEDs(50-59), leftmost(49), ..., rightmost(40), AfterLEDs(30-39)
-// Row   0: BeforeLEDs(20-29), leftmost(19), ..., rightmost(10), AfterLEDs(0-9)
+// Row  13: BeforeLEDs, leftmost, ..., rightmost, 
+// Row ...: BeforeLEDs, leftmost, ..., rightmost, 
+// Row   1: BeforeLEDs(50-59), leftmost(49), ..., rightmost(40), 
+// Row   0: BeforeLEDs(20-29), leftmost(19), ..., rightmost(10), 
 
 // LED Display Board (start at top left and snake down board)
 // Row  0: leftmost(0), .., rightmost(9)
@@ -2657,6 +2657,37 @@ void start_menu()
   }
   delay(300);
   
+}
+
+
+
+/* Convert from bigDispBoard to LEDs on Tree */
+/* Start at bottom, right and wind around tree */
+void displayLEDTreeCal()
+{
+  int i, j;
+  unsigned int currentLED = 0;
+  
+  /* bottom row to top, right to left */
+ /*  for(i = num_tree_rows - 1; i >= 0; i--)
+  {
+    
+   for(j = ledsBeforeRows[i + (NUM_DISP_ROWS_TETRIS - num_rows)] - 1; j >= 0; j--)
+    {      
+      leds_tree[currentLED] = CRGB::Black;
+      currentLED++;
+    }
+    for(j = NUM_DISP_COLS_TETRIS - 1; j >= 0; j--)
+    {      
+      leds_tree[currentLED] = numToColor[bigDispBoard[i + unused_rows_top][j + unused_cols_left]];
+      currentLED++;
+    }
+  }
+  for(i = currentLED; i < NUM_TREE_LEDS; i++)
+    if (showLed == true)
+        leds_tree[currentLED] = CRGB::Black;
+*/
+
 }
 
 /* Calibration Num Rows Display */
