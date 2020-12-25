@@ -42,10 +42,10 @@
 #define NUM_DISP_COLS 22
 
 
-
+/* Max number of display rows, cols for xmas tree */
 #define NUM_DISP_ROWS_TREE 20 /*middle twenty are visible */
 // NUM_DISP_ROWS 20 for full tetris
-#define NUM_DISP_COLS_TREE 10 /* middle ten are visible */
+#define NUM_DISP_COLS_TREE 20 /* middle ten are visible for tetris */
 
 #define NUM_DISP_ROWS_TETRIS 20 /*middle twenty are visible */
 // NUM_DISP_ROWS 20 for full tetris
@@ -152,6 +152,15 @@ const int RIGHT_BUTTON     = 7;
 #define MUSIC_PIN_TETRIS (22)
 #define MUSIC_PIN_PAC    (24)
 #define MUSIC_PIN_MARIO  (26)
+
+
+
+
+
+/* Num display rows and cols for xmas tree */
+/* initial values, overwritten by values from EEPROM */
+unsigned char num_tree_rows = NUM_DISP_ROWS_TREE;
+unsigned char num_tree_cols = NUM_DISP_COLS_TREE;
 
 /* Number of "unused" LEDs before rows, starting at top*/
 unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
@@ -294,7 +303,7 @@ void setup() {
   FastLED.addLeds<LED_TYPE, LED_TREE_PIN, COLOR_ORDER>(leds, NUM_TREE_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.setBrightness(  BRIGHTNESS );
   
-  //Serial.begin(9600);
+  Serial.begin(9600);
 
   /* Change to seed when user presses START */
   randomSeed(analogRead(0));
@@ -322,6 +331,23 @@ void setup() {
   digitalWrite(MUSIC_PIN_TETRIS, LOW);
   digitalWrite(MUSIC_PIN_PAC, LOW);
   digitalWrite(MUSIC_PIN_MARIO, LOW);
+
+  /* Read values from EEPROM */
+  unsigned char i = EEPROM.read(NUM_ROWS_EEPROM_ADDRESS); /* num rows to be stored at address 0 */
+  if ((i > 0) && (i <= NUM_DISP_ROWS_TREE))
+    num_tree_rows = i;
+  i = EEPROM.read(NUM_COLS_EEPROM_ADDRESS); /* num cols to be stored at address 0 */
+  if ((i > 0) && (i <= NUM_DISP_COLS_TREE))
+    num_tree_cols = i; 
+
+  /* Update ledsBeforeRows values if something stored there > 0 */
+  /* Right now these are stored from top to bottom */
+  for (i = 0; i < NUM_DISP_ROWS_TREE; i++);
+  {
+    unsigned char num_leds = EEPROM.read(ROW_OFFSET_EEPROM_ADDRESS + i);
+    if ((num_leds > 0) && (num_leds < 50))
+      ledsBeforeRows[i] = num_leds;
+  }
 }
 
 
@@ -414,7 +440,7 @@ void displayLEDTree(bool showLed)
 {
   int i, j;
   unsigned int currentLED = 0;
-  const unsigned char num_rows = EEPROM.read(NUM_ROWS_EEPROM_ADDRESS); /* num rows to display */
+  const unsigned char num_rows = NUM_DISP_ROWS_TETRIS;//EEPROM.read(NUM_ROWS_EEPROM_ADDRESS); /* num rows to display */
   //const unsigned char num_cols = EEPROM.read(NUM_COLS_EEPROM_ADDRESS); /* num cols to display */
   
   unsigned int unused_cols_left = (NUM_DISP_ROWS - NUM_DISP_ROWS_TETRIS) / 2;
@@ -455,7 +481,7 @@ void displayLEDTree(bool showLed)
 void displayLEDs(bool showLed)
 {
     displayBigBoardTwoTwo(showLed);
-    displayLEDTree(showLed);
+//    displayLEDTree(showLed);
 //  #ifdef TEN_X_TWENTY
 //    displayLEDBoardTwentyTen(showLed);
 //  #endif
@@ -467,7 +493,7 @@ unsigned const char PROGMEM middle_column [10] = {0x11, 0x00, 0x15, 0x15, 0x04, 
 unsigned const char PROGMEM right_column [10] =  {0x1F, 0x1F, 0x17, 0x1F, 0x1F, 0x1D, 0x1D, 0x1F, 0x1F, 0x1F}; // top is LSB, bottom is MSB
 
 /* Generic Number Display (0-199) */
-void displayScore(unsigned int totalScore)
+void displayScore(unsigned int totalScore, bool show_leds)
 {
   unsigned int j;
   unsigned int tens_digit = (totalScore % 100) / 10;
@@ -493,9 +519,8 @@ void displayScore(unsigned int totalScore)
       bigDispBoard[14+j][15] = 5; // Green 
   }
      
-
-  displayLEDs(true);
-  delay(3000);
+  if (show_leds)
+    displayLEDs(true);
 }
 
 
@@ -1000,6 +1025,7 @@ void play_tetris()
   byte gameLevel = 0;
   
   init_tetris();
+
   
   /* If new tetris game, Loop */
   while (gameEnd == false)
@@ -1053,7 +1079,7 @@ void play_tetris()
       }
     
       /* Check if can drop */
-      if ((currentMillis - timePieceStartRow) > pgm_read_byte_near(&millisPerRow[gameLevel]))
+      if ((currentMillis - timePieceStartRow) > pgm_read_word_near(&millisPerRow[gameLevel]))
       {
         if (!attemptMovePiece(MOVE_DOWN))
         {
@@ -1086,7 +1112,8 @@ void play_tetris()
   }
    /* if end of game, display score */ 
    displayTetrisStart();
-   displayScore(totalScore); 
+   displayScore(totalScore, true); 
+   delay(3000);
 }
 
 
@@ -1243,7 +1270,7 @@ void display_one_color()
     leds_tree[i] = CHSV( gHue, 200, 255);
   gHue++;
   FastLED.show();
-  delay(500);
+  delay(200);
 }
 
 void display_sinelon()
@@ -2311,12 +2338,12 @@ bool time_to_move(unsigned char input_speed)
   //timer_80 = pac_counter % 5 == 0; // 20 Hz -> (mod 5) == 0
   //timer_90 = (pac_counter % 5 == 0) || (pac_counter % 40 == 19); // 22.5 Hz ((mod 5) == 0 || (mod 40) == 19 
   //timer_100 = pac_counter % 4 == 0; // 25 Hz -> (mod 4) == 0
-  timer_50 = pac_counter % 9 == 0; // 12.5 Hz -> 100 (mod 8) == 0
-  timer_60 = pac_counter % 8 == 0; // 15 Hz -> 100 (mod 7) == 0
-  timer_70 = pac_counter % 7 == 0; // 17.5 Hz -> 100 (mod 6) == 0 || 100 (mod 100) == 1
-  timer_80 = pac_counter % 6 == 0; // 20 Hz -> 100 (mod 5) == 0
-  timer_90 = pac_counter % 5 == 0; // 22.5 Hz (100 (mod 5) == 0 || 100 (mod 40) == 19 
-  timer_100 = pac_counter % 4 == 0; // 25 Hz -> 100 (mod 4) == 0
+  timer_50 = pac_counter % 8 == 0; // 12.5 Hz -> 100 (mod 8) == 0
+  timer_60 = pac_counter % 7 == 0; // 15 Hz -> 100 (mod 7) == 0
+  timer_70 = pac_counter % 6 == 0; // 17.5 Hz -> 100 (mod 6) == 0 || 100 (mod 100) == 1
+  timer_80 = pac_counter % 5 == 0; // 20 Hz -> 100 (mod 5) == 0
+  timer_90 = pac_counter % 4 == 0; // 22.5 Hz (100 (mod 5) == 0 || 100 (mod 40) == 19 
+  timer_100 = pac_counter % 3 == 0; // 25 Hz -> 100 (mod 4) == 0
 
   it_is_time_to_move =
        (((input_speed == PAC_SPEED_50) && (timer_50 == true)) ||
@@ -2536,36 +2563,34 @@ void play_pac_man()
   }
   /* Display Splash Screen */
   displayPacStart();
-  displayScore(current_pac_level);
+  displayScore(current_pac_level, true);
   delay(2500); /* Delay so START button press is only picked up once */
 }
 
 
 /* Game Menu */
 
+unsigned char game_selection = 0; /* game selected: 0 - PAC, 1 - TET, 2 - MAR */
 
 /* Game Menu Display */
-const unsigned char PROGMEM gameMenuDisp[NUM_DISP_ROWS_MENU][NUM_DISP_COLS_MENU] =
+const unsigned char PROGMEM gameMenuDisp[NUM_DISP_ROWS_MENU - 3][NUM_DISP_COLS_MENU] =
   {{0,0,0,5,5,5,4,4,4,0,5,5},
    {0,0,0,5,0,5,4,0,4,5,0,0},
    {0,0,0,5,5,5,4,4,4,5,0,0},
    {0,0,0,5,0,0,4,0,4,5,0,0},
    {0,0,0,5,0,0,4,0,4,0,5,5},
    {0,0,0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,5,5,5,4,4,4,5,5,5},
-   {0,0,0,0,5,0,4,0,0,0,5,0},
-   {0,0,0,0,5,0,4,4,4,0,5,0},
-   {0,0,0,0,5,0,4,0,0,0,5,0},
-   {0,0,0,0,5,0,4,4,4,0,5,0},
+   {0,0,0,4,4,4,5,5,5,4,4,4},
+   {0,0,0,0,4,0,5,0,0,0,4,0},
+   {0,0,0,0,4,0,5,5,5,0,4,0},
+   {0,0,0,0,4,0,5,0,0,0,4,0},
+   {0,0,0,0,4,0,5,5,5,0,4,0},
    {0,0,0,0,0,0,0,0,0,0,0,0},
    {0,0,0,5,0,5,4,4,4,5,5,5},
    {0,0,0,5,5,5,4,0,4,5,0,5},
    {0,0,0,5,0,5,4,4,4,5,5,0},
    {0,0,0,5,0,5,4,0,4,5,5,5},
-   {0,0,0,5,0,5,4,0,4,5,0,5},
-   {0,0,0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0,0,0}};
+   {0,0,0,5,0,5,4,0,4,5,0,5}};
 
 void displayGameMenu()
 {
@@ -2577,19 +2602,26 @@ void displayGameMenu()
     for(j = 0; j < NUM_DISP_COLS; j++)
       bigDispBoard[i][j] = DISP_COLOR_BLACK;
     
-  for(i = 0; i < NUM_DISP_ROWS_MENU; i++)
+  for(i = 0; i < NUM_DISP_ROWS_MENU - 3; i++)
     for(j = 0; j < NUM_DISP_COLS_MENU; j++)
       bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&gameMenuDisp[i][j]);
 
+  /* Display Selection Cursor */
+  bigDispBoard[unused_rows_top + 1 + 6 * game_selection][unused_cols_left] = DISP_COLOR_YELLOW;
+  bigDispBoard[unused_rows_top + 1 + 6 * game_selection][unused_cols_left + 1] = DISP_COLOR_YELLOW;
+  bigDispBoard[unused_rows_top + 2 + 6 * game_selection][unused_cols_left] = DISP_COLOR_YELLOW;
+  bigDispBoard[unused_rows_top + 2 + 6 * game_selection][unused_cols_left + 1] = DISP_COLOR_YELLOW;
+
   displayLEDs(true);
+
 }
+
 
 
 void start_menu()
 {
   const unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_MENU) / 2;
   const unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_MENU) / 2;
-  unsigned char game_selection = 0; /* game selected: 0 - PAC, 1 - TET, 2 - MAR */
   bool game_selected = false; 
   unsigned int move_dir = MOVE_NONE;
 
@@ -2610,21 +2642,15 @@ void start_menu()
 
     /* Re-display background */
     displayGameMenu();
-    /* Display Selection Cursor */
-    bigDispBoard[unused_rows_top + 1 + 6 * game_selection][unused_cols_left] = DISP_COLOR_YELLOW;
-    bigDispBoard[unused_rows_top + 2 + 6 * game_selection][unused_cols_left + 1] = DISP_COLOR_YELLOW;
-    bigDispBoard[unused_rows_top + 1 + 6 * game_selection][unused_cols_left] = DISP_COLOR_YELLOW;
-    bigDispBoard[unused_rows_top + 2 + 6 * game_selection][unused_cols_left + 1] = DISP_COLOR_YELLOW;
 
-
-    delay(20);
+    delay(80);
   }
 
-  if (game_selection == 1)
+  if (game_selection == 0)
     play_pac_man(); 
-  else if (game_selection == 2)
+  else if (game_selection == 1)
     play_tetris();
-  else if (game_selection == 3)
+  else if (game_selection == 2)
   {
     bool mario_is_green = display_mario_run();
     play_mario(mario_is_green);
@@ -2667,10 +2693,6 @@ void dispCalNumRowsCols(bool isRows) /* isRows=true => Rows, else Cols */
   unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_TETRIS) / 2;
   unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_TETRIS) / 2;
   unsigned char i,j;
-  
-  for(i = 0; i < NUM_DISP_ROWS; i++)
-    for(j = 0; j < NUM_DISP_COLS; j++)
-      bigDispBoard[i][j] = DISP_COLOR_BLACK;
     
   for(i = 0; i < 11; i++)
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
@@ -2681,7 +2703,7 @@ void dispCalNumRowsCols(bool isRows) /* isRows=true => Rows, else Cols */
         bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&calNumColsDisp[i][j]);
     }
 
-  displayLEDs(true);
+  displayBigBoardTwoTwo(true);
 }
 
 /* Calibration Num Cols Display */
@@ -2699,10 +2721,6 @@ void dispLedsCal(unsigned char row_num)
   unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_TETRIS) / 2;
   unsigned int tens_digit = (row_num % 100) / 10;
   unsigned int ones_digit = row_num % 10;
-  
-  for(i = 0; i < NUM_DISP_ROWS; i++)
-    for(j = 0; j < NUM_DISP_COLS; j++)
-      bigDispBoard[i][j] = DISP_COLOR_BLACK;
     
   for(i = 0; i < 5; i++)
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
@@ -2726,7 +2744,7 @@ void dispLedsCal(unsigned char row_num)
       bigDispBoard[7+j][15] = 5; // Green 
   }
 
-  displayLEDs(true);
+  displayBigBoardTwoTwo(true);
 }
 
 
@@ -2736,9 +2754,7 @@ void calibrate_tree()
 {
   bool cal_complete = false;
   unsigned int move_dir = MOVE_NONE;
-  unsigned char num_rows = EEPROM.read(NUM_ROWS_EEPROM_ADDRESS); /* num rows to be stored at address 0 */
-  unsigned char num_cols = EEPROM.read(NUM_COLS_EEPROM_ADDRESS); /* num cols to be stored at address 0 */
-  unsigned char i;
+  unsigned char i, j, k;
   unsigned char num_leds;
   
   /* First, determine number of display rows */
@@ -2746,22 +2762,28 @@ void calibrate_tree()
   {
     move_dir = getMove();
 
+    /* range from 10 - NUM_DISP_ROWS_TREE */
     if (move_dir == MOVE_UP)
-      num_rows = (num_rows + 1) % NUM_DISP_ROWS;
+      num_tree_rows = ((num_tree_rows + 2) % (NUM_DISP_ROWS_TREE + 2)) % (NUM_DISP_ROWS_TREE - 9) + 10;
     else if (move_dir == MOVE_DOWN)
-      num_rows = (num_rows + NUM_DISP_ROWS - 1) % NUM_DISP_ROWS;
+      num_tree_rows = ((num_tree_rows + NUM_DISP_ROWS - 1) % (NUM_DISP_ROWS_TREE + 1)) % (NUM_DISP_ROWS_TREE - 9) + 10;
     else if (move_dir == MOVE_START)
       cal_complete = true;
 
+    for(j = 0; j < NUM_DISP_ROWS; j++)
+        for(k = 0; k < NUM_DISP_COLS; k++)
+        bigDispBoard[j][k] = DISP_COLOR_BLACK;
+        
+    /* Display Num Rows (stored in EEPROM) */
+    displayScore(num_tree_rows, false);
     /* Re-display background */
     dispCalNumRowsCols(true);
-    /* Display Num Rows (stored in EEPROM) */
-    displayScore(num_rows);
+    
 
-    delay(20);
+    delay(80);
   }
   /* write num_rows to EEPROM */
-  EEPROM.write(NUM_ROWS_EEPROM_ADDRESS, num_rows);
+  EEPROM.write(NUM_ROWS_EEPROM_ADDRESS, num_tree_rows);
   delay(250);
   cal_complete = false;
 
@@ -2770,27 +2792,33 @@ void calibrate_tree()
   {
     move_dir = getMove();
 
+   /* range from 10 - NUM_DISP_ROWS_TREE */
     if (move_dir == MOVE_UP)
-      num_cols = (num_cols + 1) % NUM_DISP_COLS;
+      num_tree_cols = ((num_tree_cols + 2) % (NUM_DISP_COLS_TREE + 2)) % (NUM_DISP_COLS_TREE - 9) + 10;
     else if (move_dir == MOVE_DOWN)
-      num_cols = (num_cols + NUM_DISP_COLS - 1) % NUM_DISP_COLS;
-    else if (move_dir == MOVE_SELECT)
+      num_tree_cols = ((num_tree_cols + NUM_DISP_COLS - 1) % (NUM_DISP_COLS_TREE + 1)) % (NUM_DISP_COLS_TREE - 9) + 10;
+    else if (move_dir == MOVE_START)
       cal_complete = true;
 
+    for(j = 0; j < NUM_DISP_ROWS; j++)
+        for(k = 0; k < NUM_DISP_COLS; k++)
+        bigDispBoard[j][k] = DISP_COLOR_BLACK;
+
+    /* Display Num Cols (stored in EEPROM) */
+    displayScore(num_tree_cols, false);
     /* Re-display background */
     dispCalNumRowsCols(false);
-    /* Display Num Cols (stored in EEPROM) */
-    displayScore(num_cols);
+    
 
-    delay(20);
+    delay(80);
   }
   /* write num_cols to EEPROM */
-  EEPROM.write(NUM_COLS_EEPROM_ADDRESS, num_cols);
+  EEPROM.write(NUM_COLS_EEPROM_ADDRESS, num_tree_cols);
   delay(250);
   cal_complete = false;
 
   /* Finally get offsets for each row (number of down-spiral leds from end of last row */
-  for(i = 0; i < num_rows; i++)
+  for(i = 0; i < num_tree_rows; i++)
   {
     num_leds = EEPROM.read(ROW_OFFSET_EEPROM_ADDRESS + i);
     cal_complete = false;
@@ -2802,17 +2830,19 @@ void calibrate_tree()
         num_leds = (num_leds + 1) % MAX_LED_OFFSET;
       else if (move_dir == MOVE_DOWN)
         num_leds = (num_leds + MAX_LED_OFFSET - 1) % MAX_LED_OFFSET;
-      else if (((i % 2) == 0) && (move_dir == MOVE_START))
-        cal_complete = true;
       else if (((i % 2) == 1) && (move_dir == MOVE_SELECT))
         cal_complete = true;
 
+      for(j = 0; j < NUM_DISP_ROWS; j++)
+        for(k = 0; k < NUM_DISP_COLS; k++)
+        bigDispBoard[j][k] = DISP_COLOR_BLACK;
+
+      /* Display Num Cols (stored in EEPROM) */
+      displayScore(num_leds, false);
       /* Re-display background */
       dispLedsCal(i);
-      /* Display Num Cols (stored in EEPROM) */
-      displayScore(num_leds);
 
-      delay(20);
+      delay(80);
     } /* end while loop for this row */
     /* Write EEPROM led offset value for this row */
     EEPROM.write(ROW_OFFSET_EEPROM_ADDRESS + i, num_leds);
@@ -2833,15 +2863,6 @@ void loop() {
   digitalWrite(MUSIC_PIN_TETRIS, LOW);
   digitalWrite(MUSIC_PIN_PAC, LOW);
   digitalWrite(MUSIC_PIN_MARIO, LOW);
-
-  /* Update ledsBeforeRows values if something stored there > 0 */
-  /* Right now these are stored from top to bottom */
-  for (i = 0; i < NUM_DISP_ROWS_TREE; i++);
-  {
-    num_leds = EEPROM.read(ROW_OFFSET_EEPROM_ADDRESS + i);
-    if (num_leds > 0)
-      ledsBeforeRows[i] = num_leds;
-  }
   
   /* Monitor Inputs */
   moveDir = getMove();
