@@ -7,8 +7,9 @@
 
 
 /*  Display everything on a 22x22 board, top left is 0  
- *  Convert board to 22x22 snake display, 20x10 snake display, 
- *  or xmas tree as dictated by #define display mode below
+ *  Convert board to 22x22 snaked display, 20x10 snaked display, 
+ *  or xmas tree as dictated by #defines below
+ *  Currently outputs both 22x22 snaked display and xmas tree simultaneously
  */
 
 #define NUM_TREE_LEDS    550
@@ -42,6 +43,7 @@
 #define NUM_DISP_COLS 22
 
 
+/* Initial defaults overwritten by EEPROM values from Calibration */
 /* Max number of display rows, cols for xmas tree */
 #define NUM_DISP_ROWS_TREE 20 /*middle twenty are visible */
 // NUM_DISP_ROWS 20 for full tetris
@@ -440,38 +442,31 @@ void displayLEDTree(bool showLed)
 {
   int i, j;
   unsigned int currentLED = 0;
-  const unsigned char num_rows = NUM_DISP_ROWS_TETRIS;//EEPROM.read(NUM_ROWS_EEPROM_ADDRESS); /* num rows to display */
-  //const unsigned char num_cols = EEPROM.read(NUM_COLS_EEPROM_ADDRESS); /* num cols to display */
   
-  unsigned int unused_cols_left = (NUM_DISP_ROWS - NUM_DISP_ROWS_TETRIS) / 2;
-  unsigned int unused_rows_top = (NUM_DISP_COLS - NUM_DISP_COLS_TETRIS) / 2 + (NUM_DISP_ROWS_TETRIS - num_rows);
-  
-  //Serial.println("TREE");
+  unsigned int unused_rows_top = (NUM_DISP_ROWS - num_tree_rows) / 2 + num_tree_rows;
+  unsigned int unused_cols_left = (NUM_DISP_COLS - num_tree_cols) / 2 + num_tree_cols;
   
   /* bottom row to top, right to left */
-  //for(i = NUM_DISP_ROWS_TETRIS - 1; i >= 0; i--)
-  for(i = num_rows - 1; i >= 0; i--)
+  for(i = 0; i < num_tree_rows; i++)
   {
-    //Serial.println("New Row");
-    //Serial.println(i);
-    
-    for(j = ledsBeforeRows[i + (NUM_DISP_ROWS_TETRIS - num_rows)] - 1; j >= 0; j--)
+    /* ledsBeforeRows starts at bottom row of tree, right to left */
+    for(j = 0; j < ledsBeforeRows[i]; j++)
     {      
       if (showLed == true)
         leds_tree[currentLED] = CRGB::Black;
       currentLED++;
     }
-    //Serial.println(currentLED);
-    for(j = NUM_DISP_COLS_TETRIS - 1; j >= 0; j--)
+
+    for(j = num_tree_cols - 1; j >= 0; j--)
     {      
-      leds_tree[currentLED] = numToColor[bigDispBoard[i + unused_rows_top][j + unused_cols_left]];
+      leds_tree[currentLED] = numToColor[bigDispBoard[(num_tree_rows - i - 1) + unused_rows_top][j + unused_cols_left]];
       currentLED++;
     }
   }
-  //Serial.println(currentLED);
+
   for(i = currentLED; i < NUM_TREE_LEDS; i++)
     if (showLed == true)
-        leds_tree[currentLED] = CRGB::Black;
+      leds_tree[currentLED] = CRGB::Black;
 
   if (showLed == true)
     FastLED.show();
@@ -481,10 +476,8 @@ void displayLEDTree(bool showLed)
 void displayLEDs(bool showLed)
 {
     displayBigBoardTwoTwo(showLed);
-//    displayLEDTree(showLed);
-//  #ifdef TEN_X_TWENTY
+    displayLEDTree(showLed);
 //    displayLEDBoardTwentyTen(showLed);
-//  #endif
 }
 
 // Descriptions of pixel representations of digits 0 - 9
@@ -2661,34 +2654,46 @@ void start_menu()
 
 
 
+// TREE (Start at bottom right and wind around the tree upward)
+// Row  13: BeforeLEDs, leftmost, ..., rightmost, 
+// Row ...: BeforeLEDs, leftmost, ..., rightmost, 
+// Row   1: BeforeLEDs(50-59), leftmost(49), ..., rightmost(40), 
+// Row   0: BeforeLEDs(20-29), leftmost(19), ..., rightmost(10), 
 /* Convert from bigDispBoard to LEDs on Tree */
 /* Start at bottom, right and wind around tree */
 void displayLEDTreeCal()
 {
-  int i, j;
+  unsigned int i, j;
   unsigned int currentLED = 0;
+  unsigned int unused_rows_top = (NUM_DISP_ROWS - num_tree_rows) / 2 + num_tree_rows;
+  unsigned int unused_cols_left = (NUM_DISP_COLS - num_tree_cols) / 2 + num_tree_cols;
   
   /* bottom row to top, right to left */
- /*  for(i = num_tree_rows - 1; i >= 0; i--)
+  for(i = 0; i < num_tree_rows; i++)
   {
-    
-   for(j = ledsBeforeRows[i + (NUM_DISP_ROWS_TETRIS - num_rows)] - 1; j >= 0; j--)
+    /* ledsBeforeRows starts at bottom row of tree, right to left */
+    for(j = 0; j < ledsBeforeRows[i]; j++)
     {      
       leds_tree[currentLED] = CRGB::Black;
       currentLED++;
     }
-    for(j = NUM_DISP_COLS_TETRIS - 1; j >= 0; j--)
-    {      
-      leds_tree[currentLED] = numToColor[bigDispBoard[i + unused_rows_top][j + unused_cols_left]];
+
+    for(j = num_tree_cols - 1; j >= 0; j--)
+    { 
+      if ((i % 2) == 0)     
+        leds_tree[currentLED] = DISP_COLOR_GREEN;
+      else
+        leds_tree[currentLED] = DISP_COLOR_RED;
       currentLED++;
     }
   }
-  for(i = currentLED; i < NUM_TREE_LEDS; i++)
-    if (showLed == true)
-        leds_tree[currentLED] = CRGB::Black;
-*/
 
+  for(i = currentLED; i < NUM_TREE_LEDS; i++)
+    leds_tree[currentLED] = CRGB::Black;
+
+  FastLED.show();
 }
+
 
 /* Calibration Num Rows Display */
 const unsigned char PROGMEM calNumRowsDisp[11][NUM_DISP_COLS_TETRIS] =
@@ -2786,7 +2791,6 @@ void calibrate_tree()
   bool cal_complete = false;
   unsigned int move_dir = MOVE_NONE;
   unsigned char i, j, k;
-  unsigned char num_leds;
   
   /* First, determine number of display rows */
   while (cal_complete == false)
@@ -2809,6 +2813,8 @@ void calibrate_tree()
     displayScore(num_tree_rows, false);
     /* Re-display background */
     dispCalNumRowsCols(true);
+    /* Display updated tree board */
+    displayLEDTreeCal();
     
 
     delay(80);
@@ -2839,6 +2845,8 @@ void calibrate_tree()
     displayScore(num_tree_cols, false);
     /* Re-display background */
     dispCalNumRowsCols(false);
+    /* Display updated tree board */
+    displayLEDTreeCal();
     
 
     delay(80);
@@ -2848,19 +2856,19 @@ void calibrate_tree()
   delay(250);
   cal_complete = false;
 
-  /* Finally get offsets for each row (number of down-spiral leds from end of last row */
+  /* Finally get offsets for each row (number of leds before each row, starting
+     at bottom right and going up-spiral) */
   for(i = 0; i < num_tree_rows; i++)
   {
-    num_leds = EEPROM.read(ROW_OFFSET_EEPROM_ADDRESS + i);
     cal_complete = false;
     while (cal_complete == false)
     {
       move_dir = getMove();
 
       if (move_dir == MOVE_UP)
-        num_leds = (num_leds + 1) % MAX_LED_OFFSET;
+        ledsBeforeRows[i] = (ledsBeforeRows[i] + 1) % MAX_LED_OFFSET;
       else if (move_dir == MOVE_DOWN)
-        num_leds = (num_leds + MAX_LED_OFFSET - 1) % MAX_LED_OFFSET;
+        ledsBeforeRows[i] = (ledsBeforeRows[i] + MAX_LED_OFFSET - 1) % MAX_LED_OFFSET;
       else if (((i % 2) == 1) && (move_dir == MOVE_SELECT))
         cal_complete = true;
 
@@ -2869,14 +2877,16 @@ void calibrate_tree()
         bigDispBoard[j][k] = DISP_COLOR_BLACK;
 
       /* Display Num Cols (stored in EEPROM) */
-      displayScore(num_leds, false);
+      displayScore(ledsBeforeRows[i], false);
       /* Re-display background */
       dispLedsCal(i);
+      /* Display updated tree board */
+      displayLEDTreeCal();
 
       delay(80);
     } /* end while loop for this row */
     /* Write EEPROM led offset value for this row */
-    EEPROM.write(ROW_OFFSET_EEPROM_ADDRESS + i, num_leds);
+    EEPROM.write(ROW_OFFSET_EEPROM_ADDRESS + i, ledsBeforeRows[i]);
     delay(250);
   }
   
