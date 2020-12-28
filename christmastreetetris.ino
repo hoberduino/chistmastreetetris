@@ -2325,12 +2325,6 @@ bool time_to_move(unsigned char input_speed)
   bool it_is_time_to_move = false;
   /* Bool Timers used to determine when to move Pac */
   /* Updated here, but used in individual ghost,pac move functions */
-  //timer_50 = pac_counter % 8 == 0; // 12.5 Hz -> (mod 8) == 0
-  //timer_60 = pac_counter % 7 == 0; // 15 Hz -> (mod 7) == 0
-  //timer_70 = (pac_counter % 6 == 0) || (pac_counter % 100) == 1; // 17.5 Hz -> (mod 6) == 0 || (mod 100) == 1
-  //timer_80 = pac_counter % 5 == 0; // 20 Hz -> (mod 5) == 0
-  //timer_90 = (pac_counter % 5 == 0) || (pac_counter % 40 == 19); // 22.5 Hz ((mod 5) == 0 || (mod 40) == 19 
-  //timer_100 = pac_counter % 4 == 0; // 25 Hz -> (mod 4) == 0
   timer_50 = pac_counter % 8 == 0; // 12.5 Hz -> 100 (mod 8) == 0
   timer_60 = pac_counter % 7 == 0; // 15 Hz -> 100 (mod 7) == 0
   timer_70 = pac_counter % 6 == 0; // 17.5 Hz -> 100 (mod 6) == 0 || 100 (mod 100) == 1
