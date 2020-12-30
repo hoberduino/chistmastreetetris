@@ -6,7 +6,7 @@
 /* Mario */
 
 
-/*  Display everything on a 22x22 board, top left is 0  
+/*  Display everything on a 22x22 board, top left is (0,0)
  *  Convert board to 22x22 snaked display, 20x10 snaked display, 
  *  or xmas tree as dictated by #defines below
  *  Currently outputs both 22x22 snaked display and xmas tree simultaneously
@@ -1619,6 +1619,12 @@ bool display_mario_run()
 
 
 
+
+
+/* MARIO GAME */
+
+
+
 void disp_mario_back()
 {
   unsigned char i,j;
@@ -1637,6 +1643,13 @@ void disp_mario_back()
 }
 
 
+void display_mario_back_items()
+{
+  
+}
+
+
+
 #define MARIO_FACE_COLOR DISP_COLOR_PEACH
 #define MARIO_HAT_COLOR DISP_COLOR_RED
 #define LUIGI_HAT_COLOR DISP_COLOR_GREEN
@@ -1645,22 +1658,28 @@ void disp_mario_back()
 #define MARIO_FIRE_HAT_COLOR DISP_COLOR_WHITE
 #define MARIO_FIRE_PANTS_COLOR DISP_COLOR_RED
 
+#define MARIO_ACCELERATION_COUNT 10
+
 unsigned char current_mario_row = NUM_DISP_ROWS - 2; /* bottom left of mario */
 unsigned int current_mario_col = 3; /* (0 - 438), bottom left of mario */
 unsigned int current_display_col = 0; /* leftmost column of display as level column */
+
+#define LAST_MARIO_COLUMN 421
 
 bool mario_face_right = true;
 bool mario_is_big = false;
 bool mario_is_fire = false;
 bool mario_is_luigi = false;
-char current_mario_speed = 0; /* (-4,4) */
-unsigned int mario_time = 0;
-unsigned int mario_run_time = 0; /* time when mario most recently started running */
+char current_mario_speed = 0; /* (-3,3) */
+char current_mario_button_dir = MOVE_NONE; /* current button-press movement */
+unsigned int mario_count = 0; /* count of loop cycles for current game */
+unsigned int mario_run_count = 0; /* time when mario most recently started moving in current direction */
 
 
 void disp_mario()
 {
   unsigned char mario_col_now = current_mario_col - current_display_col;
+  unsigned char abs_mario_speed = abs(current_mario_speed);
 
   if (mario_is_big == false)
   {
@@ -1671,7 +1690,7 @@ void disp_mario()
       /* blink front shoe depending on speed */
       if (current_mario_speed == 0)
         bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_PANTS_COLOR; // bottom right pixel
-      else if ((mario_time % (8 / current_mario_speed)) < (4 / current_mario_speed))
+      else if ((mario_count % (8 / abs_mario_speed)) < (4 / abs_mario_speed))
         bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_PANTS_COLOR; // bottom right pixel
       else
         bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_SHOE_COLOR; // bottom right pixel
@@ -1684,7 +1703,7 @@ void disp_mario()
       /* blink front shoe depending on speed */
       if (current_mario_speed == 0)
         bigDispBoard[current_mario_row][mario_col_now] = MARIO_PANTS_COLOR; // bottom left pixel
-      else if ((mario_time % (8 / current_mario_speed)) < (4 / current_mario_speed))
+      else if ((mario_count % (8 / abs_mario_speed)) < (4 / abs_mario_speed))
         bigDispBoard[current_mario_row][mario_col_now] = MARIO_PANTS_COLOR; // bottom left pixel
       else
         bigDispBoard[current_mario_row][mario_col_now] = MARIO_SHOE_COLOR; // bottom left pixel
@@ -1694,30 +1713,135 @@ void disp_mario()
   }
 }
 
+void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
+{
+  unsigned char run_time_diff = MARIO_ACCELERATION_COUNT;
+  bool is_running = false;
+  bool button_right = (move_dir & MOVE_RIGHT) > 0;
+  bool button_left = (move_dir & MOVE_LEFT) > 0;
+
+  if ((button_press & MOVE_ROTATE_LEFT) > 0) // B Button, Run
+  {
+    run_time_diff = run_time_diff / 2;
+    is_running = true;
+  }
+
+  /* Set New Move Direction */
+  if ((button_right || button_left) && (current_mario_button_dir != move_dir))
+  {
+    mario_run_count = mario_count; /* Set counter mark for when walking started */
+    current_mario_button_dir = move_dir;
+  }
+  else if (move_dir == MOVE_NONE)
+  {
+    mario_run_count = 0;  /* Clear counter mark for when running started */
+    current_mario_button_dir = MOVE_NONE;
+  }
+
+ /* Update Speed */
+  if ((current_mario_speed < 0) && (button_right || (move_dir == MOVE_NONE)))
+    current_mario_speed++;
+  else if ((current_mario_speed > 0) && (button_left || (move_dir == MOVE_NONE)))
+    current_mario_speed--;
+  else if ((mario_count - mario_run_count) <= run_time_diff)
+  {
+    if (is_running && button_right)
+      current_mario_speed = 2;
+    else if (button_right)
+      current_mario_speed = 1;
+    else if (is_running && button_left)
+      current_mario_speed = -2;
+    else if (button_left)
+      current_mario_speed = -1;
+  }
+  else if ((mario_count - mario_run_count) > run_time_diff)
+  {
+    if (is_running && button_right)
+      current_mario_speed = 3;
+    else if (button_right)
+      current_mario_speed = 2;
+    else if (is_running && button_left)
+      current_mario_speed = -3;
+    else if (button_left)
+      current_mario_speed = -2;
+  }
+  else
+    current_mario_speed = 0;
+
+  /* Update face direction */
+  if (current_mario_speed > 0)
+    mario_face_right = true;
+  else if (current_mario_speed < 0)
+    mario_face_right = false;
+
+}
+
+
+void update_mario_location()
+{
+  /* update rate based on current Mario speed */
+  unsigned char update_rate = 0;
+
+  /* Only update if abs(speed) > 0 */
+  if (current_mario_speed != 0)
+  {
+    update_rate = 9 / abs(current_mario_speed);
+    if ((mario_count % update_rate) == 0)
+    {
+      /* Mario stays on left half of screen
+       * If move right past midpoint -> move display right (current_display_col++)
+       * If move left, can only move to left side of screen
+       */
+      if ((current_mario_speed > 0) && (current_mario_col < LAST_MARIO_COLUMN))
+        current_mario_col++; /* (0 - 438), bottom left of mario */
+      else if ((current_mario_speed < 0) && (current_mario_col > current_display_col))
+        current_mario_col--; /* (0 - 438), bottom left of mario */
+      if ((current_mario_col - current_display_col) > 11)
+        current_display_col++;
+    }
+  }
+
+}
+
 void play_mario(bool mario_is_green)
 {
   bool mario_over = false;
   unsigned int move_dir = MOVE_NONE;
+  mario_run_count = 0;
+  mario_count = MARIO_ACCELERATION_COUNT;
 
   mario_is_luigi = mario_is_green;
 
-  // while (mario_over == false)
+  while (mario_over == false)
   {
     /* look for movements */
     move_dir = getMove();
 
-    if ((move_dir & 0xF) == MOVE_RIGHT)
-    {
-      
-    }
+    update_mario_dir_speed(move_dir & 0xF, (move_dir >> 4) & 0xF);
+    update_mario_location();
+    
+    mario_count++;
 
+    if (mario_count >= 1000)
+      mario_over = true;
+
+    delay(5);
   }
 
 
   disp_mario_back();
+  display_mario_back_items();
   disp_mario();
   
 }
+
+
+
+
+
+
+
+
 
 
 
