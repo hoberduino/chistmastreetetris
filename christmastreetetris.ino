@@ -1672,11 +1672,16 @@ bool mario_is_fire = false;
 bool mario_is_luigi = false;
 bool mario_is_jumping = false;
 char current_mario_speed = 0; /* (-3,3) */
+char current_mario_jump_speed = 0; /* (-3,3) */
 char current_mario_button_dir = MOVE_NONE; /* current button-press movement */
 unsigned int mario_count = 0; /* count of loop cycles for current game */
 unsigned int mario_run_count = 0; /* time when mario most recently started moving in current direction */
+unsigned int mario_jump_count = 0; /* time when mario most recently started moving in current direction */
 
 
+/* Displays mario in current position based on current_mario_row, current_mario_col, current_display_col, current_mario_speed, 
+ *                                             mario_face_right, mario_is_big, mario_is_fire, mario_is_luigi
+ */
 void disp_mario()
 {
   unsigned char mario_col_now = current_mario_col - current_display_col;
@@ -1714,6 +1719,10 @@ void disp_mario()
   }
 }
 
+/* Updates current_mario_speed (used by update_mario_vert_speed, update_mario_location, 
+ *         mario_face_right (used by disp_mario) 
+ * Uses mario_run_count internally
+ */
 void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
 {
   unsigned char run_time_diff = MARIO_ACCELERATION_COUNT;
@@ -1721,6 +1730,7 @@ void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
   bool button_right = (move_dir & MOVE_RIGHT) > 0;
   bool button_left = (move_dir & MOVE_LEFT) > 0;
 
+  /* Accelerate Mario from 2->3 at half the time Mario goes from 1->2 */
   if ((button_press & MOVE_ROTATE_LEFT) > 0) // B Button, Run
   {
     run_time_diff = run_time_diff / 2;
@@ -1746,7 +1756,7 @@ void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
   else if (((current_mario_speed > 0) || (mario_is_jumping && (current_mario_speed > -1)))
       && (button_left || (move_dir == MOVE_NONE)))
     current_mario_speed--;
-  else if ((mario_count - mario_run_count) <= run_time_diff)
+  else if (((mario_count - mario_run_count) <= run_time_diff) && (mario_is_jumping == false))
   {
     if (is_running && button_right)
       current_mario_speed = 2;
@@ -1757,7 +1767,7 @@ void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
     else if (button_left)
       current_mario_speed = -1;
   }
-  else if ((mario_count - mario_run_count) > run_time_diff)
+  else if (((mario_count - mario_run_count) > run_time_diff) && (mario_is_jumping == false))
   {
     if (is_running && button_right)
       current_mario_speed = 3;
@@ -1768,7 +1778,7 @@ void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
     else if (button_left)
       current_mario_speed = -2;
   }
-  else
+  else if (mario_is_jumping == false)
     current_mario_speed = 0;
 
   /* Update face direction */
@@ -1779,17 +1789,55 @@ void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
 
 }
 
+/* Updates current_mario_jump_speed (used by update_mario_location),
+ *         mario_is_jumping (used by update_mario_dir_speed)
+ * Uses mario_jump_count internally
+ */
 void update_mario_vert_speed(unsigned char button_press)
 {
+  if ((mario_is_jumping == true) && (current_mario_row == NUM_DISP_ROWS - 1))
+  {
+    /* back on ground, stop the jump */
+    mario_is_jumping = false;
+    current_mario_jump_speed = 0;
+  }
+  else 
+  {
+    /* Determine Jump Height */
+    if ((button_press & MOVE_ROTATE_RIGHT) > 0) // A Button, Jump
+    {
+      if (mario_jump_count == 0) /* on ground */
+      {
+        mario_jump_count = mario_count;
+        /* current_mario_jump_speed > 0 means moving up, < 0 is down */
+        current_mario_jump_speed = 3;
+      }
+      if ((mario_count - mario_jump_count) < current_mario_speed) 
+        current_mario_jump_speed = 3;
+    }
+
+    if (mario_jump_count != 0)
+    {
+      /* current_mario_jump_speed > 0 means moving up, < 0 is down */
+      if ((mario_jump_count - mario_count >= 3) && (current_mario_jump_speed > -3))
+        current_mario_jump_speed--;
+      mario_is_jumping = true;
+    }
+    else
+      mario_is_jumping = false;
+  } /* on ground */
   
 }
 
-
+/* Updates Mario location based on current_mario_row, current_mario_col and 
+ * current_mario_speed, current_mario_jump_speed
+ */
 void update_mario_location()
 {
   /* update rate based on current Mario speed */
   unsigned char update_rate = 0;
 
+  /* UPDATE HORIZONTAL POSITION */
   /* Only update if abs(speed) > 0 */
   if (current_mario_speed != 0)
   {
@@ -1809,6 +1857,19 @@ void update_mario_location()
     }
   }
 
+  /* UPDATE VERTICAL POSITION */
+  if (current_mario_jump_speed != 0)
+  {
+    update_rate = 9 / abs(current_mario_jump_speed);
+    if ((mario_count % update_rate) == 0)
+    {
+      /* current_mario_jump_speed > 0 means moving up, < 0 is down */
+      if ((current_mario_jump_speed > 0) && (current_mario_row > 0))
+        current_mario_row--; /* (0 - 21) 0 is top row, bottom left of mario */
+      else if ((current_mario_jump_speed < 0) && (current_mario_row < (NUM_DISP_ROWS - 1)))
+        current_mario_row++; /* (0 - 438), bottom left of mario */
+    }
+  }
 }
 
 void play_mario(bool mario_is_green)
@@ -1831,6 +1892,7 @@ void play_mario(bool mario_is_green)
     
     mario_count++;
 
+   /* Game Over based on timer */
     if (mario_count >= 1000)
       mario_over = true;
 
