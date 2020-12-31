@@ -1670,6 +1670,7 @@ bool mario_face_right = true;
 bool mario_is_big = false;
 bool mario_is_fire = false;
 bool mario_is_luigi = false;
+bool mario_is_jumping = false;
 char current_mario_speed = 0; /* (-3,3) */
 char current_mario_button_dir = MOVE_NONE; /* current button-press movement */
 unsigned int mario_count = 0; /* count of loop cycles for current game */
@@ -1738,10 +1739,12 @@ void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
     current_mario_button_dir = MOVE_NONE;
   }
 
- /* Update Speed */
-  if ((current_mario_speed < 0) && (button_right || (move_dir == MOVE_NONE)))
+  /* Update Speed */
+  if (((current_mario_speed < 0) || (mario_is_jumping && (current_mario_speed < 1)))
+      && (button_right || (move_dir == MOVE_NONE)))
     current_mario_speed++;
-  else if ((current_mario_speed > 0) && (button_left || (move_dir == MOVE_NONE)))
+  else if (((current_mario_speed > 0) || (mario_is_jumping && (current_mario_speed > -1)))
+      && (button_left || (move_dir == MOVE_NONE)))
     current_mario_speed--;
   else if ((mario_count - mario_run_count) <= run_time_diff)
   {
@@ -1774,6 +1777,11 @@ void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
   else if (current_mario_speed < 0)
     mario_face_right = false;
 
+}
+
+void update_mario_vert_speed(unsigned char button_press)
+{
+  
 }
 
 
@@ -1818,6 +1826,7 @@ void play_mario(bool mario_is_green)
     move_dir = getMove();
 
     update_mario_dir_speed(move_dir & 0xF, (move_dir >> 4) & 0xF);
+    update_mario_vert_speed((move_dir >> 4) & 0xF);
     update_mario_location();
     
     mario_count++;
