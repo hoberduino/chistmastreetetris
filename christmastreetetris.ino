@@ -1795,6 +1795,10 @@ void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
  */
 void update_mario_vert_speed(unsigned char button_press)
 {
+  /* If land on ground, stop jump (look for pits)
+   * If hit head, stop going up
+   * If land on something, stop jump
+   */
   if ((mario_is_jumping == true) && (current_mario_row == NUM_DISP_ROWS - 1))
   {
     /* back on ground, stop the jump */
@@ -1804,27 +1808,40 @@ void update_mario_vert_speed(unsigned char button_press)
   else 
   {
     /* Determine Jump Height */
-    if ((button_press & MOVE_ROTATE_RIGHT) > 0) // A Button, Jump
+    /* Mario jumps higher based on horizontal speed, how long press A button */
+    if (((button_press & MOVE_ROTATE_RIGHT) > 0) && /* A Button, Jump */
+         (mario_is_jumping == false)) /* Not already jumping (for initial jump acceleration, this is still false */
     {
       if (mario_jump_count == 0) /* on ground */
-      {
-        mario_jump_count = mario_count;
-        /* current_mario_jump_speed > 0 means moving up, < 0 is down */
-        current_mario_jump_speed = 3;
-      }
-      if ((mario_count - mario_jump_count) < current_mario_speed) 
-        current_mario_jump_speed = 3;
+        mario_jump_count = mario_count; /* Here Mario Jump Count is used to determine how long button is pressed */
+      /* current_mario_jump_speed > 0 means moving up, < 0 is down */
+      if ((mario_count - mario_jump_count) < 2 * current_mario_speed) /* UPDATE: determine how long to keep moving up on initial jump */
+        current_mario_jump_speed = 3; /* Top Upward Jump Speed */
+    }
+    else if (mario_jump_count > 0) /* Jumping has been initiated */
+    {
+      mario_is_jumping = true;
+      mario_jump_count = mario_count; /* New Jump, Jump Count will now be used to model gravity effects on jump */
     }
 
-    if (mario_jump_count != 0)
+    /* After initial jump, start downward effects of gravity */
+    if (mario_is_jumping == true)
     {
       /* current_mario_jump_speed > 0 means moving up, < 0 is down */
-      if ((mario_jump_count - mario_count >= 3) && (current_mario_jump_speed > -3))
+      /* A jump goes up 6 - 10 rows, first 0 - 4 rows handled above based on length of A Button press, horizontal speed */
+      if (current_mario_speed == 3)
         current_mario_jump_speed--;
-      mario_is_jumping = true;
+      else if ((current_mario_speed == 2) && (mario_count - mario_jump_count) >= 4)
+        current_mario_jump_speed--;
+      else if ((current_mario_speed == 1) && (mario_count - mario_jump_count) >= 10)
+        current_mario_jump_speed--;
+      else if ((current_mario_speed == 0) && (mario_count - mario_jump_count) >= 18)
+        current_mario_jump_speed--;
+      else if ((current_mario_speed == -1) && (mario_count - mario_jump_count) >= 24)
+        current_mario_jump_speed--;
+      else if ((current_mario_speed == -2) && (mario_count - mario_jump_count) >= 28)
+        current_mario_jump_speed--;   
     }
-    else
-      mario_is_jumping = false;
   } /* on ground */
   
 }
