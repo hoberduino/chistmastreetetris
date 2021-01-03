@@ -91,7 +91,8 @@
 const CRGB numToColor[NUM_DISP_COLORS] = 
 {CRGB::Black, CRGB::Blue, CRGB::Orange, CRGB::Yellow, CRGB::Red, CRGB::Green, CRGB::Cyan, CRGB::PeachPuff,
  CRGB::Purple, 0xD7FF00, 0x002332, CRGB::White, CRGB::Gray, 0x2F1010, 0x0000A0, 0x808080, 
- 0x000080, 0x800000, 0x404040, 0xff69b4, 0x00cccc, 0x808040, 0x228022, 0x000080, 0x888800};
+ 0x000080, 0x800000, 0x404040, 0xff69b4, 0x00cccc, 0x408820, 0x124012, 0x008000, 
+ 0x888800};
 
 /* Tetris stuff */
 #define NUM_ROWS      24 /*middle twenty are visible */
@@ -1779,9 +1780,9 @@ const unsigned int PROGMEM marioDispBackItems[NUM_MARIO_COLUMNS] =
  0x0003,0x0003,0x0001,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0001,0x0003,0x0003,0x0001, // 24
  
  0x0003,0x0003,0x0001,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000, // 25
- 0x0000,0x0000,0x0010,0x0030,0x0070,0x00F0,0x01F0,0x01F0,0x00F0,0x0070,0x0030,0x0010,0x0000,0x0000,0x8000,0x8000, // 26
+ 0x0000,0x0000,0x0010,0x0030,0x0070,0x00F0,0x01F0,0x01F0,0x00F0,0x0070,0x0030,0x0010,0x0000,0x0000,0x0000,0x8000, // 26
  
- 0x0000,0x0000,0x0001,0x0003,0x0003,0x0001,0x0600,0x0200,0x5600,0x3200,0x5E00,0x5E00,0x3200,0x5600,0x0200,0x0600, // 27
+ 0x0000,0x0000,0x0001,0x0003,0x0003,0x0001,0x0A00,0x0200,0x5A00,0x3200,0x5E00,0x5E00,0x3200,0x5A00,0x0200,0x0A00, // 27
  0x0004,0x0000,0x0010,0x0030,0x0070,0x0070,0x0030,0x0010,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};// 28
 
 
@@ -1796,8 +1797,10 @@ void disp_mario_back()
     {
       if (i < NUM_DISP_ROWS - 1)
         bigDispBoard[i][j] = DISP_COLOR_LIGHT_BLUE;
-      else if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_HOLE) == 0) /* not a hole */
+      else if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_HOLE) == 0) /* not a hole */
         bigDispBoard[i][j] = DISP_COLOR_HALF_RED;
+      else
+        bigDispBoard[i][j] = DISP_COLOR_BLACK;
     }
   }
   
@@ -1810,49 +1813,49 @@ void display_mario_back_items()
   for(j = 0; j < NUM_DISP_COLS; j++)
   {
     /* Display Clouds */
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_CLOUD_1) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_CLOUD_1) > 0)
       bigDispBoard[2][j] = DISP_COLOR_HALF_WHITE;
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_CLOUD_2) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_CLOUD_2) > 0)
       bigDispBoard[1][j] = DISP_COLOR_HALF_WHITE;
 
     /* Display Bushes */
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_BUSH_1) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_BUSH_1) > 0)
       bigDispBoard[20][j] = DISP_COLOR_BUSH_GREEN;
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_BUSH_2) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_BUSH_2) > 0)
       bigDispBoard[19][j] = DISP_COLOR_BUSH_GREEN;
 
     /* Display Hills */
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_HILL_1) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_HILL_1) > 0)
       bigDispBoard[20][j] = DISP_COLOR_HILL_GREEN;
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_HILL_2) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_HILL_2) > 0)
       bigDispBoard[19][j] = DISP_COLOR_HILL_GREEN;
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_HILL_3) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_HILL_3) > 0)
       bigDispBoard[18][j] = DISP_COLOR_HILL_GREEN;
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_HILL_4) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_HILL_4) > 0)
       bigDispBoard[17][j] = DISP_COLOR_HILL_GREEN;
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_HILL_5) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_DISP_HILL_5) > 0)
       bigDispBoard[16][j] = DISP_COLOR_HILL_GREEN;
 
     /* Display Castle */
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_LOW_WALL) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_LOW_WALL) > 0)
       for(i = 15; i <= 20; i++)
         bigDispBoard[i][j] = DISP_COLOR_HALF_RED;
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_HIGH_WALL) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_HIGH_WALL) > 0)
       for(i = 9; i <= 14; i++)
         bigDispBoard[i][j] = DISP_COLOR_HALF_RED;
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_DOOR) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_DOOR) > 0)
       for(i = 17; i <= 20; i++)
         bigDispBoard[i][j] = DISP_COLOR_BLACK;
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_WINDOW) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_WINDOW) > 0)
       for(i = 10; i <= 12; i++)
         bigDispBoard[i][j] = DISP_COLOR_BLACK;
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_LOW_TURRET) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_LOW_TURRET) > 0)
       bigDispBoard[14][j] = DISP_COLOR_YELLOW;
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_HIGH_TURRET) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_HIGH_TURRET) > 0)
       bigDispBoard[8][j] = DISP_COLOR_YELLOW;
 
     /* Display Flag Pole */
-    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_FLAG_POLE) > 0)
+    if ((pgm_read_word_near(&marioDispBackItems[current_display_col+j]) & MARIO_FLAG_POLE) > 0)
     {
       for(i = 2; i <= 19; i++)
         bigDispBoard[i][j] = DISP_COLOR_PIPE_GREEN;
@@ -1876,11 +1879,11 @@ void display_mario_fore_items()
   {
     /* Display Pipes */
     pipe_top = 0;
-    if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_LOW_PIPE_TOP) > 0)
+    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_LOW_PIPE_TOP) > 0)
       pipe_top = 16;
-    if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_MED_PIPE_TOP) > 0)
+    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_MED_PIPE_TOP) > 0)
       pipe_top = 14;
-    if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_HIGH_PIPE_TOP) > 0)
+    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_HIGH_PIPE_TOP) > 0)
       pipe_top = 12;
     if (pipe_top > 0)
     {
@@ -1888,73 +1891,73 @@ void display_mario_fore_items()
       bigDispBoard[pipe_top + 1][j] = DISP_COLOR_PIPE_GREEN;
 
       /* Middle of pipe, draw pipe base */
-      if (((pgm_read_byte_near(&marioDispForeItems[current_display_col+j+1]) & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_HIGH_PIPE_TOP)) > 0) &&
-          ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j-1]) & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_HIGH_PIPE_TOP)) > 0))
+      if (((pgm_read_word_near(&marioDispForeItems[current_display_col+j+1]) & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP)) > 0) &&
+          ((pgm_read_word_near(&marioDispForeItems[current_display_col+j-1]) & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP)) > 0))
         for(i = pipe_top + 2; i <= 20; i++)
           bigDispBoard[i][j] = DISP_COLOR_PIPE_GREEN;
     }
 
     /* Display Bricks */
-    if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_LOW_BRICK) > 0)
+    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_LOW_BRICK) > 0)
     {
       bigDispBoard[13][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[14][j] = DISP_COLOR_HALF_RED;
     }
-    if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_HIGH_BRICK) > 0)
+    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_HIGH_BRICK) > 0)
     {
       bigDispBoard[5][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[6][j] = DISP_COLOR_HALF_RED;
     }
 
     /* Display ? Blocks */
-    if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_LOW_Q) > 0)
+    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_LOW_Q) > 0)
     {
       bigDispBoard[13][j] = DISP_COLOR_Q_YELLOW;
       bigDispBoard[14][j] = DISP_COLOR_Q_YELLOW;
     }
-    if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_HIGH_Q) > 0)
+    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_HIGH_Q) > 0)
     {
       bigDispBoard[5][j] = DISP_COLOR_Q_YELLOW;
       bigDispBoard[6][j] = DISP_COLOR_Q_YELLOW;
     }
 
     /* Display Steps */
-    if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_1) > 0)
+    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_1) > 0)
     {
       bigDispBoard[19][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[20][j] = DISP_COLOR_HALF_RED;
     }
-    if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_2) > 0)
+    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_2) > 0)
     {
       bigDispBoard[17][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[18][j] = DISP_COLOR_HALF_RED;
     }
-    if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_3) > 0)
+    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_3) > 0)
     {
       bigDispBoard[15][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[16][j] = DISP_COLOR_HALF_RED;
     }
-    if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_4) > 0)
+    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_4) > 0)
     {
       bigDispBoard[13][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[14][j] = DISP_COLOR_HALF_RED;
     }
-    if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_5) > 0)
+    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_5) > 0)
     {
       bigDispBoard[11][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[12][j] = DISP_COLOR_HALF_RED;
     }
-    if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_6) > 0)
+    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_6) > 0)
     {
       bigDispBoard[9][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[10][j] = DISP_COLOR_HALF_RED;
     }
-    if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_7) > 0)
+    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_7) > 0)
     {
       bigDispBoard[7][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[8][j] = DISP_COLOR_HALF_RED;
     }
-    if ((pgm_read_byte_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_8) > 0)
+    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_8) > 0)
     {
       bigDispBoard[5][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[6][j] = DISP_COLOR_HALF_RED;
@@ -2238,11 +2241,12 @@ void play_mario(bool mario_is_green)
     mario_count++;
 
    /* Game Over based on timer */
-    if (mario_count >= 1000)
+    if (mario_count >= 2000)
       mario_over = true;
 
     disp_mario_back();
     display_mario_back_items();
+    display_mario_fore_items();
     disp_mario(mario_is_green);
     displayLEDs(true);
 
