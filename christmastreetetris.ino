@@ -1651,6 +1651,7 @@ bool mario_face_right = true;
 bool mario_is_big = false;
 bool mario_is_fire = false;
 bool mario_is_jumping = false;
+bool mario_is_trying = false;
 char current_mario_speed = 0; /* (-3,3) */
 int current_mario_jump_speed = 0; /* (-3,3) */
 char current_mario_button_dir = MOVE_NONE; /* current button-press movement */
@@ -1972,13 +1973,12 @@ void display_mario_fore_items()
 
 
 
-/* Displays mario in current position based on current_mario_row, current_mario_col, current_display_col, current_mario_speed, 
- *                                             mario_face_right, mario_is_big, mario_is_fire, mario_is_luigi
+/* Displays mario in current position based on current_mario_row, current_mario_col, current_display_col,
+ *                                             mario_face_right, mario_is_big, mario_is_fire, mario_is_luigi, mario_is_walking
  */
 void disp_mario(bool mario_is_green)
 {
   unsigned char mario_col_now = current_mario_col - current_display_col;
-  unsigned char abs_mario_speed = abs(current_mario_speed);
   unsigned char hat_color = MARIO_HAT_COLOR;
   if (mario_is_green)
     hat_color = LUIGI_HAT_COLOR;
@@ -1989,87 +1989,158 @@ void disp_mario(bool mario_is_green)
     {
       bigDispBoard[current_mario_row - 1][mario_col_now] = hat_color; // top left pixel
       bigDispBoard[current_mario_row - 1][mario_col_now + 1] = MARIO_FACE_COLOR; // top right pixel
-      /* blink front shoe depending on speed */
-      if ((current_mario_speed == 0) || (mario_is_jumping == true))
-        bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_PANTS_COLOR; // bottom right pixel
-      else if ((mario_count % (8 / abs_mario_speed)) < (4 / abs_mario_speed))
-        bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_PANTS_COLOR; // bottom right pixel
-      else
-        bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_SHOE_COLOR; // bottom right pixel
+      bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_PANTS_COLOR; // bottom right pixel
       bigDispBoard[current_mario_row][mario_col_now] = MARIO_PANTS_COLOR; // bottom left pixel
+      /* blink front shoe when walking */
+      if ((mario_is_trying == true) && (mario_is_jumping == false) && ((mario_count % 8) < 4))
+        bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_SHOE_COLOR; // bottom right pixel
     }
     else
     {
       bigDispBoard[current_mario_row - 1][mario_col_now] = MARIO_FACE_COLOR; // top left pixel
       bigDispBoard[current_mario_row - 1][mario_col_now + 1] = hat_color; // top right pixel
-      /* blink front shoe depending on speed */
-      if ((current_mario_speed == 0) || (mario_is_jumping == true))
-        bigDispBoard[current_mario_row][mario_col_now] = MARIO_PANTS_COLOR; // bottom left pixel
-      else if ((mario_count % (8 / abs_mario_speed)) < (4 / abs_mario_speed))
-        bigDispBoard[current_mario_row][mario_col_now] = MARIO_PANTS_COLOR; // bottom left pixel
-      else
-        bigDispBoard[current_mario_row][mario_col_now] = MARIO_SHOE_COLOR; // bottom left pixel
+      bigDispBoard[current_mario_row][mario_col_now] = MARIO_PANTS_COLOR; // bottom left pixel
       bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_PANTS_COLOR; // bottom right pixel
+      /* blink front shoe when walking */
+      if ((mario_is_trying == true) && (mario_is_jumping == false) && ((mario_count % 8) < 4))
+        bigDispBoard[current_mario_row][mario_col_now] = MARIO_SHOE_COLOR; // bottom left pixel
     }
 
   }
 }
 
+/* Returns bool telling if Mario can go left or right based on current_mario_col and applicable foreground objects (current_mario_row)
+ * This includes bricks, ? blocks, pipes, steps
+ * Also, mario_is_big and looks at end of level, current_display_col
+ * Does not check for collisions with creatures
+ */
+bool can_go_dir(bool is_right)
+{
+  bool can_go_dir = true;
+  unsigned char high_row = 13;
+  unsigned char low_row = 15;
+  if (mario_is_big)
+    low_row = 17;
+
+  char adder = -1;
+  if (is_right)
+    adder = 1;
+ 
+  if (is_right && (current_mario_col >= (NUM_MARIO_COLUMNS - 12)))
+    can_go_dir = false;
+  else if ((is_right == false) && (current_mario_col == current_display_col))
+    can_go_dir = false;
+  else if (((current_mario_row >= high_row) && (current_mario_row <= low_row)) &&
+           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_LOW_BRICK | MARIO_LOW_Q | MARIO_HIGH_PIPE_TOP | MARIO_STEP_4) > 0)))
+    can_go_dir = false;
+
+  high_row = 5;
+  low_row = 7;
+  if (mario_is_big)
+    low_row = 9;
+
+  if (((current_mario_row >= high_row) && (current_mario_row <= low_row)) &&
+           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_HIGH_BRICK | MARIO_HIGH_Q | MARIO_STEP_8) > 0)))
+    can_go_dir = false;
+  else if ((current_mario_row >= 19) &&
+           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_STEP_1) > 0)))
+    can_go_dir = false;
+  else if ((current_mario_row >= 17) &&
+           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_STEP_2) > 0)))
+    can_go_dir = false;
+  else if ((current_mario_row >= 15) &&
+           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_STEP_3) > 0)))
+    can_go_dir = false;
+  else if ((current_mario_row >= 11) &&
+           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_STEP_5) > 0)))
+    can_go_dir = false;
+  else if ((current_mario_row >= 9) &&
+           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_STEP_6) > 0)))
+    can_go_dir = false;
+  else if ((current_mario_row >= 7) &&
+           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_STEP_7) > 0)))
+    can_go_dir = false;
+  
+  /* Pipe Base */
+  if ((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HIGH_PIPE_TOP) > 0)
+    high_row = 15;
+  if ((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_MED_PIPE_TOP) > 0)
+    high_row = 17;
+  if ((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_MED_PIPE_TOP) > 0)
+    high_row = 19;
+  if ((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP) > 0) && 
+      (pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP) > 0) &&
+      (current_mario_row >= high_row))
+    can_go_dir = false;
+
+  return can_go_dir;
+}
+
+
+
+
+
 /* Updates current_mario_speed (used by update_mario_vert_speed, update_mario_location, 
- *         mario_face_right (used by disp_mario) 
+ *         mario_face_right (used by disp_mario), mario_is_walking (used by disp_mario)
  * Uses mario_run_count internally
+ * Reads button presses to determine and apply effects of accelearation (updates current_mario_speed)  
  */
 void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
 {
-  unsigned char run_time_diff = MARIO_ACCELERATION_COUNT;
-  bool is_running = false;
+  unsigned char run_time_diff = MARIO_ACCELERATION_COUNT; /* how quickly mario accelerates */
   bool button_right = (move_dir & MOVE_RIGHT) > 0;
   bool button_left = (move_dir & MOVE_LEFT) > 0;
+  bool mario_is_running = false;
+  mario_is_trying = button_right || button_left;
 
   /* Accelerate Mario from 2->3 at half the time Mario goes from 1->2 */
   if ((button_press & MOVE_ROTATE_LEFT) > 0) // B Button, Run
   {
     run_time_diff = run_time_diff / 2;
-    is_running = true;
+    mario_is_running = true;
   }
 
   /* Set New Move Direction */
   if ((button_right || button_left) && (current_mario_button_dir != move_dir))
   {
-    mario_run_count = mario_count; /* Set counter mark for when walking started */
+    mario_run_count = mario_count; /* Set counter mark for when applied movement started */
     current_mario_button_dir = move_dir;
   }
   else if (move_dir == MOVE_NONE)
   {
-    mario_run_count = 0;  /* Clear counter mark for when running started */
+    mario_run_count = mario_count;  /* Set counter mark for when applied movement stopped */
     current_mario_button_dir = MOVE_NONE;
   }
 
   /* Update Speed */
-  if (((current_mario_speed < 0) || (mario_is_jumping && (current_mario_speed < 1)))
-      && (button_right))
+  if ((button_right || (current_mario_speed > 0))  && (can_go_dir(true) == false)) /* if can't go right, stop */
+    current_mario_speed = 0;
+  else if ((button_left || (current_mario_speed < 0))  && (can_go_dir(false) == false)) /* if can't go left, stop */
+    current_mario_speed = 0;
+  else if (((current_mario_speed < 0) || (mario_is_jumping && (current_mario_speed < 1))) /* take some time to decelerate */
+      && (button_right) && ((mario_count - mario_run_count) <= run_time_diff / 2))
     current_mario_speed++;
-  else if (((current_mario_speed > 0) || (mario_is_jumping && (current_mario_speed > -1)))
-      && (button_left ))
-    current_mario_speed--;
+  else if (((current_mario_speed > 0) || (mario_is_jumping && (current_mario_speed > -1))) /* take some time to decelerate */
+      && (button_left ) && ((mario_count - mario_run_count) <= run_time_diff / 2))
+    current_mario_speed--;  
   else if ((mario_run_count > 0) && ((mario_count - mario_run_count) <= run_time_diff) && (mario_is_jumping == false))
   {
-    if (is_running && button_right)
+    if (mario_is_running && button_right)
       current_mario_speed = 2;
     else if (button_right)
       current_mario_speed = 1;
-    else if (is_running && button_left)
+    else if (mario_is_running && button_left)
       current_mario_speed = -2;
     else if (button_left)
       current_mario_speed = -1;
   }
   else if ((mario_run_count > 0) && ((mario_count - mario_run_count) > run_time_diff) && (mario_is_jumping == false))
   {
-    if (is_running && button_right)
+    if (mario_is_running && button_right)
       current_mario_speed = 3;
     else if (button_right)
       current_mario_speed = 2;
-    else if (is_running && button_left)
+    else if (mario_is_running && button_left)
       current_mario_speed = -3;
     else if (button_left)
       current_mario_speed = -2;
@@ -2085,6 +2156,8 @@ void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
 
 }
 
+/* Determine if Mario is on solid ground based on current_mario_row and applicable foreground items (current_mario_col) */
+/* TODO: Add broken bricks, creatures landed on to be handled elsewhere */
 bool mario_on_solid_ground()
 {
   /* Solid ground is non hole ground, on pipe, on blocks, on ?, or on step */
@@ -2096,6 +2169,58 @@ bool mario_on_solid_ground()
                           ((current_mario_row == 12) && 
                           (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_LOW_Q) > 0) || 
                           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_LOW_Q) > 0))) ||
+
+                          ((current_mario_row == 4) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HIGH_BRICK) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_HIGH_BRICK) > 0))) ||
+
+                          ((current_mario_row == 4) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HIGH_Q) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_HIGH_Q) > 0))) ||
+
+                          ((current_mario_row == 16) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_LOW_PIPE_TOP) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_LOW_PIPE_TOP) > 0))) ||
+
+                          ((current_mario_row == 14) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_MED_PIPE_TOP) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_MED_PIPE_TOP) > 0))) ||
+
+                          ((current_mario_row == 12) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HIGH_PIPE_TOP) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_HIGH_PIPE_TOP) > 0))) ||
+
+                          ((current_mario_row == 18) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_1) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_1) > 0))) ||
+
+                          ((current_mario_row == 16) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_2) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_2) > 0))) ||
+
+                          ((current_mario_row == 14) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_3) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_3) > 0))) ||
+
+                          ((current_mario_row == 12) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_4) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_4) > 0))) ||
+
+                          ((current_mario_row == 10) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_5) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_5) > 0))) ||
+
+                          ((current_mario_row == 8) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_6) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_6) > 0))) ||
+
+                          ((current_mario_row == 6) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_7) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_7) > 0))) ||
+
+                          ((current_mario_row == 4) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_8) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_8) > 0))) ||
                           
                           ((current_mario_row == NUM_DISP_ROWS - 2) && 
                           (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HOLE) == 0) || 
@@ -2105,13 +2230,61 @@ bool mario_on_solid_ground()
    return on_solid_ground;
 }
 
+
+/* Determine if Mario can go up based on current_mario_row, applicable foreground items (current_mario_col)
+ * and mario_is_big
+ * TODO: Add broken bricks, creatures landed on to be handled elsewhere
+ */
+bool mario_can_go_up()
+{
+  /* Can't go up when hit blocks or ? */
+  bool can_go_up = true;
+  unsigned char low_row = 16;
+  unsigned char high_row = 24;
+  if (mario_is_big)
+  {
+    low_row = 14;
+    high_row = 22;
+  }
+  
+  if  (
+        ((current_mario_row == low_row) && 
+          (
+            (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_LOW_BRICK) > 0) || 
+            ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_LOW_BRICK) > 0))
+          ) ||
+          (
+            (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_LOW_Q) > 0) || 
+            ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_LOW_Q) > 0))
+          )
+        ) ||
+        ((current_mario_row == high_row) && 
+          (
+            (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HIGH_BRICK) > 0) || 
+            ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_HIGH_BRICK) > 0))
+          ) ||
+          (
+            (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HIGH_Q) > 0) || 
+            ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_HIGH_Q) > 0))
+          )
+      )
+    )
+    can_go_up = false;
+      
+   return can_go_up;
+  
+}
+
 /* Updates current_mario_jump_speed (used by update_mario_location),
  *         mario_is_jumping (used by update_mario_dir_speed)
- * Uses mario_jump_count internally
+ * Uses mario_jump_count internally (in 2 different ways, be careful)
+ * Reads button presses to determine and apply affects of vert accelearation (updates current_mario_jump_speed)  
+ * TODO: Add broken bricks, creatures landed on to be handled elsewhere
  */
 void update_mario_vert_speed(unsigned char button_press)
 {
   /* jump_time_diff used to manage how high can max jump at current horizontal speed */
+  /* i.e. how long you can hold down jump and continue maintaining max vert speed */
   unsigned char jump_time_diff = MARIO_ACCELERATION_COUNT;
   if (current_mario_speed == 0)
     jump_time_diff = jump_time_diff / 2;
@@ -2129,6 +2302,11 @@ void update_mario_vert_speed(unsigned char button_press)
     mario_is_jumping = false;
     current_mario_jump_speed = 0;
     mario_jump_count = 0;
+  }
+  else if (mario_can_go_up() == false)
+  {
+    current_mario_jump_speed = 0;
+    mario_jump_count = mario_count - 16; /* so we start falling */
   }
   else 
   {
@@ -2153,7 +2331,7 @@ void update_mario_vert_speed(unsigned char button_press)
     if ((mario_is_jumping == false) && (current_mario_jump_speed == 0) && (mario_on_solid_ground() == false))
     {
       mario_is_jumping = true;
-      mario_jump_count = mario_count - 16;
+      mario_jump_count = mario_count - 16; /* so we start falling */
       current_mario_jump_speed = 0;
     }
     
@@ -2180,6 +2358,8 @@ void update_mario_vert_speed(unsigned char button_press)
 
 /* Updates Mario location based on current_mario_row, current_mario_col and 
  * current_mario_speed, current_mario_jump_speed
+ * Applies current_mario_speed and current_mario_jump_speed to position
+ * (how many cycles it takes to update position based on current speed)
  */
 void update_mario_location()
 {
@@ -2234,6 +2414,7 @@ void play_mario(bool mario_is_green)
   mario_is_big = false;
   mario_is_fire = false;
   mario_is_jumping = false;
+  mario_is_trying = false;
   current_mario_speed = 0; /* (-3,3) */
   current_mario_jump_speed = 0; /* (-3,3) */
   current_mario_button_dir = MOVE_NONE; /* current button-press movement */
