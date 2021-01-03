@@ -2306,7 +2306,7 @@ void update_mario_vert_speed(unsigned char button_press)
   else if (mario_can_go_up() == false)
   {
     current_mario_jump_speed = 0;
-    mario_jump_count = mario_count - 16; /* so we start falling */
+    mario_jump_count = mario_count - 8; /* so we start falling */
   }
   else 
   {
@@ -2331,7 +2331,7 @@ void update_mario_vert_speed(unsigned char button_press)
     if ((mario_is_jumping == false) && (current_mario_jump_speed == 0) && (mario_on_solid_ground() == false))
     {
       mario_is_jumping = true;
-      mario_jump_count = mario_count - 16; /* so we start falling */
+      mario_jump_count = mario_count - 8; /* so we start falling */
       current_mario_jump_speed = 0;
     }
     
@@ -2342,15 +2342,15 @@ void update_mario_vert_speed(unsigned char button_press)
       /* A jump goes up 6 - 10 rows, first 0 - 4 rows handled above based on length of A Button press, horizontal speed */
       if ((current_mario_jump_speed == 3) && (mario_count - mario_jump_count) >= 2)
         current_mario_jump_speed--;
-      else if ((current_mario_jump_speed == 2) && (mario_count - mario_jump_count) >= 6)
+      else if ((current_mario_jump_speed == 2) && (mario_count - mario_jump_count) >= 4)
         current_mario_jump_speed--;
-      else if ((current_mario_jump_speed == 1) && (mario_count - mario_jump_count) >= 10)
+      else if ((current_mario_jump_speed == 1) && (mario_count - mario_jump_count) >= 6)
         current_mario_jump_speed--;
-      else if ((current_mario_jump_speed == 0) && (mario_count - mario_jump_count) >= 16)
+      else if ((current_mario_jump_speed == 0) && (mario_count - mario_jump_count) >= 8)
         current_mario_jump_speed--;
-      else if ((current_mario_jump_speed == -1) && (mario_count - mario_jump_count) >= 20)
+      else if ((current_mario_jump_speed == -1) && (mario_count - mario_jump_count) >= 10)
         current_mario_jump_speed--;
-      else if ((current_mario_jump_speed == -2) && (mario_count - mario_jump_count) >= 24)
+      else if ((current_mario_jump_speed == -2) && (mario_count - mario_jump_count) >= 12)
         current_mario_jump_speed--;   
     }
   } /* on ground */
