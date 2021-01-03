@@ -2009,68 +2009,68 @@ void disp_mario(bool mario_is_green)
   }
 }
 
-/* Returns bool telling if Mario can go left or right based on current_mario_col and applicable foreground objects (current_mario_row)
+/* Returns bool telling if Mario can go left or right based on input_col and applicable foreground objects (input_row)
  * This includes bricks, ? blocks, pipes, steps
  * Also, mario_is_big and looks at end of level, current_display_col
  * Does not check for collisions with creatures
  */
-bool can_go_dir(bool is_right)
+bool can_go_dir(bool is_right, bool is_big, unsigned char input_row, unsigned int input_col)
 {
   bool can_go_dir = true;
   unsigned char high_row = 13;
   unsigned char low_row = 15;
-  if (mario_is_big)
+  if (is_big)
     low_row = 17;
 
   char adder = -1;
   if (is_right)
     adder = 1;
  
-  if (is_right && (current_mario_col >= (NUM_MARIO_COLUMNS - 12)))
+  if (is_right && (input_col >= (NUM_MARIO_COLUMNS - 12)))
     can_go_dir = false;
-  else if ((is_right == false) && (current_mario_col == current_display_col))
+  else if ((is_right == false) && (input_col == current_display_col))
     can_go_dir = false;
-  else if (((current_mario_row >= high_row) && (current_mario_row <= low_row)) &&
-           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_LOW_BRICK | MARIO_LOW_Q | MARIO_HIGH_PIPE_TOP | MARIO_STEP_4) > 0)))
+  else if (((input_row >= high_row) && (input_row <= low_row)) &&
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_LOW_BRICK | MARIO_LOW_Q | MARIO_HIGH_PIPE_TOP | MARIO_STEP_4) > 0)))
     can_go_dir = false;
 
   high_row = 5;
   low_row = 7;
-  if (mario_is_big)
+  if (is_big)
     low_row = 9;
 
-  if (((current_mario_row >= high_row) && (current_mario_row <= low_row)) &&
-           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_HIGH_BRICK | MARIO_HIGH_Q | MARIO_STEP_8) > 0)))
+  if (((input_row >= high_row) && (input_row <= low_row)) &&
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_HIGH_BRICK | MARIO_HIGH_Q | MARIO_STEP_8) > 0)))
     can_go_dir = false;
-  else if ((current_mario_row >= 19) &&
-           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_STEP_1) > 0)))
+  else if ((input_row >= 19) &&
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_1) > 0)))
     can_go_dir = false;
-  else if ((current_mario_row >= 17) &&
-           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_STEP_2) > 0)))
+  else if ((input_row >= 17) &&
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_2) > 0)))
     can_go_dir = false;
-  else if ((current_mario_row >= 15) &&
-           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_STEP_3) > 0)))
+  else if ((input_row >= 15) &&
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_3) > 0)))
     can_go_dir = false;
-  else if ((current_mario_row >= 11) &&
-           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_STEP_5) > 0)))
+  else if ((input_row >= 11) &&
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_5) > 0)))
     can_go_dir = false;
-  else if ((current_mario_row >= 9) &&
-           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_STEP_6) > 0)))
+  else if ((input_row >= 9) &&
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_6) > 0)))
     can_go_dir = false;
-  else if ((current_mario_row >= 7) &&
-           ((pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_STEP_7) > 0)))
+  else if ((input_row >= 7) &&
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_7) > 0)))
     can_go_dir = false;
   
   /* Pipe Base */
-  if ((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HIGH_PIPE_TOP) > 0)
+  if ((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_HIGH_PIPE_TOP) > 0)
     high_row = 15;
-  if ((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_MED_PIPE_TOP) > 0)
+  if ((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_MED_PIPE_TOP) > 0)
     high_row = 17;
-  if ((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_MED_PIPE_TOP) > 0)
+  if ((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_MED_PIPE_TOP) > 0)
     high_row = 19;
-  if ((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP) > 0) && 
-      (pgm_read_word_near(&marioDispForeItems[current_mario_col + adder]) & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP) > 0) &&
-      (current_mario_row >= high_row))
+  if ((pgm_read_word_near(&marioDispForeItems[input_col]) & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP) > 0) && 
+      (pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP) > 0) &&
+      (input_row >= high_row))
     can_go_dir = false;
 
   return can_go_dir;
@@ -2113,9 +2113,9 @@ void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
   }
 
   /* Update Speed */
-  if ((button_right || (current_mario_speed > 0))  && (can_go_dir(true) == false)) /* if can't go right, stop */
+  if ((button_right || (current_mario_speed > 0))  && (can_go_dir(true, mario_is_big, current_mario_row, current_mario_col) == false)) /* if can't go right, stop */
     current_mario_speed = 0;
-  else if ((button_left || (current_mario_speed < 0))  && (can_go_dir(false) == false)) /* if can't go left, stop */
+  else if ((button_left || (current_mario_speed < 0))  && (can_go_dir(false, mario_is_big, current_mario_row, current_mario_col) == false)) /* if can't go left, stop */
     current_mario_speed = 0;
   else if (((current_mario_speed < 0) || (mario_is_jumping && (current_mario_speed < 1))) /* take some time to decelerate */
       && (button_right) && ((mario_count - mario_run_count) <= run_time_diff / 2))
@@ -2156,75 +2156,67 @@ void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
 
 }
 
-/* Determine if Mario is on solid ground based on current_mario_row and applicable foreground items (current_mario_col) */
+/* Determine if Mario is on solid ground based on input_row and applicable foreground items (input_col) */
 /* TODO: Add broken bricks, creatures landed on to be handled elsewhere */
-bool mario_on_solid_ground()
+bool mario_on_solid_ground(unsigned char input_row, unsigned int input_col)
 {
   /* Solid ground is non hole ground, on pipe, on blocks, on ?, or on step */
   bool on_solid_ground =  (
-                          ((current_mario_row == 12) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_LOW_BRICK) > 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_LOW_BRICK) > 0))) ||
+                          ((input_row == 12) && 
+                          (((pgm_read_word_near(&marioDispForeItems[input_col]) & (MARIO_LOW_BRICK | MARIO_LOW_Q)) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[input_col + 1]) & (MARIO_LOW_BRICK | MARIO_LOW_Q)) > 0))) ||
 
-                          ((current_mario_row == 12) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_LOW_Q) > 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_LOW_Q) > 0))) ||
+                          ((input_row == 4) && 
+                          (((pgm_read_word_near(&marioDispForeItems[input_col]) & (MARIO_HIGH_BRICK | MARIO_HIGH_Q)) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[input_col + 1]) & (MARIO_HIGH_BRICK | MARIO_HIGH_Q)) > 0))) ||
 
-                          ((current_mario_row == 4) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HIGH_BRICK) > 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_HIGH_BRICK) > 0))) ||
+                          ((input_row == 16) && 
+                          (((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_LOW_PIPE_TOP) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[input_col + 1]) & MARIO_LOW_PIPE_TOP) > 0))) ||
 
-                          ((current_mario_row == 4) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HIGH_Q) > 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_HIGH_Q) > 0))) ||
+                          ((input_row == 14) && 
+                          (((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_MED_PIPE_TOP) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[input_col + 1]) & MARIO_MED_PIPE_TOP) > 0))) ||
 
-                          ((current_mario_row == 16) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_LOW_PIPE_TOP) > 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_LOW_PIPE_TOP) > 0))) ||
+                          ((input_row == 12) && 
+                          (((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_HIGH_PIPE_TOP) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[input_col + 1]) & MARIO_HIGH_PIPE_TOP) > 0))) ||
 
-                          ((current_mario_row == 14) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_MED_PIPE_TOP) > 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_MED_PIPE_TOP) > 0))) ||
+                          ((input_row == 18) && 
+                          (((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_STEP_1) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[input_col + 1]) & MARIO_STEP_1) > 0))) ||
 
-                          ((current_mario_row == 12) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HIGH_PIPE_TOP) > 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_HIGH_PIPE_TOP) > 0))) ||
+                          ((input_row == 16) && 
+                          (((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_STEP_2) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[input_col + 1]) & MARIO_STEP_2) > 0))) ||
 
-                          ((current_mario_row == 18) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_1) > 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_1) > 0))) ||
+                          ((input_row == 14) && 
+                          (((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_STEP_3) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[input_col + 1]) & MARIO_STEP_3) > 0))) ||
 
-                          ((current_mario_row == 16) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_2) > 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_2) > 0))) ||
+                          ((input_row == 12) && 
+                          (((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_STEP_4) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[input_col + 1]) & MARIO_STEP_4) > 0))) ||
 
-                          ((current_mario_row == 14) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_3) > 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_3) > 0))) ||
+                          ((input_row == 10) && 
+                          (((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_STEP_5) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[input_col + 1]) & MARIO_STEP_5) > 0))) ||
 
-                          ((current_mario_row == 12) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_4) > 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_4) > 0))) ||
+                          ((input_row == 8) && 
+                          (((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_STEP_6) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[input_col + 1]) & MARIO_STEP_6) > 0))) ||
 
-                          ((current_mario_row == 10) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_5) > 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_5) > 0))) ||
+                          ((input_row == 6) && 
+                          (((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_STEP_7) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[input_col + 1]) & MARIO_STEP_7) > 0))) ||
 
-                          ((current_mario_row == 8) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_6) > 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_6) > 0))) ||
-
-                          ((current_mario_row == 6) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_7) > 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_7) > 0))) ||
-
-                          ((current_mario_row == 4) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_STEP_8) > 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_STEP_8) > 0))) ||
+                          ((input_row == 4) && 
+                          (((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_STEP_8) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[input_col + 1]) & MARIO_STEP_8) > 0))) ||
                           
-                          ((current_mario_row == NUM_DISP_ROWS - 2) && 
-                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HOLE) == 0) || 
-                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_HOLE) == 0)))
+                          ((input_row == NUM_DISP_ROWS - 2) && 
+                          (((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_HOLE) == 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[input_col + 1]) & MARIO_HOLE) == 0)))
                           );
 
    return on_solid_ground;
@@ -2296,7 +2288,7 @@ void update_mario_vert_speed(unsigned char button_press)
    * If hit head, stop going up
    * If land on something, stop jump
    */
-  if ((mario_is_jumping == true) && mario_on_solid_ground())
+  if ((mario_is_jumping == true) && mario_on_solid_ground(current_mario_row, current_mario_col))
   {
     /* back on ground, stop the jump */
     mario_is_jumping = false;
@@ -2328,7 +2320,7 @@ void update_mario_vert_speed(unsigned char button_press)
     }
 
     /* if walk off solid ground */
-    if ((mario_is_jumping == false) && (current_mario_jump_speed == 0) && (mario_on_solid_ground() == false))
+    if ((mario_is_jumping == false) && (current_mario_jump_speed == 0) && (mario_on_solid_ground(current_mario_row, current_mario_col) == false))
     {
       mario_is_jumping = true;
       mario_jump_count = mario_count - 8; /* so we start falling */
