@@ -2085,6 +2085,26 @@ void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
 
 }
 
+bool mario_on_solid_ground()
+{
+  /* Solid ground is non hole ground, on pipe, on blocks, on ?, or on step */
+  bool on_solid_ground =  (
+                          ((current_mario_row == 12) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_LOW_BRICK) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_LOW_BRICK) > 0))) ||
+
+                          ((current_mario_row == 12) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_LOW_Q) > 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_LOW_Q) > 0))) ||
+                          
+                          ((current_mario_row == NUM_DISP_ROWS - 2) && 
+                          (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HOLE) == 0) || 
+                          ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_HOLE) == 0)))
+                          );
+
+   return on_solid_ground;
+}
+
 /* Updates current_mario_jump_speed (used by update_mario_location),
  *         mario_is_jumping (used by update_mario_dir_speed)
  * Uses mario_jump_count internally
@@ -2098,16 +2118,12 @@ void update_mario_vert_speed(unsigned char button_press)
   else if (current_mario_speed < 3)
     jump_time_diff = jump_time_diff * 3 / 4;
 
-  bool solid_ground = (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HOLE) == 0) || 
-                       ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_HOLE) == 0));
-
   
   /* If land on ground, stop jump (look for pits)
    * If hit head, stop going up
    * If land on something, stop jump
    */
-
-  if ((mario_is_jumping == true) && (current_mario_row == NUM_DISP_ROWS - 2) && solid_ground)
+  if ((mario_is_jumping == true) && mario_on_solid_ground())
   {
     /* back on ground, stop the jump */
     mario_is_jumping = false;
@@ -2134,10 +2150,10 @@ void update_mario_vert_speed(unsigned char button_press)
     }
 
     /* if walk off solid ground */
-    if ((mario_is_jumping == false) && (current_mario_row == NUM_DISP_ROWS - 2) && (solid_ground == false))
+    if ((mario_is_jumping == false) && (current_mario_jump_speed == 0) && (mario_on_solid_ground() == false))
     {
       mario_is_jumping = true;
-      mario_jump_count = mario_count - 10;
+      mario_jump_count = mario_count - 16;
       current_mario_jump_speed = 0;
     }
     
