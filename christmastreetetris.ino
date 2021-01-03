@@ -1675,15 +1675,21 @@ void disp_mario_back()
 }
 
 
-#define MARIO_DISP_CLOUD_1 0x1     /* 1 pixel heigh cloud */
-#define MARIO_DISP_CLOUD_2 0x2     /* 2 pixel heigh cloud */
-#define MARIO_DISP_BUSH_1  0x4     /* 1 pixel heigh bush */
-#define MARIO_DISP_BUSH_2  0x8     /* 2 pixel heigh bush */
-#define MARIO_DISP_HILL_1  0x10    /* 1 pixel heigh hill */
-#define MARIO_DISP_HILL_2  0x20    /* 2 pixel heigh hill */
-#define MARIO_DISP_HILL_3  0x40    /* 3 pixel heigh hill */
-#define MARIO_DISP_HILL_4  0x80    /* 2 pixel heigh hill */
-#define MARIO_DISP_HILL_5  0x100   /* 3 pixel heigh hill */
+#define MARIO_DISP_CLOUD_1       0x1     /* 1 pixel height cloud */
+#define MARIO_DISP_CLOUD_2       0x2     /* 2 pixel height cloud */
+#define MARIO_DISP_BUSH_1        0x4     /* 1 pixel height bush */
+#define MARIO_DISP_BUSH_2        0x8     /* 2 pixel height bush */
+#define MARIO_DISP_HILL_1        0x10    /* 1 pixel height hill */
+#define MARIO_DISP_HILL_2        0x20    /* 2 pixel height hill */
+#define MARIO_DISP_HILL_3        0x40    /* 3 pixel height hill */
+#define MARIO_DISP_HILL_4        0x80    /* 2 pixel height hill */
+#define MARIO_DISP_HILL_5        0x100   /* 3 pixel height hill */
+#define MARIO_CASTLE_LOW_WALL    0x200   /* 6 pixel height lower wall */
+#define MARIO_CASTLE_DOOR        0x400   /* 4 pixel height lower wall door */
+#define MARIO_CASTLE_LOW_TURRET  0x800   /* 1 pixel height lower turret */
+#define MARIO_CASTLE_HIGH_WALL   0x1000  /* 6 pixel height lower wall */
+#define MARIO_CASTLE_WINDOW      0x2000   /* 4 pixel height lower wall door */
+#define MARIO_CASTLE_HIGH_TURRET 0x4000   /* 1 pixel height lower turret */
 
  /* Mario Background Display Items */
 const unsigned int PROGMEM marioDispBackItems[NUM_MARIO_COLUMNS] =
@@ -1727,9 +1733,8 @@ const unsigned int PROGMEM marioDispBackItems[NUM_MARIO_COLUMNS] =
  0x0003,0x0003,0x0001,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000, // 25
  0x0000,0x0000,0x0010,0x0030,0x0070,0x00F0,0x01F0,0x01F0,0x00F0,0x0070,0x0030,0x0010,0x0000,0x0000,0x0000,0x0000, // 26
  
- 0x0000,0x0000,0x0000,0x0000,0x0001,0x0003,0x0003,0x0001,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000, // 27
+ 0x0000,0x0000,0x0001,0x0003,0x0003,0x0001,0x0600,0x0200,0x5600,0x3200,0x5E00,0x5E00,0x3200,0x5600,0x0200,0x0600, // 27
  0x0004,0x0000,0x0010,0x0030,0x0070,0x0070,0x0030,0x0010,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};// 28
- 
 
 
 
@@ -1737,7 +1742,7 @@ const unsigned int PROGMEM marioDispBackItems[NUM_MARIO_COLUMNS] =
 
 void display_mario_back_items()
 {
-  unsigned char j;
+  unsigned char i, j;
   for(j = 0; j < NUM_DISP_COLS; j++)
   {
     /* Display Clouds */
@@ -1765,7 +1770,23 @@ void display_mario_back_items()
       bigDispBoard[16][j] = DISP_COLOR_HILL_GREEN;
 
     /* Display Castle */
-    
+    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_LOW_WALL) > 0)
+      for(i = 15; i <= 20; i++)
+        bigDispBoard[i][j] = DISP_COLOR_HALF_RED;
+    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_HIGH_WALL) > 0)
+      for(i = 9; i <= 14; i++)
+        bigDispBoard[i][j] = DISP_COLOR_HALF_RED;
+    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_DOOR) > 0)
+      for(i = 17; i <= 20; i++)
+        bigDispBoard[i][j] = DISP_COLOR_BLACK;
+    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_WINDOW) > 0)
+      for(i = 10; i <= 12; i++)
+        bigDispBoard[i][j] = DISP_COLOR_BLACK;
+    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_LOW_TURRET) > 0)
+      bigDispBoard[14][j] = DISP_COLOR_YELLOW;
+    if ((pgm_read_byte_near(&marioDispBackItems[current_display_col+j]) & MARIO_CASTLE_HIGH_TURRET) > 0)
+      bigDispBoard[8][j] = DISP_COLOR_YELLOW;
+      
   }
 }
 
