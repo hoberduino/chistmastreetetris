@@ -2098,12 +2098,16 @@ void update_mario_vert_speed(unsigned char button_press)
   else if (current_mario_speed < 3)
     jump_time_diff = jump_time_diff * 3 / 4;
 
+  bool solid_ground = (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HOLE) == 0) || 
+                       ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_HOLE) == 0));
+
   
   /* If land on ground, stop jump (look for pits)
    * If hit head, stop going up
    * If land on something, stop jump
    */
-  if ((mario_is_jumping == true) && (current_mario_row == NUM_DISP_ROWS - 2))
+
+  if ((mario_is_jumping == true) && (current_mario_row == NUM_DISP_ROWS - 2) && solid_ground)
   {
     /* back on ground, stop the jump */
     mario_is_jumping = false;
@@ -2127,6 +2131,14 @@ void update_mario_vert_speed(unsigned char button_press)
     {
       mario_is_jumping = true;
       mario_jump_count = mario_count; /* New Jump, Jump Count will now be used to model gravity effects on jump */
+    }
+
+    /* if walk off solid ground */
+    if ((mario_is_jumping == false) && (current_mario_row == NUM_DISP_ROWS - 2) && (solid_ground == false))
+    {
+      mario_is_jumping = true;
+      mario_jump_count = mario_count - 10;
+      current_mario_jump_speed = 0;
     }
     
     /* After initial jump, start downward effects of gravity */
@@ -2240,8 +2252,8 @@ void play_mario(bool mario_is_green)
     
     mario_count++;
 
-   /* Game Over based on timer */
-    if (mario_count >= 2000)
+   /* Game Over based on timer or fall in hole */
+    if ((mario_count >= 2000) || (current_mario_row == (NUM_DISP_ROWS - 1)))
       mario_over = true;
 
     disp_mario_back();
@@ -2252,7 +2264,7 @@ void play_mario(bool mario_is_green)
 
     delay(5);
   }
-  
+  delay(500);
   
 }
 
