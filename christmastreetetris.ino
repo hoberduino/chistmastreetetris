@@ -2024,14 +2024,14 @@ bool can_go_dir(bool is_right, bool is_big, unsigned char input_row, unsigned in
 
   char adder = -1;
   if (is_right)
-    adder = 1;
+    adder = 2;
  
   if (is_right && (input_col >= (NUM_MARIO_COLUMNS - 12)))
     can_go_dir = false;
   else if ((is_right == false) && (input_col == current_display_col))
     can_go_dir = false;
   else if (((input_row >= high_row) && (input_row <= low_row)) &&
-           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_LOW_BRICK | MARIO_LOW_Q | MARIO_HIGH_PIPE_TOP | MARIO_STEP_4) > 0)))
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_LOW_BRICK | MARIO_LOW_Q | MARIO_HIGH_PIPE_TOP | MARIO_STEP_4)) > 0))
     can_go_dir = false;
 
   high_row = 5;
@@ -2040,25 +2040,25 @@ bool can_go_dir(bool is_right, bool is_big, unsigned char input_row, unsigned in
     low_row = 9;
 
   if (((input_row >= high_row) && (input_row <= low_row)) &&
-           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_HIGH_BRICK | MARIO_HIGH_Q | MARIO_STEP_8) > 0)))
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_HIGH_BRICK | MARIO_HIGH_Q | MARIO_STEP_8)) > 0))
     can_go_dir = false;
   else if ((input_row >= 19) &&
-           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_1) > 0)))
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_1)) > 0))
     can_go_dir = false;
   else if ((input_row >= 17) &&
-           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_2) > 0)))
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_2)) > 0))
     can_go_dir = false;
   else if ((input_row >= 15) &&
-           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_3) > 0)))
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_3)) > 0))
     can_go_dir = false;
   else if ((input_row >= 11) &&
-           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_5) > 0)))
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_5)) > 0))
     can_go_dir = false;
   else if ((input_row >= 9) &&
-           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_6) > 0)))
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_6)) > 0))
     can_go_dir = false;
   else if ((input_row >= 7) &&
-           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_7) > 0)))
+           ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_STEP_7)) > 0))
     can_go_dir = false;
   
   /* Pipe Base */
@@ -2066,10 +2066,10 @@ bool can_go_dir(bool is_right, bool is_big, unsigned char input_row, unsigned in
     high_row = 15;
   if ((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_MED_PIPE_TOP) > 0)
     high_row = 17;
-  if ((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_MED_PIPE_TOP) > 0)
+  if ((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_LOW_PIPE_TOP) > 0)
     high_row = 19;
-  if ((pgm_read_word_near(&marioDispForeItems[input_col]) & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP) > 0) && 
-      (pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP) > 0) &&
+  if (((pgm_read_word_near(&marioDispForeItems[input_col]) & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP)) > 0) && 
+      ((pgm_read_word_near(&marioDispForeItems[input_col + adder]) & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP)) > 0) &&
       (input_row >= high_row))
     can_go_dir = false;
 
@@ -2108,7 +2108,7 @@ void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
   }
   else if (move_dir == MOVE_NONE)
   {
-    mario_run_count = mario_count;  /* Set counter mark for when applied movement stopped */
+    mario_run_count = 0;  /* Set counter mark for when applied movement stopped */
     current_mario_button_dir = MOVE_NONE;
   }
 
@@ -2118,10 +2118,10 @@ void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press)
   else if ((button_left || (current_mario_speed < 0))  && (can_go_dir(false, mario_is_big, current_mario_row, current_mario_col) == false)) /* if can't go left, stop */
     current_mario_speed = 0;
   else if (((current_mario_speed < 0) || (mario_is_jumping && (current_mario_speed < 1))) /* take some time to decelerate */
-      && (button_right) && ((mario_count - mario_run_count) <= run_time_diff / 2))
+      && (button_right))
     current_mario_speed++;
   else if (((current_mario_speed > 0) || (mario_is_jumping && (current_mario_speed > -1))) /* take some time to decelerate */
-      && (button_left ) && ((mario_count - mario_run_count) <= run_time_diff / 2))
+      && (button_left ))
     current_mario_speed--;  
   else if ((mario_run_count > 0) && ((mario_count - mario_run_count) <= run_time_diff) && (mario_is_jumping == false))
   {
@@ -2218,7 +2218,7 @@ bool mario_on_solid_ground(unsigned char input_row, unsigned int input_col)
                           (((pgm_read_word_near(&marioDispForeItems[input_col]) & MARIO_HOLE) == 0) || 
                           ((pgm_read_word_near(&marioDispForeItems[input_col + 1]) & MARIO_HOLE) == 0)))
                           );
-
+                          
    return on_solid_ground;
 }
 
@@ -2232,38 +2232,38 @@ bool mario_can_go_up()
   /* Can't go up when hit blocks or ? */
   bool can_go_up = true;
   unsigned char low_row = 16;
-  unsigned char high_row = 24;
+  unsigned char high_row = 8;
   if (mario_is_big)
   {
-    low_row = 14;
-    high_row = 22;
+    low_row = 18;
+    high_row = 10;
   }
   
   if  (
         ((current_mario_row == low_row) && 
-          (
+          ((
             (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_LOW_BRICK) > 0) || 
             ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_LOW_BRICK) > 0))
           ) ||
           (
             (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_LOW_Q) > 0) || 
             ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_LOW_Q) > 0))
-          )
+          ))
         ) ||
         ((current_mario_row == high_row) && 
-          (
+          ((
             (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HIGH_BRICK) > 0) || 
             ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_HIGH_BRICK) > 0))
           ) ||
           (
             (((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_HIGH_Q) > 0) || 
             ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 1]) & MARIO_HIGH_Q) > 0))
-          )
+          ))
       )
     )
     can_go_up = false;
-      
-   return can_go_up;
+
+  return can_go_up;
   
 }
 
@@ -2288,14 +2288,14 @@ void update_mario_vert_speed(unsigned char button_press)
    * If hit head, stop going up
    * If land on something, stop jump
    */
-  if ((mario_is_jumping == true) && mario_on_solid_ground(current_mario_row, current_mario_col))
+  if ((mario_is_jumping) && mario_on_solid_ground(current_mario_row, current_mario_col))
   {
     /* back on ground, stop the jump */
     mario_is_jumping = false;
     current_mario_jump_speed = 0;
     mario_jump_count = 0;
   }
-  else if (mario_can_go_up() == false)
+  else if ((mario_can_go_up() == false) && (current_mario_jump_speed > 0))
   {
     current_mario_jump_speed = 0;
     mario_jump_count = mario_count - 8; /* so we start falling */
@@ -2306,6 +2306,7 @@ void update_mario_vert_speed(unsigned char button_press)
     /* Mario jumps higher based on horizontal speed, how long press A button */
     if (((button_press & MOVE_ROTATE_RIGHT) > 0) && /* A Button, Jump */
          (mario_is_jumping == false) && /* Not already jumping (for initial jump acceleration, this is still false */
+         (mario_can_go_up() == true) &&
          ((mario_jump_count == 0) || ((mario_count - mario_jump_count) < jump_time_diff)))  
     {
       if (mario_jump_count == 0) /* on ground */
@@ -2313,7 +2314,7 @@ void update_mario_vert_speed(unsigned char button_press)
       /* current_mario_jump_speed > 0 means moving up, < 0 is down */
       current_mario_jump_speed = 3; /* Top Upward Jump Speed */
     }
-    else if ((mario_jump_count > 0) && (mario_is_jumping == false)) /* Jumping has been initiated */
+    else if ((mario_jump_count > 0) && (mario_can_go_up() == true) && (mario_is_jumping == false)) /* Jumping has been initiated */
     {
       mario_is_jumping = true;
       mario_jump_count = mario_count; /* New Jump, Jump Count will now be used to model gravity effects on jump */
