@@ -2019,6 +2019,33 @@ void disp_mario(bool mario_is_green)
   }
 }
 
+
+
+
+/* Store breaking bricks for animation */
+/* Stores initial row, col.  Time updates and determines current display and whether active */
+unsigned char breaking_brick_row[2] = {0,0};
+unsigned int breaking_brick_col[2] = {0,0};
+unsigned char breaking_brick_time[2] = {0,0};
+
+void set_breaking_brick(unsigned char input_row, unsigned int input_col)
+{
+  unsigned char location = 0;
+  if (breaking_brick_time[1] > 0)
+    location = 0;
+  else if (breaking_brick_time[0] > 0)
+    location = 1;
+
+  breaking_brick_row[location] = input_row;
+  breaking_brick_col[location] = input_col;
+}
+
+void disp_breaking_brick()
+{
+  
+}
+
+
 /* Returns bool telling if Mario can go left or right based on input_col and applicable foreground objects (input_row)
  * This includes bricks, ? blocks, pipes, steps
  * Also, mario_is_big and looks at end of level, current_display_col
@@ -2299,12 +2326,14 @@ bool mario_can_go_up()
         can_go_up = false;
       //  if (mario_is_big)
           locations_low_bricks[i] = 22; /* Break brick */
+          set_breaking_brick(current_mario_row - 4, current_mario_col);
       }
       if ((current_mario_row == high_row) &&  ((locations_high_bricks[i] == current_mario_col) || (locations_high_bricks[i] == current_mario_col + 1)))
       {
         can_go_up = false;
        // if (mario_is_big)
           locations_low_bricks[i] = 22; /* Break brick */
+          set_breaking_brick(current_mario_row - 4, current_mario_col);
       }
     }
   }
