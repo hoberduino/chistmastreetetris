@@ -2359,7 +2359,7 @@ void update_mario_vert_speed(unsigned char button_press)
     /* Determine Jump Height */
     /* Mario jumps higher based on horizontal speed, how long press A button */
     if (((button_press & MOVE_ROTATE_RIGHT) > 0) && /* A Button, Jump */
-         ((mario_count - mario_jump_count) < 4)) /* Not already jumping (for initial jump acceleration, this is still false */  
+         ((mario_count == 0) ||((mario_count - mario_jump_count) < 4))) /* Not already jumping (for initial jump acceleration, this is still false */  
     {
       if (mario_jump_count == 0) /* on ground */
         mario_jump_count = mario_count; /* Here Mario Jump Count is used to determine how long button is pressed */
