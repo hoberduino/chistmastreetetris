@@ -2033,24 +2033,85 @@ float apply_acceleration(float current_speed, float accel)
 
 /* Store breaking bricks for animation */
 /* Stores initial row, col.  Time updates and determines current display and whether active */
-unsigned char breaking_brick_row[2] = {0,0};
-unsigned int breaking_brick_col[2] = {0,0};
-unsigned char breaking_brick_time[2] = {0,0};
+float breaking_brick_row[2][2] = {{22.0,22.0},{22.0,22.0}}; /* brick, (0-top brick row,1-bottom brick row) */
+float breaking_brick_col[2][4] = {{0.0,0.0,0.0,0.0},{0.0,0.0,0.0,0.0}}; /* brick, (0-top left brick col,1-bottom left brick row, 2-top right brick col,1-bottom right brick row) */
+float breaking_brick_vert_speed[2][2] = {{0.0,0.0},{0.0,0.0}}; /* brick, (0-top brick speed,1-bottom brick speed) */
 
 void set_breaking_brick(unsigned char input_row, unsigned int input_col)
 {
   unsigned char location = 0;
-  if (breaking_brick_time[1] > 0)
+  if (breaking_brick_row[1][0] < 22.0)
     location = 0;
-  else if (breaking_brick_time[0] > 0)
+  else if (breaking_brick_row[0][0] < 22.0)
     location = 1;
 
-  breaking_brick_row[location] = input_row;
-  breaking_brick_col[location] = input_col;
+  breaking_brick_row[location][0] = input_row - 1;
+  breaking_brick_row[location][1] = input_row;
+  breaking_brick_col[location][0] = input_col;
+  breaking_brick_col[location][1] = input_col;
+  breaking_brick_col[location][2] = input_col + 1;
+  breaking_brick_col[location][3] = input_col + 1;
+  /* Set initial vertical speeds */
+  breaking_brick_vert_speed[location][0] = 2.0;
+  breaking_brick_vert_speed[location][1] = 1.0;
 }
 
 void disp_breaking_brick()
 {
+  /* Display the 4 brick fragments */
+  /* bottom bricks have upward, outward speeds of 1
+   * top bricks have upward, outward speeds of 2
+   */
+
+  /* update rate based on current brick speed */
+  unsigned char i, j;
+
+  /* Update brick vertical speeds */
+  for(i = 0; i < 2; i++)
+  {
+    for(j = 0; j < 2; j++) 
+    {
+      if (breaking_brick_row[i][j] < 22.0) /* active bricks in top row */
+      {
+        breaking_brick_vert_speed[i][j] = breaking_brick_vert_speed[i][j] - MARIO_ACCELERATION;
+        if (breaking_brick_vert_speed[i][j] < -3.0)
+          breaking_brick_vert_speed[i][j] = -3.0;
+      }
+    }
+  }
+
+  /* Update brick positions */
+  for(i = 0; i < 2; i++)
+  {
+    /* Update row position */
+    for(j = 0; j < 2; j++) 
+    {
+      if (breaking_brick_row[i][j] < 22.0) /* active bricks */
+        breaking_brick_row[i][j] = breaking_brick_row[i][j] + breaking_brick_vert_speed[i][j] / 8;
+    }
+    /* Update col position */
+    if (breaking_brick_row[i][0] < 22.0) /* active bricks in top row */
+    {
+        breaking_brick_col[i][0] = breaking_brick_col[i][0] - 2.0 / 8; /* top left brick col */
+        breaking_brick_col[i][1] = breaking_brick_col[i][1] - 1.0 / 8; /* bottom left brick col */
+        breaking_brick_col[i][2] = breaking_brick_col[i][0] + 2.0 / 8; /* top right brick col */
+        breaking_brick_col[i][3] = breaking_brick_col[i][1] + 1.0 / 8; /* bottom right brick col */
+    }
+  }
+
+  /* Display bricks */
+  int brick_col_now = 0;
+  int brick_row_now = 0;
+  for(i = 0; i < 2; i++)
+  {  
+    for(j = 0; j < 4; j++)
+    {
+      brick_row_now = breaking_brick_row[i][(char)j / 2];
+      brick_col_now = breaking_brick_col[i][j] - current_display_col;
+      if ((brick_col_now >= 0) && (brick_col_now < 22) && (brick_row_now >= 0) && (brick_row_now < 22) )
+        bigDispBoard[brick_row_now][brick_col_now] = DISP_COLOR_HALF_RED;
+    }
+  }
   
 }
 
@@ -2508,6 +2569,7 @@ void play_mario(bool mario_is_green)
     display_mario_back_items();
     display_mario_fore_items();
     disp_mario(mario_is_green);
+    disp_breaking_brick();
     displayLEDs(true);
 
     delay(5);
