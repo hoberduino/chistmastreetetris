@@ -2411,7 +2411,7 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
     high_row = 10;
   }
 
-   /* Check for bricks */
+  /* Only look if we might actually hit something */
   if ((current_mario_row == low_row) || (current_mario_row == high_row))
   {
     bool left_is_low_q = ((pgm_read_word_near(&marioDispForeItems[current_mario_col]) & MARIO_LOW_Q) > 0);
@@ -2423,42 +2423,8 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
     bool left_minus_one_is_high_q = ((pgm_read_word_near(&marioDispForeItems[current_mario_col - 1]) & MARIO_HIGH_Q) > 0);
     bool right_plus_one_is_high_q = ((pgm_read_word_near(&marioDispForeItems[current_mario_col + 2]) & MARIO_HIGH_Q) > 0);
     unsigned int i;
-    for(i = 0; i < NUM_BRICKS; i++)
-    {
-      if ((current_mario_row == low_row) && ((locations_low_bricks[i] == current_mario_col) || (locations_low_bricks[i] == current_mario_col + 1)))
-      {
-        can_go_up = false;
-      //  if (mario_is_big)
-        if ((left_is_low_q == false) && (right_is_low_q == false))
-        {
-          locations_low_bricks[i] = 22; /* Break brick */
-          if (locations_low_bricks[i - 1] == current_mario_col - 1)
-            locations_low_bricks[i - 1] = 22; /* Break brick */
-          else if (locations_low_bricks[i + 1] == current_mario_col + 2)
-            locations_low_bricks[i + 1] = 22; /* Break brick */
-          if (locations_low_bricks[i + 1] == current_mario_col + 1)
-            locations_low_bricks[i + 1] = 22; /* Break brick */
-          set_breaking_brick(current_mario_row - 4, current_mario_col);
-        }
-      }
-      else if ((current_mario_row == high_row) && ((locations_high_bricks[i] == current_mario_col) || (locations_high_bricks[i] == current_mario_col + 1)))
-      {
-        can_go_up = false;
-       // if (mario_is_big)
-       if ((left_is_high_q == false) && (right_is_high_q == false))
-        {
-          locations_high_bricks[i] = 22; /* Break brick */
-          if (locations_high_bricks[i - 1] == current_mario_col - 1)
-            locations_high_bricks[i - 1] = 22; /* Break brick */
-          else if (locations_high_bricks[i + 1] == current_mario_col + 2)
-            locations_high_bricks[i + 1] = 22; /* Break brick */
-          if (locations_high_bricks[i + 1] == current_mario_col + 1)
-            locations_high_bricks[i + 1] = 22; /* Break brick */
-          set_breaking_brick(current_mario_row - 4, current_mario_col);
-        }
-      }
-    }
 
+    /* Check for Q */
     if ((current_mario_row == low_row) && (left_is_low_q || right_is_low_q))
     {
       can_go_up = false;
@@ -2497,12 +2463,53 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
 
       if (found == false) /* haven't hit before */
       {
-        locations_high_q[high_q_i] = q_col;
+        locations_high_q[high_q_i] = q_col; /* only saves left column of ? */
         high_q_i++;
         total_score++;
         set_coin_animation(q_col, 6);
       }
     }
+    else
+    {
+
+      /* Check for bricks */
+      for(i = 0; i < NUM_BRICKS; i++)
+      {
+        if ((current_mario_row == low_row) && ((locations_low_bricks[i] == current_mario_col) || (locations_low_bricks[i] == current_mario_col + 1)))
+        {
+          can_go_up = false;
+        //  if (mario_is_big)
+          if ((left_is_low_q == false) && (right_is_low_q == false))
+          {
+            locations_low_bricks[i] = 22; /* Break brick */
+            if (locations_low_bricks[i - 1] == current_mario_col - 1)
+              locations_low_bricks[i - 1] = 22; /* Break brick */
+            else if (locations_low_bricks[i + 1] == current_mario_col + 2)
+              locations_low_bricks[i + 1] = 22; /* Break brick */
+            if (locations_low_bricks[i + 1] == current_mario_col + 1)
+              locations_low_bricks[i + 1] = 22; /* Break brick */
+            set_breaking_brick(current_mario_row - 4, current_mario_col);
+          }
+        }
+        else if ((current_mario_row == high_row) && ((locations_high_bricks[i] == current_mario_col) || (locations_high_bricks[i] == current_mario_col + 1)))
+        {
+          can_go_up = false;
+         // if (mario_is_big)
+         if ((left_is_high_q == false) && (right_is_high_q == false))
+          {
+            locations_high_bricks[i] = 22; /* Break brick */
+            if (locations_high_bricks[i - 1] == current_mario_col - 1)
+              locations_high_bricks[i - 1] = 22; /* Break brick */
+            else if (locations_high_bricks[i + 1] == current_mario_col + 2)
+              locations_high_bricks[i + 1] = 22; /* Break brick */
+            if (locations_high_bricks[i + 1] == current_mario_col + 1)
+              locations_high_bricks[i + 1] = 22; /* Break brick */
+            set_breaking_brick(current_mario_row - 4, current_mario_col);
+          }
+        }
+      }
+    }
+
   }
   
   
