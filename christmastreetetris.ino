@@ -93,7 +93,7 @@ const CRGB numToColor[NUM_DISP_COLORS] =
 {CRGB::Black, CRGB::Blue, CRGB::Orange, CRGB::Yellow, CRGB::Red, CRGB::Green, CRGB::Cyan, CRGB::PeachPuff,
  CRGB::Purple, 0xD7FF00, 0x002332, CRGB::White, CRGB::Gray, 0x2F1010, 0x0000A0, 0x808080, 
  0x000080, 0x800000, 0x404040, 0xff69b4, 0x00cccc, 0x408820, 0x124012, 0x008000, 
- 0x888800, 0xCC8800};
+ 0x888800, 0xFFA500};
 
 /* Tetris stuff */
 #define NUM_ROWS      24 /*middle twenty are visible */
@@ -1721,10 +1721,12 @@ const unsigned int PROGMEM marioDispForeItems[NUM_MARIO_COLUMNS] =
 #define NUM_BRICKS 16
 #define NUM_Q 10
 
-unsigned int locations_high_bricks[NUM_BRICKS] = {22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22};
-unsigned int locations_low_bricks[NUM_BRICKS] = {22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22};
-unsigned int locations_high_q[NUM_Q] = {22,22,22,22,22,22,22,22,22,22};
-unsigned int locations_low_q[NUM_Q] = {22,22,22,22,22,22,22,22,22,22};
+/* These are per column */
+unsigned int locations_high_bricks[NUM_BRICKS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+unsigned int locations_low_bricks[NUM_BRICKS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+/* These are per Q */
+unsigned int locations_high_q[NUM_Q] = {0,0,0,0,0,0,0,0,0,0};
+unsigned int locations_low_q[NUM_Q] = {0,0,0,0,0,0,0,0,0,0};
 
 unsigned char high_q_i = 0;
 unsigned char low_q_i = 0;
@@ -1886,11 +1888,12 @@ void display_mario_fore_items(int current_display_col)
   {
     /* Display Pipes */
     pipe_top = 0;
-    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_LOW_PIPE_TOP) > 0)
+    unsigned int fore_item_word = pgm_read_word_near(&marioDispForeItems[current_display_col+j]);
+    if ((fore_item_word & MARIO_LOW_PIPE_TOP) > 0)
       pipe_top = 16;
-    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_MED_PIPE_TOP) > 0)
+    if ((fore_item_word & MARIO_MED_PIPE_TOP) > 0)
       pipe_top = 14;
-    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_HIGH_PIPE_TOP) > 0)
+    if ((fore_item_word & MARIO_HIGH_PIPE_TOP) > 0)
       pipe_top = 12;
     if (pipe_top > 0)
     {
@@ -1907,12 +1910,12 @@ void display_mario_fore_items(int current_display_col)
     /* Display Bricks */
     for(i = 0; i < NUM_BRICKS; i++)
     {
-      if (locations_low_bricks[i] == current_display_col+j)
+      if ((locations_low_bricks[i] > 0) && (locations_low_bricks[i] == current_display_col+j))
       {
         bigDispBoard[13][j] = DISP_COLOR_HALF_RED;
         bigDispBoard[14][j] = DISP_COLOR_HALF_RED;
       }
-      if (locations_high_bricks[i] == current_display_col+j)
+      if ((locations_high_bricks[i] > 0) && (locations_high_bricks[i] == current_display_col+j))
       {
         bigDispBoard[5][j] = DISP_COLOR_HALF_RED;
         bigDispBoard[6][j] = DISP_COLOR_HALF_RED;
@@ -1920,12 +1923,12 @@ void display_mario_fore_items(int current_display_col)
     }
 
     /* Display ? Blocks */
-    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_LOW_Q) > 0)
+    if ((fore_item_word & MARIO_LOW_Q) > 0)
     {
       bigDispBoard[13][j] = DISP_COLOR_Q_YELLOW;
       bigDispBoard[14][j] = DISP_COLOR_Q_YELLOW;
     }
-    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_HIGH_Q) > 0)
+    if ((fore_item_word & MARIO_HIGH_Q) > 0)
     {
       bigDispBoard[5][j] = DISP_COLOR_Q_YELLOW;
       bigDispBoard[6][j] = DISP_COLOR_Q_YELLOW;
@@ -1934,14 +1937,16 @@ void display_mario_fore_items(int current_display_col)
     /* Display Bricks */
     for(i = 0; i < NUM_Q; i++)
     {
-      if (locations_low_q[i] == current_display_col+j)
+      /* Q this column, here Q in left column represent whole block */
+      if ((locations_low_q[i] > 0) && (locations_low_q[i] == current_display_col+j))
       {
         bigDispBoard[13][j] = DISP_COLOR_Q_ORANGE;
         bigDispBoard[14][j] = DISP_COLOR_Q_ORANGE;
         bigDispBoard[13][j + 1] = DISP_COLOR_Q_ORANGE;
         bigDispBoard[14][j + 1] = DISP_COLOR_Q_ORANGE;
       }
-      if (locations_high_q[i] == current_display_col+j)
+      /* Q this column, here Q in left column represent whole block */
+      if ((locations_high_q[i] > 0) && (locations_high_q[i] == current_display_col+j))
       {
         bigDispBoard[5][j] = DISP_COLOR_Q_ORANGE;
         bigDispBoard[6][j] = DISP_COLOR_Q_ORANGE;
@@ -1951,42 +1956,42 @@ void display_mario_fore_items(int current_display_col)
     }
 
     /* Display Steps */
-    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_1) > 0)
+    if ((fore_item_word & MARIO_STEP_1) > 0)
     {
       bigDispBoard[19][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[20][j] = DISP_COLOR_HALF_RED;
     }
-    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_2) > 0)
+    if ((fore_item_word & MARIO_STEP_2) > 0)
     {
       bigDispBoard[17][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[18][j] = DISP_COLOR_HALF_RED;
     }
-    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_3) > 0)
+    if ((fore_item_word & MARIO_STEP_3) > 0)
     {
       bigDispBoard[15][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[16][j] = DISP_COLOR_HALF_RED;
     }
-    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_4) > 0)
+    if ((fore_item_word & MARIO_STEP_4) > 0)
     {
       bigDispBoard[13][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[14][j] = DISP_COLOR_HALF_RED;
     }
-    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_5) > 0)
+    if ((fore_item_word & MARIO_STEP_5) > 0)
     {
       bigDispBoard[11][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[12][j] = DISP_COLOR_HALF_RED;
     }
-    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_6) > 0)
+    if ((fore_item_word & MARIO_STEP_6) > 0)
     {
       bigDispBoard[9][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[10][j] = DISP_COLOR_HALF_RED;
     }
-    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_7) > 0)
+    if ((fore_item_word & MARIO_STEP_7) > 0)
     {
       bigDispBoard[7][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[8][j] = DISP_COLOR_HALF_RED;
     }
-    if ((pgm_read_word_near(&marioDispForeItems[current_display_col+j]) & MARIO_STEP_8) > 0)
+    if ((fore_item_word & MARIO_STEP_8) > 0)
     {
       bigDispBoard[5][j] = DISP_COLOR_HALF_RED;
       bigDispBoard[6][j] = DISP_COLOR_HALF_RED;
@@ -2061,7 +2066,44 @@ unsigned int coin_col = 0;
 unsigned int coin_count = 0;
 void set_coin_animation(unsigned char input_row, unsigned int input_col)
 {
-  
+  coin_row = input_row;
+  coin_col = input_col;
+  coin_count = mario_count;
+}
+
+void display_coin_animation(int current_display_col)
+{
+  /* Update coin position */
+  if ((coin_row > 0) && ((mario_count - coin_count) < 65))
+  {
+    if (((mario_count - coin_count) % 4) == 0)
+      coin_row--;
+  }
+  else
+  {
+    coin_row = 0;
+    coin_count = 0;
+  }
+
+  /* Display coin */
+  unsigned int coin_disp_col = coin_col - current_display_col;
+  if ((coin_disp_col >= 0) && (coin_disp_col < 21) && (coin_row > 0))
+  {
+    if (((mario_count - coin_count) % 8) < 4)
+    {
+      bigDispBoard[coin_row][coin_disp_col] = DISP_COLOR_WHITE;
+      bigDispBoard[coin_row - 1][coin_disp_col] = DISP_COLOR_WHITE;
+      bigDispBoard[coin_row][coin_disp_col + 1] = DISP_COLOR_YELLOW;
+      bigDispBoard[coin_row - 1][coin_disp_col + 1] = DISP_COLOR_YELLOW;
+    }
+    else
+    {
+      bigDispBoard[coin_row][coin_disp_col] = DISP_COLOR_YELLOW;
+      bigDispBoard[coin_row - 1][coin_disp_col] = DISP_COLOR_YELLOW;
+      bigDispBoard[coin_row][coin_disp_col + 1] = DISP_COLOR_WHITE;
+      bigDispBoard[coin_row - 1][coin_disp_col + 1] = DISP_COLOR_WHITE;
+    }
+  }
 }
 
 
@@ -2710,6 +2752,7 @@ void play_mario(bool mario_is_green)
     display_mario_fore_items(current_display_col);
     disp_mario(mario_is_green, current_mario_row, current_mario_col, current_display_col);
     disp_breaking_brick(current_display_col);
+    display_coin_animation(current_display_col);
     displayLEDs(true);
 
     delay(5);
