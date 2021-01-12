@@ -1,7 +1,7 @@
 #include <FastLED.h>
 #include <EEPROM.h>
 
-//#include <avr/pgmspace.h>
+#include <avr/pgmspace.h>
 
 /* TODO: */
 /* Mario */
@@ -157,18 +157,13 @@ const int RIGHT_BUTTON     = 7;
 #define NES_LATCH          17    // The latch pin for the NES controller
 #define LED_PIN            21
 #define LED_TREE_PIN       22
-#define RESET_SWITCH_IN    8
-#define RESET_SWITCH_OUT   9
-#define POWER_SWITCH_IN   10
-#define POWER_SWITCH_OUT  11
-#define MUSIC_PIN_TETRIS (22)
-#define MUSIC_PIN_PAC    (24)
-#define MUSIC_PIN_MARIO  (26)
-
-// ESP32 OLED WiFi Kit onboard LED
-#define LED_ONBOARD_PIN 2
-// ESP32 OLED WiFi Kit "PRG" button for input to programs
-#define PRG_BUTTON_PIN 0
+//#define RESET_SWITCH_IN    8
+//#define RESET_SWITCH_OUT   9
+//#define POWER_SWITCH_IN   10
+//#define POWER_SWITCH_OUT  11
+//#define MUSIC_PIN_TETRIS (22)
+//#define MUSIC_PIN_PAC    (24)
+//#define MUSIC_PIN_MARIO  (26)
 
 
 
@@ -331,25 +326,11 @@ void setup() {
   // Set appropriate pins to outputs
   pinMode(NES_CLOCK, OUTPUT);
   pinMode(NES_LATCH, OUTPUT);
-  pinMode(RESET_SWITCH_IN, INPUT);
-  pinMode(RESET_SWITCH_OUT, OUTPUT);
-  pinMode(POWER_SWITCH_IN, INPUT);
-  pinMode(POWER_SWITCH_OUT, OUTPUT);
-  pinMode(MUSIC_PIN_TETRIS, OUTPUT);
-  pinMode(MUSIC_PIN_PAC, OUTPUT);
-  pinMode(MUSIC_PIN_MARIO, OUTPUT);
-
-  pinMode(LED_ONBOARD_PIN, OUTPUT);
 
   
   // Set initial states
   digitalWrite(NES_CLOCK, LOW);
   digitalWrite(NES_LATCH, LOW);
-  digitalWrite(RESET_SWITCH_OUT, HIGH);
-  digitalWrite(POWER_SWITCH_OUT, HIGH);
-  digitalWrite(MUSIC_PIN_TETRIS, LOW);
-  digitalWrite(MUSIC_PIN_PAC, LOW);
-  digitalWrite(MUSIC_PIN_MARIO, LOW);
 
   /* Read values from EEPROM */
   unsigned char i = EEPROM.read(NUM_ROWS_EEPROM_ADDRESS); /* num rows to be stored at address 0 */
@@ -851,9 +832,6 @@ void init_tetris()
    // Set initial states
   digitalWrite(NES_CLOCK, LOW);
   digitalWrite(NES_LATCH, LOW);
-  digitalWrite(RESET_SWITCH_OUT, HIGH);
-  digitalWrite(POWER_SWITCH_OUT, HIGH);
-  digitalWrite(MUSIC_PIN_TETRIS, LOW);
 
   for(i = 0; i < NUM_ROWS - 2; i++)
     gameBoard[i] = EMPTY_BOARD_ROW;
@@ -869,7 +847,7 @@ void init_tetris()
 
   blockLoc[0] = 0;
   blockLoc[1] = 0;
-  digitalWrite(MUSIC_PIN_TETRIS, HIGH);
+  //digitalWrite(MUSIC_PIN_TETRIS, HIGH);
   randomSeed(millis());
   displayTetrisStart();
   delay(3000);
@@ -1023,7 +1001,7 @@ void play_tetris()
 {
   byte numNewLines = 0;
   bool gameEnd = false;
-  bool playMusic = false;
+  //bool playMusic = false;
   unsigned long timePieceStartRow;
   unsigned int moveDir = MOVE_NONE;
   unsigned long currentMillis = 0;
@@ -1080,14 +1058,14 @@ void play_tetris()
           moveDir = getMove();
         }
       } 
-      else if (moveDir == MOVE_SELECT)
-      {
-        playMusic = !playMusic;
-        if (playMusic)
-          digitalWrite(MUSIC_PIN_TETRIS, HIGH);
-        else
-          digitalWrite(MUSIC_PIN_TETRIS, LOW);
-      }
+//      else if (moveDir == MOVE_SELECT)
+//      {
+//        playMusic = !playMusic;
+//        if (playMusic)
+//          digitalWrite(MUSIC_PIN_TETRIS, HIGH);
+//        else
+//          digitalWrite(MUSIC_PIN_TETRIS, LOW);
+//      }
     
       /* Check if can drop */
       if ((currentMillis - timePieceStartRow) > pgm_read_word_near(&millisPerRow[gameLevel]))
@@ -1108,8 +1086,6 @@ void play_tetris()
         }
         timePieceStartRow = currentMillis;
       }
-      if (digitalRead(RESET_SWITCH_IN) == HIGH)
-        gameEnd = true;
 
       delay(60);
     }
@@ -3501,7 +3477,6 @@ void play_pac_man()
   unsigned char ghost_mode;
   /* allow for "cornering", press button ahead of move */
   unsigned char loaded_move_dir = MOVE_NONE; 
-  bool play_music = false;
 
   /* Reset the score */
   current_pac_level = 0;
@@ -3522,14 +3497,6 @@ void play_pac_man()
     /* exit game on START */
     if (move_dir == MOVE_START)
       pac_man_over = true;
-    else if (move_dir == MOVE_SELECT)
-    {
-      play_music = !play_music;
-      if (play_music)
-        digitalWrite(MUSIC_PIN_PAC, HIGH);
-      else
-        digitalWrite(MUSIC_PIN_PAC, LOW);
-    }
 
     /* Update Pac Counter */
     pac_counter++;
@@ -3965,45 +3932,28 @@ void loop() {
   unsigned int moveDir = MOVE_NONE;
   unsigned char i;
   unsigned char num_leds = 0;
-  digitalWrite(MUSIC_PIN_TETRIS, LOW);
-  digitalWrite(MUSIC_PIN_PAC, LOW);
-  digitalWrite(MUSIC_PIN_MARIO, LOW);
-
-  digitalWrite(LED_ONBOARD_PIN, HIGH);
-  digitalWrite(NES_CLOCK, HIGH);
-  digitalWrite(NES_LATCH, HIGH);
+  //digitalWrite(MUSIC_PIN_TETRIS, LOW);
+  //digitalWrite(MUSIC_PIN_PAC, LOW);
+  //digitalWrite(MUSIC_PIN_MARIO, LOW);
   
   /* Monitor Inputs */
   moveDir = getMove();
 
-  //if (digitalRead(NES_DATA) == LOW)
-  //  digitalWrite(LED_ONBOARD_PIN, HIGH);
-
   /* Move up and down between display options */
   if (moveDir == MOVE_UP)
-  {
     display_mode = (display_mode + NUM_DISP_MODES - 1) % NUM_DISP_MODES;
-    digitalWrite(LED_ONBOARD_PIN, HIGH);
-  }
   else if (moveDir == MOVE_DOWN)
-  {
     display_mode = (display_mode + 1) % NUM_DISP_MODES;
-    digitalWrite(LED_ONBOARD_PIN, LOW);
-  }
 
   /* Update display for current selection */
   /* If tetris, init and kick out of loop */
   if (moveDir == MOVE_START) //|| (digitalRead(RESET_SWITCH_IN) == HIGH))
-  {
-    digitalWrite(LED_ONBOARD_PIN, HIGH);
-    //start_menu();
-  }
+    start_menu();
     
   else if (moveDir == MOVE_SELECT) /* Calibrate if SELECT, A, B pressed in order */
   {
-    digitalWrite(LED_ONBOARD_PIN, LOW);
-   // play_mario(true);
-    //calibration_mode = 1;
+    play_mario(true);
+    calibration_mode = 1;
   }
   else if ((moveDir >> 4 == MOVE_ROTATE_RIGHT) && (calibration_mode == 1))
     calibration_mode++;
