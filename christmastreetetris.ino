@@ -1,6 +1,7 @@
 #include <FastLED.h>
 #include <EEPROM.h>
-#include <avr/pgmspace.h>
+
+//#include <avr/pgmspace.h>
 
 /* TODO: */
 /* Mario */
@@ -133,7 +134,7 @@ const int RIGHT_BUTTON     = 7;
 //  Pin Declarations
 //===============================================================================
 //Inputs:
-#define NES_DATA          4    // The data pin for the NES controller
+#define NES_DATA          35    // The data pin for the NES controller
 
 /* use 560 ohm pull down resistors (to ground) for RESET_SWITCH_IN and POWER_SWITCH_IN */
 /* use ~2k ohm resistor connecting ground to white power/reset wire */
@@ -152,10 +153,10 @@ const int RIGHT_BUTTON     = 7;
 
 /* Do I really need RESET_SWITCH_OUT and POWER_SWITCH_OUT or can I connect to 5V? */
 /* Outputs: */
-#define NES_CLOCK          2    // The clock pin for the NES controller
-#define NES_LATCH          3    // The latch pin for the NES controller
-#define LED_PIN            5
-#define LED_TREE_PIN       6
+#define NES_CLOCK          4    // The clock pin for the NES controller
+#define NES_LATCH          17    // The latch pin for the NES controller
+#define LED_PIN            21
+#define LED_TREE_PIN       22
 #define RESET_SWITCH_IN    8
 #define RESET_SWITCH_OUT   9
 #define POWER_SWITCH_IN   10
@@ -163,6 +164,11 @@ const int RIGHT_BUTTON     = 7;
 #define MUSIC_PIN_TETRIS (22)
 #define MUSIC_PIN_PAC    (24)
 #define MUSIC_PIN_MARIO  (26)
+
+// ESP32 OLED WiFi Kit onboard LED
+#define LED_ONBOARD_PIN 2
+// ESP32 OLED WiFi Kit "PRG" button for input to programs
+#define PRG_BUTTON_PIN 0
 
 
 
@@ -333,6 +339,8 @@ void setup() {
   pinMode(MUSIC_PIN_PAC, OUTPUT);
   pinMode(MUSIC_PIN_MARIO, OUTPUT);
 
+  pinMode(LED_ONBOARD_PIN, OUTPUT);
+
   
   // Set initial states
   digitalWrite(NES_CLOCK, LOW);
@@ -359,6 +367,7 @@ void setup() {
     if ((num_leds > 0) && (num_leds < 50))
       ledsBeforeRows[i] = num_leds;
   }
+  
 }
 
 
@@ -2113,8 +2122,9 @@ void display_coin_animation(int current_display_col)
 float breaking_brick_row[2][4] = {{22.0,22.0,22.0,22.0},{22.0,22.0,22.0,22.0}}; /* brick, (0-top left brick col,1-bottom left brick row, 2-top right brick col,1-bottom right brick row) */
 float breaking_brick_col[2][4] = {{0.0,0.0,0.0,0.0},{0.0,0.0,0.0,0.0}}; /* brick, (0-top left brick col,1-bottom left brick row, 2-top right brick col,1-bottom right brick row) */
 float breaking_brick_vert_speed[2][4] = {{0.0,0.0,0.0,0.0},{0.0,0.0,0.0,0.0}}; /* brick, (0-top left brick col,1-bottom left brick row, 2-top right brick col,1-bottom right brick row) */
+bool bumping_brick[2] = {false, false}; /* true if breaking, false if bumping */
 
-void set_breaking_brick(unsigned char input_row, unsigned int input_col)
+void set_breaking_brick(unsigned char input_row, unsigned int input_col, bool bump_brick)
 {
   unsigned char location = 0;
   if (breaking_brick_row[1][0] < 22.0)
@@ -2122,19 +2132,24 @@ void set_breaking_brick(unsigned char input_row, unsigned int input_col)
   else if (breaking_brick_row[0][0] < 22.0)
     location = 1;
 
-  breaking_brick_row[location][0] = input_row - 1;
-  breaking_brick_row[location][1] = input_row;
-  breaking_brick_row[location][2] = input_row - 1;
-  breaking_brick_row[location][3] = input_row;
-  breaking_brick_col[location][0] = input_col;
-  breaking_brick_col[location][1] = input_col;
-  breaking_brick_col[location][2] = input_col + 1;
-  breaking_brick_col[location][3] = input_col + 1;
-  /* Set initial vertical speeds */
-  breaking_brick_vert_speed[location][0] = 2.0;
-  breaking_brick_vert_speed[location][1] = 1.0;
-  breaking_brick_vert_speed[location][2] = 2.0;
-  breaking_brick_vert_speed[location][3] = 1.0;
+  if (bump_brick == false)
+  {
+    breaking_brick_row[location][0] = input_row - 1;
+    breaking_brick_row[location][1] = input_row;
+    breaking_brick_row[location][2] = input_row - 1;
+    breaking_brick_row[location][3] = input_row;
+    breaking_brick_col[location][0] = input_col;
+    breaking_brick_col[location][1] = input_col;
+    breaking_brick_col[location][2] = input_col + 1;
+    breaking_brick_col[location][3] = input_col + 1;
+    /* Set initial vertical speeds */
+    breaking_brick_vert_speed[location][0] = 2.0;
+    breaking_brick_vert_speed[location][1] = 1.0;
+    breaking_brick_vert_speed[location][2] = 2.0;
+    breaking_brick_vert_speed[location][3] = 1.0;
+  }
+  else
+    bumping_brick[location] = true;
 }
 
 void disp_breaking_brick(int current_display_col)
@@ -2530,7 +2545,7 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
               locations_low_bricks[i + 1] = 22; /* Break brick */
             if (locations_low_bricks[i + 1] == current_mario_col + 1)
               locations_low_bricks[i + 1] = 22; /* Break brick */
-            set_breaking_brick(current_mario_row - 4, current_mario_col);
+            set_breaking_brick(current_mario_row - 4, current_mario_col, true);
           }
         }
         else if ((current_mario_row == high_row) && ((locations_high_bricks[i] == current_mario_col) || (locations_high_bricks[i] == current_mario_col + 1)))
@@ -2546,7 +2561,7 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
               locations_high_bricks[i + 1] = 22; /* Break brick */
             if (locations_high_bricks[i + 1] == current_mario_col + 1)
               locations_high_bricks[i + 1] = 22; /* Break brick */
-            set_breaking_brick(current_mario_row - 4, current_mario_col);
+            set_breaking_brick(current_mario_row - 4, current_mario_col, true);
           }
         }
       }
@@ -3953,23 +3968,43 @@ void loop() {
   digitalWrite(MUSIC_PIN_TETRIS, LOW);
   digitalWrite(MUSIC_PIN_PAC, LOW);
   digitalWrite(MUSIC_PIN_MARIO, LOW);
+
+  digitalWrite(LED_ONBOARD_PIN, HIGH);
+  digitalWrite(NES_CLOCK, HIGH);
+  digitalWrite(NES_LATCH, HIGH);
   
   /* Monitor Inputs */
   moveDir = getMove();
 
+  //if (digitalRead(NES_DATA) == LOW)
+  //  digitalWrite(LED_ONBOARD_PIN, HIGH);
+
   /* Move up and down between display options */
   if (moveDir == MOVE_UP)
+  {
     display_mode = (display_mode + NUM_DISP_MODES - 1) % NUM_DISP_MODES;
+    digitalWrite(LED_ONBOARD_PIN, HIGH);
+  }
   else if (moveDir == MOVE_DOWN)
+  {
     display_mode = (display_mode + 1) % NUM_DISP_MODES;
+    digitalWrite(LED_ONBOARD_PIN, LOW);
+  }
 
   /* Update display for current selection */
   /* If tetris, init and kick out of loop */
-  if ((moveDir == MOVE_START) || (digitalRead(RESET_SWITCH_IN) == HIGH))
-    start_menu();
+  if (moveDir == MOVE_START) //|| (digitalRead(RESET_SWITCH_IN) == HIGH))
+  {
+    digitalWrite(LED_ONBOARD_PIN, HIGH);
+    //start_menu();
+  }
+    
   else if (moveDir == MOVE_SELECT) /* Calibrate if SELECT, A, B pressed in order */
-    play_mario(true);
+  {
+    digitalWrite(LED_ONBOARD_PIN, LOW);
+   // play_mario(true);
     //calibration_mode = 1;
+  }
   else if ((moveDir >> 4 == MOVE_ROTATE_RIGHT) && (calibration_mode == 1))
     calibration_mode++;
   else if ((moveDir >> 4 == MOVE_ROTATE_LEFT) && (calibration_mode == 2))
