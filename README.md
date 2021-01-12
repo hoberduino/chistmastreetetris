@@ -55,9 +55,9 @@ GND -> GND
 VCC -> +5V
 CLK -> Pin 2 (NES_CLOCK)
 Latch -> Pin 3 (NES_LATCH)
-Data -> O -> Pin 4          (Board then split with 1k resistor to ground, input to pin 4 (NES_DATA))
+Data -> O -> Pin 4          (Board then split with 1k resistor to 5V, input to pin 4 (NES_DATA))
 	    |
-		---> 1k resistor -> GND
+		---> 1k resistor -> 5V
 
 
 
