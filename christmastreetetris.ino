@@ -30,8 +30,7 @@
 #define DISP_JUGGLE    3
 #define DISP_CASTLE    4
 #define DISP_ONE_COLOR 5
-#define DISP_SNAKE     6
-#define NUM_DISP_MODES 7
+#define NUM_DISP_MODES 6
 
 
 
@@ -94,7 +93,7 @@ const CRGB numToColor[NUM_DISP_COLORS] =
 {CRGB::Black, CRGB::Blue, CRGB::Orange, CRGB::Yellow, CRGB::Red, CRGB::Green, CRGB::Cyan, CRGB::PeachPuff,
  CRGB::Purple, 0xD7FF00, 0x002332, CRGB::White, CRGB::Gray, 0x2F1010, 0x0000A0, 0x808080, 
  0x000080, 0x800000, 0x404040, 0xff69b4, 0x00cccc, 0x408820, 0x124012, 0x008000, 
- 0x888800, 0xFFA500};
+ 0x888800, 0xFF6500};
 
 /* Tetris stuff */
 #define NUM_ROWS      24 /*middle twenty are visible */
@@ -134,7 +133,7 @@ const int RIGHT_BUTTON     = 7;
 //  Pin Declarations
 //===============================================================================
 //Inputs:
-#define NES_DATA          35    // The data pin for the NES controller
+#define NES_DATA          22    // The data pin for the NES controller
 
 /* use 560 ohm pull down resistors (to ground) for RESET_SWITCH_IN and POWER_SWITCH_IN */
 /* use ~2k ohm resistor connecting ground to white power/reset wire */
@@ -153,10 +152,10 @@ const int RIGHT_BUTTON     = 7;
 
 /* Do I really need RESET_SWITCH_OUT and POWER_SWITCH_OUT or can I connect to 5V? */
 /* Outputs: */
-#define NES_CLOCK          4    // The clock pin for the NES controller
-#define NES_LATCH          17    // The latch pin for the NES controller
-#define LED_PIN            21
-#define LED_TREE_PIN       22
+#define NES_CLOCK          26    // The clock pin for the NES controller
+#define NES_LATCH          30    // The latch pin for the NES controller
+#define LED_PIN            48
+#define LED_TREE_PIN       52
 //#define RESET_SWITCH_IN    8
 //#define RESET_SWITCH_OUT   9
 //#define POWER_SWITCH_IN   10
@@ -326,6 +325,7 @@ void setup() {
   // Set appropriate pins to outputs
   pinMode(NES_CLOCK, OUTPUT);
   pinMode(NES_LATCH, OUTPUT);
+
 
   
   // Set initial states
@@ -1106,79 +1106,6 @@ void play_tetris()
 
 
 
-
-/* SNAKE Function */
-
-
-
-#define NUM_SNAKE_COLORS 11 
-unsigned int snake_dir = MOVE_RIGHT;
-unsigned int snake_leds[10] = {200,201,202,203,204,205,206,207,208,209}; // locations of 5 displayable snake leds, starting with head
-unsigned int snake_color_idx = 0;
-void play_snake()
-{ 
-  int new_snake_head_pos = 0;
-  int i = 0;
-  byte move_dir = 0;
-
-  CRGB numToSnakeColor[NUM_SNAKE_COLORS] = 
- {CRGB::Blue, CRGB::Orange, CRGB::Yellow, CRGB::Red, CRGB::Green, CRGB::Cyan, CRGB::PeachPuff,
-  CRGB::Purple, 0xD7FF00, CRGB::LightBlue, CRGB::White};
-
-  delay(20);
-    
-    /* look for movements */
-    move_dir = getMove();
-    //if ((move_dir == MOVE_START) || (move_dir == MOVE_SELECT))
-    //  snake_over = true;
-    //else 
-    if ((move_dir == MOVE_RIGHT) || (move_dir == MOVE_LEFT))
-      snake_dir = move_dir;
-
-    move_dir = move_dir >> 4;
-    if (move_dir == MOVE_ROTATE_RIGHT)
-      snake_color_idx = (snake_color_idx + NUM_SNAKE_COLORS + 1) % NUM_SNAKE_COLORS;
-    else if (move_dir == MOVE_ROTATE_LEFT)
-      snake_color_idx = (snake_color_idx + NUM_SNAKE_COLORS - 1) % NUM_SNAKE_COLORS;
-
-    // update snake position
-    if (snake_dir == MOVE_RIGHT)
-      new_snake_head_pos = snake_leds[0] - 1;
-    else if (snake_dir == MOVE_LEFT)
-      new_snake_head_pos = snake_leds[0] + 1;
-      
-    if (new_snake_head_pos < 0)
-      new_snake_head_pos = NUM_LEDS - 1;
-    else if (new_snake_head_pos >= NUM_LEDS)
-      new_snake_head_pos = 0;
-    
-
-    // Update snake tail
-    for(i = 9; i > 0; i--)
-      snake_leds[i] = snake_leds[i-1];
-    snake_leds[0] = new_snake_head_pos;
-     
-    // Display snake
-    for(i = 0; i < NUM_LEDS; i++)
-    {
-      if ((i == snake_leds[0]) || (i == snake_leds[1]) || (i == snake_leds[2]) || (i == snake_leds[3]) || (i == snake_leds[4]) || (i == snake_leds[5]) || (i == snake_leds[6]) || (i == snake_leds[7]) || (i == snake_leds[8]) || (i == snake_leds[9]))
-        leds[i] = numToSnakeColor[snake_color_idx];
-      else
-        leds[i] = CRGB::Black;
-    }
-    for(i = 0; i < NUM_TREE_LEDS; i++)
-    {
-      if ((i == snake_leds[0]) || (i == snake_leds[1]) || (i == snake_leds[2]) || (i == snake_leds[3]) || (i == snake_leds[4]) || (i == snake_leds[5]) || (i == snake_leds[6]) || (i == snake_leds[7]) || (i == snake_leds[8]) || (i == snake_leds[9]))
-        leds_tree[i] = numToSnakeColor[snake_color_idx];
-      else
-        leds_tree[i] = CRGB::Black;
-    }
-    FastLED.show();
-    delay(20);
-}
-
-
-
 /* Lights Functions */
 
 
@@ -1868,7 +1795,7 @@ void display_mario_fore_items(int current_display_col)
 {
   unsigned int i, j;
   unsigned char pipe_top = 0;
-  
+
   for(j = 0; j < NUM_DISP_COLS; j++)
   {
     /* Display Pipes */
@@ -1919,24 +1846,20 @@ void display_mario_fore_items(int current_display_col)
       bigDispBoard[6][j] = DISP_COLOR_Q_YELLOW;
     }
 
-    /* Display Bricks */
+    /* Display ? Blocks */
     for(i = 0; i < NUM_Q; i++)
     {
       /* Q this column, here Q in left column represent whole block */
-      if ((locations_low_q[i] > 0) && (locations_low_q[i] == current_display_col+j))
+      if ((locations_low_q[i] > 0) && ((locations_low_q[i] == current_display_col + j) || (locations_low_q[i] == current_display_col + j - 1)))
       {
         bigDispBoard[13][j] = DISP_COLOR_Q_ORANGE;
         bigDispBoard[14][j] = DISP_COLOR_Q_ORANGE;
-        bigDispBoard[13][j + 1] = DISP_COLOR_Q_ORANGE;
-        bigDispBoard[14][j + 1] = DISP_COLOR_Q_ORANGE;
       }
       /* Q this column, here Q in left column represent whole block */
-      if ((locations_high_q[i] > 0) && (locations_high_q[i] == current_display_col+j))
+      if ((locations_high_q[i] > 0) && ((locations_high_q[i] == current_display_col + j) || (locations_high_q[i] == current_display_col + j - 1)))
       {
         bigDispBoard[5][j] = DISP_COLOR_Q_ORANGE;
         bigDispBoard[6][j] = DISP_COLOR_Q_ORANGE;
-        bigDispBoard[5][j + 1] = DISP_COLOR_Q_ORANGE;
-        bigDispBoard[6][j + 1] = DISP_COLOR_Q_ORANGE;
       }
     }
 
@@ -2058,10 +1981,12 @@ void set_coin_animation(unsigned char input_row, unsigned int input_col)
 
 void display_coin_animation(int current_display_col)
 {
+  unsigned int coin_disp_col = coin_col - current_display_col;
+  
   /* Update coin position */
-  if ((coin_row > 0) && ((mario_count - coin_count) < 65))
+  if ((coin_row > 0) && ((mario_count - coin_count) < 12))
   {
-    if (((mario_count - coin_count) % 4) == 0)
+    if (((mario_count - coin_count) % 2) == 0)
       coin_row--;
   }
   else
@@ -2069,9 +1994,9 @@ void display_coin_animation(int current_display_col)
     coin_row = 0;
     coin_count = 0;
   }
-
+  
   /* Display coin */
-  unsigned int coin_disp_col = coin_col - current_display_col;
+  
   if ((coin_disp_col >= 0) && (coin_disp_col < 21) && (coin_row > 0))
   {
     if (((mario_count - coin_count) % 8) < 4)
@@ -2477,7 +2402,7 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
         locations_low_q[low_q_i] = q_col;
         low_q_i++;
         total_score++;
-        set_coin_animation(q_col, 14);
+        set_coin_animation(14, q_col);
       }
     }
     else if ((current_mario_row == high_row) && (left_is_high_q || right_is_high_q))
@@ -2499,7 +2424,7 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
         locations_high_q[high_q_i] = q_col; /* only saves left column of ? */
         high_q_i++;
         total_score++;
-        set_coin_animation(q_col, 6);
+        set_coin_animation(6, q_col);
       }
     }
     else
@@ -2521,7 +2446,7 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
               locations_low_bricks[i + 1] = 22; /* Break brick */
             if (locations_low_bricks[i + 1] == current_mario_col + 1)
               locations_low_bricks[i + 1] = 22; /* Break brick */
-            set_breaking_brick(current_mario_row - 4, current_mario_col, true);
+            set_breaking_brick(current_mario_row - 4, current_mario_col, false);
           }
         }
         else if ((current_mario_row == high_row) && ((locations_high_bricks[i] == current_mario_col) || (locations_high_bricks[i] == current_mario_col + 1)))
@@ -2537,7 +2462,7 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
               locations_high_bricks[i + 1] = 22; /* Break brick */
             if (locations_high_bricks[i + 1] == current_mario_col + 1)
               locations_high_bricks[i + 1] = 22; /* Break brick */
-            set_breaking_brick(current_mario_row - 4, current_mario_col, true);
+            set_breaking_brick(current_mario_row - 4, current_mario_col, false);
           }
         }
       }
@@ -2557,7 +2482,7 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
  * Reads button presses to determine and apply affects of vert accelearation (updates current_mario_jump_speed)  
  * TODO: Add broken bricks, creatures landed on to be handled elsewhere
  */
-#define NORMAL_JUMP_TIME 10
+#define NORMAL_JUMP_TIME 6
 bool mario_was_in_air = false;
 unsigned char mario_jump_time_accel = NORMAL_JUMP_TIME;
 void update_mario_vert_speed(unsigned char button_press, int current_mario_row, int current_mario_col, float *current_mario_jump_speed, float current_mario_speed)
@@ -2570,7 +2495,7 @@ void update_mario_vert_speed(unsigned char button_press, int current_mario_row, 
   /* Determine Jump Height */
   /* Mario jumps higher based on horizontal speed, how long press A button */
   if (abs(current_mario_speed) > 2.0)
-    mario_jump_time_accel = 18;
+    mario_jump_time_accel = 8;
 
   /* If land on ground, stop jump (look for pits)
    * If hit head, stop going up
@@ -2621,7 +2546,7 @@ void update_mario_hor_location(float current_mario_speed, int *current_mario_col
   /* Only update if abs(speed) > 0 */
   if (mario_speed != 0)
   {
-    update_rate = 8 / abs((int)mario_speed);
+    update_rate = 6 / abs((int)mario_speed);
     if ((mario_count % update_rate) == 0)
     {
       /* Mario stays on left half of screen
@@ -2654,7 +2579,7 @@ void update_mario_vert_location(float current_mario_jump_speed, int *current_mar
   /* UPDATE VERTICAL POSITION */
   if (mario_speed != 0)
   {
-    update_rate = 8 / abs(mario_speed);
+    update_rate = 3 / abs(mario_speed);
     if ((mario_count % update_rate) == 0)
     {
       /* current_mario_jump_speed > 0 means moving up, < 0 is down */
@@ -2665,6 +2590,47 @@ void update_mario_vert_location(float current_mario_jump_speed, int *current_mar
     }
   }
 
+}
+
+void init_mario()
+{
+  mario_face_right = true;
+  mario_is_big = false;
+  mario_is_fire = false;
+  mario_is_trying = false;
+  mario_jump_count = 0;
+  mario_count = 0;
+  total_score = 0;
+  coin_row = 0;
+  coin_col = 0;
+  coin_count = 0;
+
+  /* Initialize ? Arrays */
+  unsigned int i;
+  high_q_i = 0;
+  low_q_i = 0;
+  for(i = 0; i < NUM_Q; i++)
+  {
+    locations_high_q[i] = 0;
+    locations_low_q[i] = 0;
+  }
+
+  /* Initialize brick arrays */
+  unsigned char brick_col_h = 0;
+  unsigned char brick_col_l = 0;
+  for(i = 0; i < NUM_MARIO_COLUMNS; i++)
+  {
+    if ((pgm_read_word_near(&marioDispForeItems[i]) & MARIO_HIGH_BRICK) > 0)
+    {
+      locations_high_bricks[brick_col_h] = i;
+      brick_col_h++;
+    }
+    if ((pgm_read_word_near(&marioDispForeItems[i]) & MARIO_LOW_BRICK) > 0)
+    {
+      locations_low_bricks[brick_col_l] = i;
+      brick_col_l++;
+    }
+  }
 }
 
 void play_mario(bool mario_is_green)
@@ -2689,32 +2655,17 @@ void play_mario(bool mario_is_green)
   coin_col = 0;
   coin_count = 0;
 
-  /* Initialize brick arrays */
+  /* Initialize ? Arrays */
   unsigned int i;
-  unsigned char brick_col_h = 0;
-  unsigned char brick_col_l = 0;
-  for(i = 0; i < NUM_MARIO_COLUMNS; i++)
+  high_q_i = 0;
+  low_q_i = 0;
+  for(i = 0; i < NUM_Q; i++)
   {
-    if ((pgm_read_word_near(&marioDispForeItems[i]) & MARIO_HIGH_BRICK) > 0)
-    {
-      locations_high_bricks[brick_col_h] = i;
-      brick_col_h++;
-    }
-    if ((pgm_read_word_near(&marioDispForeItems[i]) & MARIO_LOW_BRICK) > 0)
-    {
-      locations_low_bricks[brick_col_l] = i;
-      brick_col_l++;
-    }
+    locations_high_q[i] = 0;
+    locations_low_q[i] = 0;
   }
 
-  /* Display initial scene */
-  disp_mario_back(current_display_col);
-  display_mario_back_items(current_display_col);
-  disp_mario(mario_is_green, current_mario_row, current_mario_col, current_display_col);
-  display_mario_fore_items(current_display_col);
-  displayLEDs(true);
-
-  delay(500);
+  delay(300);
 
   while (mario_over == false)
   {
@@ -2722,12 +2673,12 @@ void play_mario(bool mario_is_green)
     move_dir = getMove();
 
     /* Pause */
-    if (move_dir == MOVE_START)
-    {
-      move_dir = MOVE_NONE;
-      while (move_dir != MOVE_START)
-        move_dir = getMove();
-    }
+//    if (move_dir == MOVE_START)
+//    {
+//      move_dir = MOVE_NONE;
+//      while (move_dir != MOVE_START)
+//        move_dir = getMove();
+//    }
 
     update_mario_dir_speed(move_dir & 0xF, (move_dir >> 4) & 0xF, current_mario_row, current_mario_col, current_display_col, &current_mario_speed);
     update_mario_hor_location(current_mario_speed, &current_mario_col, &current_display_col);
@@ -3952,6 +3903,7 @@ void loop() {
     
   else if (moveDir == MOVE_SELECT) /* Calibrate if SELECT, A, B pressed in order */
   {
+    init_mario(); /* Placed here for memory reasons */
     play_mario(true);
     calibration_mode = 1;
   }
@@ -3974,8 +3926,6 @@ void loop() {
     display_juggle();
   else if (display_mode == DISP_CASTLE)
     display_castle();  
-  else if (display_mode == DISP_SNAKE)
-    play_snake();
     
   delay(50);
 
