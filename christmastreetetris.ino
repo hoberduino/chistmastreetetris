@@ -94,7 +94,7 @@ const CRGB numToColor[NUM_DISP_COLORS] =
 {CRGB::Black, CRGB::Blue, CRGB::Orange, CRGB::Yellow, CRGB::Red, CRGB::Green, CRGB::Cyan, CRGB::PeachPuff,
  CRGB::Purple, 0xD7FF00, 0x002332, CRGB::White, CRGB::Gray, 0x2F1010, 0x0000A0, 0x808080, 
  0x000080, 0x800000, 0x404040, 0xff69b4, 0x00cccc, 0x408820, 0x124012, 0x008000, 
- 0x888800, 0xFF6500, 0x886200};
+ 0x888800, 0xFF6500, 0x883200};
 
 /* Tetris stuff */
 #define NUM_ROWS      24 /*middle twenty are visible */
@@ -1548,7 +1548,7 @@ bool display_mario_run()
 
 /* MARIO GAME */
 
-#define MARIO_FACE_COLOR DISP_COLOR_HALF_ORANGE
+#define MARIO_FACE_COLOR DISP_COLOR_HALF_WHITE
 #define MARIO_HAT_COLOR DISP_COLOR_RED
 #define LUIGI_HAT_COLOR DISP_COLOR_GREEN
 #define MARIO_PANTS_COLOR DISP_COLOR_BLUE
@@ -1837,11 +1837,15 @@ void display_mario_fore_items(int current_display_col)
       {
         bigDispBoard[13][j] = DISP_COLOR_HALF_RED;
         bigDispBoard[14][j] = DISP_COLOR_HALF_RED;
+        bigDispBoard[13][j + 1] = DISP_COLOR_HALF_RED;
+        bigDispBoard[14][j + 1] = DISP_COLOR_HALF_RED;
       }
       if ((locations_high_bricks[i] > 0) && (locations_high_bricks[i] == current_display_col+j))
       {
         bigDispBoard[5][j] = DISP_COLOR_HALF_RED;
         bigDispBoard[6][j] = DISP_COLOR_HALF_RED;
+        bigDispBoard[5][j + 1] = DISP_COLOR_HALF_RED;
+        bigDispBoard[6][j + 1] = DISP_COLOR_HALF_RED;
       }
     }
 
@@ -1974,7 +1978,7 @@ void disp_mario(bool mario_is_green, int current_mario_row, int current_mario_co
       {
         if (current_mario_row > 1)
         {
-          bigDispBoard[current_mario_row - 2][mario_col_now] = MARIO_SHOE_COLOR; // 3/4 left pixel
+          bigDispBoard[current_mario_row - 2][mario_col_now] = hat_color; // 3/4 left pixel
           bigDispBoard[current_mario_row - 2][mario_col_now + 1] = MARIO_FACE_COLOR; // 3/4 right pixel
         }
         bigDispBoard[current_mario_row][mario_col_now] = MARIO_SHOE_COLOR; // bottom left pixel
@@ -1986,7 +1990,7 @@ void disp_mario(bool mario_is_green, int current_mario_row, int current_mario_co
       {
         if (current_mario_row > 1)
         {
-          bigDispBoard[current_mario_row - 2][mario_col_now + 1] = MARIO_SHOE_COLOR; // 3/4 left pixel
+          bigDispBoard[current_mario_row - 2][mario_col_now + 1] = hat_color; // 3/4 left pixel
           bigDispBoard[current_mario_row - 2][mario_col_now] = MARIO_FACE_COLOR; // 3/4 right pixel
         }
         bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_SHOE_COLOR; // bottom left pixel
@@ -2179,11 +2183,11 @@ bool can_go_dir(bool is_right, bool is_big, int input_row, int input_col, int cu
   
   /* Pipe Base */
   if ((word1 & MARIO_HIGH_PIPE_TOP) > 0)
-    high_row = 15;
+    high_row = 12;
   if ((word1 & MARIO_MED_PIPE_TOP) > 0)
-    high_row = 17;
+    high_row = 14;
   if ((word1 & MARIO_LOW_PIPE_TOP) > 0)
-    high_row = 19;
+    high_row = 16;
   if (((word1 & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP)) > 0) && 
       ((word2 & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP)) > 0) &&
       (input_row >= high_row))
@@ -2192,11 +2196,11 @@ bool can_go_dir(bool is_right, bool is_big, int input_row, int input_col, int cu
   {
     /* Pipe Base */
     if ((word2 & MARIO_HIGH_PIPE_TOP) > 0)
-      high_row = 15;
+      high_row = 12;
     if ((word2 & MARIO_MED_PIPE_TOP) > 0)
-      high_row = 17;
+      high_row = 14;
     if ((word2 & MARIO_LOW_PIPE_TOP) > 0)
-      high_row = 19;
+      high_row = 16;
     if (((word3 & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP)) > 0) && 
       ((word2 & (MARIO_HIGH_PIPE_TOP | MARIO_MED_PIPE_TOP | MARIO_LOW_PIPE_TOP)) > 0) &&
       (input_row >= high_row))
@@ -2260,7 +2264,7 @@ void set_mush_fire(unsigned char input_row, unsigned int input_col)
 {
   mush_row = input_row;
   mush_col = input_col;
-  mush_count = mario_count; 
+  mush_count = mario_count;
 }
 
 void display_mush(int current_display_col, int current_mario_row, int current_mario_col)
@@ -2291,11 +2295,15 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
   
   /* Check for Mario eating mush */
   if (((current_mario_row == mush_row) || ((current_mario_row - 1) == mush_row)) && 
-      ((current_mario_col == mush_col) || ((current_mario_col + 1) == mush_col)))
+      ((current_mario_col == mush_col) || ((current_mario_col + 1) == mush_col)) && (mush_count != 0))
   {
     mario_is_big = true;
     mush_count = 0; /* eaten */
     mush_go_right = true; /* for next mush */
+    mush_row = 0;
+    mush_col = 0;
+    Serial.println(mush_row);
+    Serial.println(mush_col); 
   }
   else if ((mush_count > 0) && (mush_disp_col > 0) && (mush_disp_col < 21) && (mush_row > 0) && (mush_row < 21)) /* Display mush */
   {
@@ -2554,7 +2562,7 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
       /* Check for bricks */
       for(i = 0; i < NUM_BRICKS; i++)
       {
-        if ((current_mario_row == low_row) && ((locations_low_bricks[i] == current_mario_col) || (locations_low_bricks[i] == current_mario_col + 1)))
+        if ((current_mario_row == low_row) && ((locations_low_bricks[i] == current_mario_col) || (locations_low_bricks[i] == current_mario_col + 1) || (locations_low_bricks[i] == current_mario_col - 1)))
         {
           can_go_up = false;
           if ((left_is_low_q == false) && (right_is_low_q == false))
@@ -2574,10 +2582,10 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
               set_breaking_brick(current_mario_row - 2, current_mario_col, true);
           }
         }
-        else if ((current_mario_row == high_row) && ((locations_high_bricks[i] == current_mario_col) || (locations_high_bricks[i] == current_mario_col + 1)))
+        else if ((current_mario_row == high_row) && ((locations_high_bricks[i] == current_mario_col) || (locations_high_bricks[i] == current_mario_col + 1) | (locations_high_bricks[i] == current_mario_col - 1)))
         {
           can_go_up = false;
-         if ((left_is_high_q == false) && (right_is_high_q == false))
+          if ((left_is_high_q == false) && (right_is_high_q == false))
           {
             if (mario_is_big)
             {
@@ -2613,6 +2621,7 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
  */
 #define NORMAL_JUMP_TIME 6
 bool mario_was_in_air = false;
+bool mario_let_go_of_a = false; /* user let go of a button */
 unsigned char mario_jump_time_accel = NORMAL_JUMP_TIME;
 void update_mario_vert_speed(unsigned char button_press, int current_mario_row, int current_mario_col, float *current_mario_jump_speed, float current_mario_speed)
 {
@@ -2643,14 +2652,17 @@ void update_mario_vert_speed(unsigned char button_press, int current_mario_row, 
     /* stop the jump */
     *current_mario_jump_speed = -1;
   }
-  else if (((button_press & MOVE_ROTATE_RIGHT) > 0) && (mario_jump_count == 0)) /* A Button, Jump */
+  else if (((button_press & MOVE_ROTATE_RIGHT) > 0) && (mario_jump_count == 0) && (mario_let_go_of_a)) /* A Button, Jump */
   {
     mario_jump_count = mario_count; /* Here Mario Jump Count is used to determine how long button is pressed */
     /* current_mario_jump_speed > 0 means moving up, < 0 is down */
     *current_mario_jump_speed = 3; /* Top Upward Jump Speed */
+    mario_let_go_of_a = false;
 
   } /* on ground */
-    
+
+  if ((button_press & MOVE_ROTATE_RIGHT) == 0)
+    mario_let_go_of_a = true;
 
   /* After initial jump, start downward effects of gravity */
   if ((mario_in_air) && (((mario_count - mario_jump_count) >= mario_jump_time_accel) || (mario_jump_count == 0)))
@@ -2745,15 +2757,15 @@ void init_mario()
   low_q_i = 0;
   for(i = 0; i < NUM_Q; i++)
   {
-    locations_high_q[i] = 0;
+    locations_low_q[i] = 0;
     if (i < NUM_HIGH_Q)
-      locations_low_q[i] = 0;
+      locations_high_q[i] = 0;
   }
 
   /* Initialize brick arrays */
   unsigned char brick_col_h = 0;
   unsigned char brick_col_l = 0;
-  for(i = 0; i < NUM_MARIO_COLUMNS; i++)
+  for(i = 0; i < NUM_MARIO_COLUMNS; i = i + 2)
   {
     if ((pgm_read_word_near(&marioDispForeItems[i]) & MARIO_HIGH_BRICK) > 0)
     {
@@ -2766,6 +2778,7 @@ void init_mario()
       brick_col_l++;
     }
   }
+
 }
 
 void play_mario(bool mario_is_green)
@@ -2777,30 +2790,9 @@ void play_mario(bool mario_is_green)
   int current_mario_row = NUM_DISP_ROWS - 2; /* bottom left of mario */
   int current_mario_col = 3; /* (0 - 438), bottom left of mario */
   int current_display_col = 0; /* leftmost column of display as level column */
-  mario_face_right = true;
-  mario_is_big = false;
-  mario_is_fire = false;
-  mario_is_trying = false;
+
   float current_mario_speed = 0; /* (-3,3) */
   float current_mario_jump_speed = 0; /* (-3,3) */
-  mario_jump_count = 0;
-  mario_count = 0;
-  total_score = 0;
-  coin_row = 0;
-  coin_col = 0;
-  coin_count = 0;
-  mush_count = 0;
-
-  /* Initialize ? Arrays */
-  unsigned int i;
-  high_q_i = 0;
-  low_q_i = 0;
-  for(i = 0; i < NUM_Q; i++)
-  {
-    locations_high_q[i] = 0;
-    if (i < NUM_HIGH_Q)
-      locations_low_q[i] = 0;
-  }
 
   delay(300);
 
@@ -2810,12 +2802,13 @@ void play_mario(bool mario_is_green)
     move_dir = getMove();
 
     /* Pause */
-//    if (move_dir == MOVE_START)
-//    {
-//      move_dir = MOVE_NONE;
-//      while (move_dir != MOVE_START)
-//        move_dir = getMove();
-//    }
+    if (move_dir == MOVE_START)
+    {
+      delay(300);
+      move_dir = MOVE_NONE;
+      while (move_dir != MOVE_START)
+        move_dir = getMove();
+    }
 
     update_mario_dir_speed(move_dir & 0xF, (move_dir >> 4) & 0xF, current_mario_row, current_mario_col, current_display_col, &current_mario_speed);
     update_mario_hor_location(current_mario_speed, &current_mario_col, &current_display_col);
