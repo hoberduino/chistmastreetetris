@@ -2331,7 +2331,7 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
     else
       bigDispBoard[mush_row - 1][mush_disp_col + 1] = DISP_COLOR_GREEN;
   }
-  else if (mush_disp_col == 0)
+  else if ((mush_disp_col == 0) || (mush_row == 21))
   {
     mush_count = 0; /* out of bounds */
     mush_go_right = true; /* for next mush */
