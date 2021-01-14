@@ -4,7 +4,25 @@
 #include <avr/pgmspace.h>
 
 /* TODO: */
-/* Mario */
+/* Mario 
+ * 1UP
+ * Lives
+ *  - Restart level
+ * Bump bricks
+ *  - affect Mushroom
+ * Multiple coin brick
+ * Star
+ * Bad Guys
+ *  - Goomba
+ *  - Koopa Troopa
+ * Flagpole Jump
+ * Underworld?
+ * Mario duck
+ * Display score
+ * Top block mushroom/fire
+ * Better looking steps
+ * 
+*/
 
 
 /*  Display everything on a 22x22 board, top left is (0,0)
@@ -1658,6 +1676,8 @@ unsigned int mush_col = 0;
 bool mush_is_red = true;
 bool mush_go_right = true;
 unsigned int mush_count = 0;
+unsigned char mario_lives = 2;
+bool mario_1up_hit = false;
 
 
 #define MARIO_DISP_CLOUD_1       0x1     /* low height cloud */
@@ -1726,9 +1746,12 @@ const unsigned int PROGMEM marioDispBackItems[NUM_MARIO_COLUMNS] =
 
 
 
-void disp_mario_back(int current_display_col)
+void disp_mario_back(int current_display_col, bool mario_is_green)
 {
   unsigned char i,j;
+  unsigned char mario_lives_color = DISP_COLOR_RED;
+  if (mario_is_green)
+    mario_lives_color = DISP_COLOR_GREEN;
   
   for(i = 0; i < NUM_DISP_ROWS; i++)
   {
@@ -1742,6 +1765,14 @@ void disp_mario_back(int current_display_col)
         bigDispBoard[i][j] = DISP_COLOR_BLACK;
     }
   }
+
+  if (mario_lives > 0)
+    bigDispBoard[0][0] = mario_lives_color;
+  if (mario_lives > 1)
+    bigDispBoard[0][1] = mario_lives_color;
+  if (mario_lives > 2)
+    bigDispBoard[0][2] = mario_lives_color;
+  
   
 }
 
@@ -2056,6 +2087,10 @@ bool on_solid_ground(int input_row, int input_col)
       if ((input_row == 4) &&  ((locations_high_bricks[i] == input_col) || (locations_high_bricks[i] == input_col + 1)))
         on_solid_ground = true;
     }
+
+    /* Check for 1UP */
+    if ((input_row == 12) && (mario_1up_hit == true) && ((input_col == MARIO_1UP_COL) || (input_col == MARIO_1UP_COL + 1) || (input_col == MARIO_1UP_COL - 1)))
+      on_solid_ground = true;
   }
   
   /* Solid ground is non hole ground, on pipe, on blocks, on ?, or on step */
@@ -2150,11 +2185,17 @@ bool can_go_dir(bool is_right, bool is_big, int input_row, int input_col, int cu
       if (locations_low_bricks[i] == input_col + adder)
         can_go_dir = false;
     }
+
+    /* Check for 1UP */
+    if ((mario_1up_hit == true) && (input_col + adder == MARIO_1UP_COL))
+      can_go_dir = false;
   }
+
+  
  
-  if (is_right && (input_col >= (NUM_MARIO_COLUMNS - 12)))
+  if (is_right && (input_col >= (NUM_MARIO_COLUMNS - 12))) /* end if level */
     can_go_dir = false;
-  else if ((is_right == false) && (input_col == current_display_col))
+  else if ((is_right == false) && (input_col == current_display_col)) /* left of screen */
     can_go_dir = false;
   else if (((input_row >= high_row) && (input_row <= low_row)) &&
            ((word2 & (MARIO_LOW_Q | MARIO_HIGH_PIPE_TOP | MARIO_STEP_4)) > 0))
@@ -2277,11 +2318,12 @@ void display_coin_animation(int current_display_col)
 }
 
 
-void set_mush_fire(unsigned char input_row, unsigned int input_col)
+void set_mush_fire(unsigned char input_row, unsigned int input_col, bool mush_is_green)
 {
   mush_row = input_row;
   mush_col = input_col;
   mush_count = mario_count;
+  mush_is_red = !mush_is_green;
 }
 
 void display_mush(int current_display_col, int current_mario_row, int current_mario_col)
@@ -2314,11 +2356,15 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
   if (((current_mario_row == mush_row) || ((current_mario_row - 1) == mush_row)) && 
       ((current_mario_col == mush_col) || ((current_mario_col + 1) == mush_col)) && (mush_count != 0))
   {
-    mario_is_big = true;
+    if (mush_is_red)
+      mario_is_big = true;
+    else 
+      mario_lives++;
     mush_count = 0; /* eaten */
     mush_go_right = true; /* for next mush */
     mush_row = 0;
     mush_col = 0;
+    mush_is_red = true; /* assume next is red */
     delay(600);
   }
   else if ((mush_count > 0) && (mush_disp_col > 0) && (mush_disp_col < 21) && (mush_row > 0) && (mush_row < 21)) /* Display mush */
@@ -2537,12 +2583,23 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
         locations_low_q[low_q_i] = q_col;
         low_q_i++;
         if ((q_col == low_mush_fire[0]) || (q_col == low_mush_fire[1]))
-          set_mush_fire(14, q_col);
+          set_mush_fire(14, q_col, false);
         else
         {
           total_score++;
           set_coin_animation(14, q_col);
         }
+      }
+    }
+    else if ((current_mario_row == low_row) && ((current_mario_col == MARIO_1UP_COL) || (current_mario_col + 1 == MARIO_1UP_COL) || (current_mario_col - 1 == MARIO_1UP_COL)))
+    {
+      can_go_up = false;
+      if (mario_1up_hit == false)
+      {
+        locations_low_q[low_q_i] = MARIO_1UP_COL;
+        low_q_i++;
+        set_mush_fire(14, MARIO_1UP_COL, true);
+        mario_1up_hit = true;
       }
     }
     else if ((current_mario_row == high_row) && (left_is_high_q || right_is_high_q))
@@ -2564,7 +2621,7 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
         locations_high_q[high_q_i] = q_col; /* only saves left column of ? */
         high_q_i++;
         if (q_col == high_mush_fire)
-          set_mush_fire(6, q_col);
+          set_mush_fire(6, q_col, false);
         else
         {
           total_score++;
@@ -2766,6 +2823,8 @@ void init_mario()
   mush_is_red = true;
   mush_go_right = true;
   mush_count = 0;
+  mario_lives = 2;
+  mario_1up_hit = false;
 
   /* Initialize ? Arrays */
   unsigned int i;
@@ -2836,7 +2895,7 @@ void play_mario(bool mario_is_green)
     if ((mario_count >= 2000) || (current_mario_row == (NUM_DISP_ROWS - 1)))
       mario_over = true;
 
-    disp_mario_back(current_display_col);
+    disp_mario_back(current_display_col, mario_is_green);
     display_mario_back_items(current_display_col);
     display_mario_fore_items(current_display_col);
     disp_mario(mario_is_green, current_mario_row, current_mario_col, current_display_col);
