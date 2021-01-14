@@ -1632,14 +1632,19 @@ const unsigned int PROGMEM marioDispForeItems[NUM_MARIO_COLUMNS] =
 
 
 #define NUM_BRICKS 16
-#define NUM_Q 10
+#define NUM_Q 12
 #define NUM_HIGH_Q 6
 
+#define MARIO_1UP_COL 130
+#define MARIO_REPEAT_BRICK_COL 202
+
 /* These are per column */
+/* These represent current locations of bricks (haven't been hit), populated from marioDispForeItems */
 unsigned int locations_high_bricks[NUM_BRICKS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 unsigned int locations_low_bricks[NUM_BRICKS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 /* These are per Q */
-unsigned int locations_low_q[NUM_Q] = {0,0,0,0,0,0,0,0,0,0};
+/* These represent if a Q has been hit */
+unsigned int locations_low_q[NUM_Q] = {0,0,0,0,0,0,0,0,0,0,0,0}; /* Added 1 for 1UP, 1 for repeat brick */
 unsigned int locations_high_q[NUM_HIGH_Q] = {0,0,0,0,0,0};
 
 unsigned char high_q_i = 0;
