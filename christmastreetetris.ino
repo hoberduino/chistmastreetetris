@@ -1633,14 +1633,14 @@ const unsigned int PROGMEM marioDispForeItems[NUM_MARIO_COLUMNS] =
 
 #define NUM_BRICKS 16
 #define NUM_Q 10
-#define NUM_HIGH_Q 4
+#define NUM_HIGH_Q 6
 
 /* These are per column */
 unsigned int locations_high_bricks[NUM_BRICKS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 unsigned int locations_low_bricks[NUM_BRICKS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 /* These are per Q */
 unsigned int locations_low_q[NUM_Q] = {0,0,0,0,0,0,0,0,0,0};
-unsigned int locations_high_q[NUM_HIGH_Q] = {0,0,0,0};
+unsigned int locations_high_q[NUM_HIGH_Q] = {0,0,0,0,0,0};
 
 unsigned char high_q_i = 0;
 unsigned char low_q_i = 0;
@@ -1833,19 +1833,25 @@ void display_mario_fore_items(int current_display_col)
     /* Display Bricks */
     for(i = 0; i < NUM_BRICKS; i++)
     {
-      if ((locations_low_bricks[i] > 0) && (locations_low_bricks[i] == current_display_col+j))
+      if ((locations_low_bricks[i] > 0) && (locations_low_bricks[i] == current_display_col + j))
       {
         bigDispBoard[13][j] = DISP_COLOR_HALF_RED;
         bigDispBoard[14][j] = DISP_COLOR_HALF_RED;
-        bigDispBoard[13][j + 1] = DISP_COLOR_HALF_RED;
-        bigDispBoard[14][j + 1] = DISP_COLOR_HALF_RED;
+        if ((j + 1) < 22)
+        {
+          bigDispBoard[13][j + 1] = DISP_COLOR_HALF_RED;
+          bigDispBoard[14][j + 1] = DISP_COLOR_HALF_RED;
+        }
       }
-      if ((locations_high_bricks[i] > 0) && (locations_high_bricks[i] == current_display_col+j))
+      if ((locations_high_bricks[i] > 0) && (locations_high_bricks[i] == current_display_col + j))
       {
         bigDispBoard[5][j] = DISP_COLOR_HALF_RED;
         bigDispBoard[6][j] = DISP_COLOR_HALF_RED;
-        bigDispBoard[5][j + 1] = DISP_COLOR_HALF_RED;
-        bigDispBoard[6][j + 1] = DISP_COLOR_HALF_RED;
+        if ((j + 1) < 22)
+        {
+          bigDispBoard[5][j + 1] = DISP_COLOR_HALF_RED;
+          bigDispBoard[6][j + 1] = DISP_COLOR_HALF_RED;
+        }
       }
     }
 
@@ -1881,43 +1887,43 @@ void display_mario_fore_items(int current_display_col)
     /* Display Steps */
     if ((fore_item_word & MARIO_STEP_1) > 0)
     {
-      bigDispBoard[19][j] = DISP_COLOR_HALF_RED;
-      bigDispBoard[20][j] = DISP_COLOR_HALF_RED;
+      bigDispBoard[19][j] = DISP_COLOR_RED;
+      bigDispBoard[20][j] = DISP_COLOR_Q_ORANGE;
     }
     if ((fore_item_word & MARIO_STEP_2) > 0)
     {
-      bigDispBoard[17][j] = DISP_COLOR_HALF_RED;
-      bigDispBoard[18][j] = DISP_COLOR_HALF_RED;
+      bigDispBoard[17][j] = DISP_COLOR_RED;
+      bigDispBoard[18][j] = DISP_COLOR_Q_ORANGE;
     }
     if ((fore_item_word & MARIO_STEP_3) > 0)
     {
-      bigDispBoard[15][j] = DISP_COLOR_HALF_RED;
-      bigDispBoard[16][j] = DISP_COLOR_HALF_RED;
+      bigDispBoard[15][j] = DISP_COLOR_RED;
+      bigDispBoard[16][j] = DISP_COLOR_Q_ORANGE;
     }
     if ((fore_item_word & MARIO_STEP_4) > 0)
     {
-      bigDispBoard[13][j] = DISP_COLOR_HALF_RED;
-      bigDispBoard[14][j] = DISP_COLOR_HALF_RED;
+      bigDispBoard[13][j] = DISP_COLOR_RED;
+      bigDispBoard[14][j] = DISP_COLOR_Q_ORANGE;
     }
     if ((fore_item_word & MARIO_STEP_5) > 0)
     {
-      bigDispBoard[11][j] = DISP_COLOR_HALF_RED;
-      bigDispBoard[12][j] = DISP_COLOR_HALF_RED;
+      bigDispBoard[11][j] = DISP_COLOR_RED;
+      bigDispBoard[12][j] = DISP_COLOR_Q_ORANGE;
     }
     if ((fore_item_word & MARIO_STEP_6) > 0)
     {
-      bigDispBoard[9][j] = DISP_COLOR_HALF_RED;
-      bigDispBoard[10][j] = DISP_COLOR_HALF_RED;
+      bigDispBoard[9][j] = DISP_COLOR_RED;
+      bigDispBoard[10][j] = DISP_COLOR_Q_ORANGE;
     }
     if ((fore_item_word & MARIO_STEP_7) > 0)
     {
-      bigDispBoard[7][j] = DISP_COLOR_HALF_RED;
-      bigDispBoard[8][j] = DISP_COLOR_HALF_RED;
+      bigDispBoard[7][j] = DISP_COLOR_RED;
+      bigDispBoard[8][j] = DISP_COLOR_Q_ORANGE;
     }
     if ((fore_item_word & MARIO_STEP_8) > 0)
     {
-      bigDispBoard[5][j] = DISP_COLOR_HALF_RED;
-      bigDispBoard[6][j] = DISP_COLOR_HALF_RED;
+      bigDispBoard[5][j] = DISP_COLOR_RED;
+      bigDispBoard[6][j] = DISP_COLOR_Q_ORANGE;
     }
     
   }
@@ -2276,7 +2282,7 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
     if (((mario_count - mush_count) % 16) == 0)
       mush_row--;
   }
-  else if (((mario_count - mush_count) % 8) == 0) /* time to move */
+  else if (((mario_count - mush_count) % 6) == 0) /* time to move */
   {
     if (can_go_dir(mush_go_right, false, mush_row, mush_col, current_display_col) == false) /* can't go this way, go other way */
       mush_go_right = !mush_go_right;
@@ -2302,8 +2308,7 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
     mush_go_right = true; /* for next mush */
     mush_row = 0;
     mush_col = 0;
-    Serial.println(mush_row);
-    Serial.println(mush_col); 
+    delay(600);
   }
   else if ((mush_count > 0) && (mush_disp_col > 0) && (mush_disp_col < 21) && (mush_row > 0) && (mush_row < 21)) /* Display mush */
   {
@@ -2315,7 +2320,7 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
     else
       bigDispBoard[mush_row - 1][mush_disp_col + 1] = DISP_COLOR_GREEN;
   }
-  else if ((mush_disp_col == 0) || (mush_row == 21))
+  else if (mush_disp_col == 0)
   {
     mush_count = 0; /* out of bounds */
     mush_go_right = true; /* for next mush */
@@ -2430,7 +2435,7 @@ void disp_breaking_brick(int current_display_col)
  */
 void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press, int current_mario_row, int current_mario_col, int current_display_col, float * current_mario_speed)
 {
-  float mario_accel = MARIO_ACCELERATION; /* how quickly mario accelerates */
+  float mario_accel = 0.4;//MARIO_ACCELERATION; /* how quickly mario accelerates */
   bool button_right = (move_dir & MOVE_RIGHT) > 0;
   bool button_left = (move_dir & MOVE_LEFT) > 0;
   bool mario_is_running = (button_press & MOVE_ROTATE_LEFT) > 0; /* B Button pressed */
@@ -2808,6 +2813,7 @@ void play_mario(bool mario_is_green)
       move_dir = MOVE_NONE;
       while (move_dir != MOVE_START)
         move_dir = getMove();
+      delay(300);
     }
 
     update_mario_dir_speed(move_dir & 0xF, (move_dir >> 4) & 0xF, current_mario_row, current_mario_col, current_display_col, &current_mario_speed);
