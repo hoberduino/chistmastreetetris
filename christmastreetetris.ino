@@ -1673,7 +1673,7 @@ unsigned char high_q_i = 0;
 unsigned char low_q_i = 0;
 
 unsigned const int low_mush_fire[2] = {44, 170};
-unsigned const int high_mush_fire = 234;
+unsigned const int high_mush_fire = 232;
 
 unsigned char mush_row = 0;
 unsigned int mush_col = 0;
@@ -2330,7 +2330,7 @@ void set_mush_fire(unsigned char input_row, unsigned int input_col, bool mush_is
   mush_count = mario_count;
   mush_is_red = !mush_is_green;
   mush_go_right = true;
-  if (mario_is_big)
+  if ((mario_is_big) && (mush_is_green == false))
     mush_is_flower = true;
   else
     mush_is_flower = false;
@@ -2365,8 +2365,8 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
 
   
     /* Check for Mario eating mush */
-    if (((current_mario_row == mush_row) || ((current_mario_row - 1) == mush_row)) && 
-        ((current_mario_col == mush_col) || ((current_mario_col + 1) == mush_col)) && (mush_count != 0))
+    if (((current_mario_row == mush_row) || ((current_mario_row - 1) == mush_row) || ((current_mario_row + 1) == mush_row)) && 
+        ((current_mario_col == mush_col) || ((current_mario_col + 1) == mush_col) || ((current_mario_col - 1) == mush_col)) && (mush_count != 0))
     {
       if (mush_is_red)
         mario_is_big = true;
@@ -2447,7 +2447,9 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
 float breaking_brick_row[2][4] = {{22.0,22.0,22.0,22.0},{22.0,22.0,22.0,22.0}}; /* brick, (0-top left brick col,1-bottom left brick row, 2-top right brick col,1-bottom right brick row) */
 float breaking_brick_col[2][4] = {{0.0,0.0,0.0,0.0},{0.0,0.0,0.0,0.0}}; /* brick, (0-top left brick col,1-bottom left brick row, 2-top right brick col,1-bottom right brick row) */
 float breaking_brick_vert_speed[2][4] = {{0.0,0.0,0.0,0.0},{0.0,0.0,0.0,0.0}}; /* brick, (0-top left brick col,1-bottom left brick row, 2-top right brick col,1-bottom right brick row) */
-bool bumping_brick[2] = {false, false}; /* true if breaking, false if bumping */
+bool bumping_brick = false; /* true if breaking, false if bumping */
+unsigned char bump_row = 0;
+unsigned int bump_col = 0;
 
 void set_breaking_brick(unsigned char input_row, unsigned int input_col, bool bump_brick)
 {
@@ -2472,14 +2474,14 @@ void set_breaking_brick(unsigned char input_row, unsigned int input_col, bool bu
     breaking_brick_vert_speed[location][1] = 1.0;
     breaking_brick_vert_speed[location][2] = 2.0;
     breaking_brick_vert_speed[location][3] = 1.0;
-    bumping_brick[location] = false;
+    bumping_brick = false;
     mario_bump_brick_count = 0;
   }
   else
   {
-    bumping_brick[0] = true;
-    breaking_brick_row[0][0] = input_row;
-    breaking_brick_col[0][0] = input_col;
+    bumping_brick = true;
+    bump_row = input_row;
+    bump_col = input_col;
     mario_bump_brick_count = mario_count;
   }
 }
@@ -2492,12 +2494,12 @@ void disp_breaking_brick(int current_display_col)
    */
 
   /* update rate based on current brick speed */
-  unsigned char i, j;
+  unsigned char i, j, k;
 
   /* Update brick vertical speeds */
   for(i = 0; i < 2; i++)
   {
-    if (bumping_brick[i] == false) /* not a bump */
+    if (bumping_brick == false) /* not a bump */
     {
       for(j = 0; j < 4; j++) 
       {
@@ -2523,33 +2525,36 @@ void disp_breaking_brick(int current_display_col)
       /* Display breaking bricks */
       int brick_col_now = 0;
       int brick_row_now = 0;
-      for(i = 0; i < 2; i++)
-      {  
-        for(j = 0; j < 4; j++)
-        {
-          brick_row_now = breaking_brick_row[i][j];
-          brick_col_now = breaking_brick_col[i][j] - current_display_col;
-          if ((brick_col_now >= 0) && (brick_col_now < 22) && (brick_row_now >= 0) && (brick_row_now < 22) )
-            bigDispBoard[brick_row_now][brick_col_now] = DISP_COLOR_HALF_RED;
-        }
+      for(j = 0; j < 4; j++)
+      {
+        brick_row_now = breaking_brick_row[i][j];
+        brick_col_now = breaking_brick_col[i][j] - current_display_col;
+        if ((brick_col_now >= 0) && (brick_col_now < 22) && (brick_row_now >= 0) && (brick_row_now < 22) )
+          bigDispBoard[brick_row_now][brick_col_now] = DISP_COLOR_HALF_RED;
       }
       
-    } /* not a bump */
-    else if ((mario_count - mario_bump_brick_count) < 20)
-    { /* just a bump */
-      unsigned int mario_bump_row = (unsigned int)breaking_brick_row[0][0];
-      unsigned int mario_bump_col = (unsigned int)breaking_brick_col[0][0] - current_display_col;
-      if (mario_bump_col < 21)
-      {
-        bigDispBoard[mario_bump_row][mario_bump_col] = DISP_COLOR_BLACK;
-        bigDispBoard[mario_bump_row - 2][mario_bump_col] = DISP_COLOR_HALF_RED;
-      }
-      if (mario_bump_col + 1 < 21)
-      {
-        bigDispBoard[mario_bump_row][mario_bump_col + 1] = DISP_COLOR_BLACK;
-        bigDispBoard[mario_bump_row - 2][mario_bump_col + 1] = DISP_COLOR_HALF_RED;
-      }
+    } 
+  }
+
+  /* not a bump */
+  if ((mario_count - mario_bump_brick_count) < 8)
+  { /* just a bump */
+    unsigned int bump_disp_col = bump_col - current_display_col;
+    if (bump_disp_col < 21)
+    {
+      bigDispBoard[bump_row][bump_disp_col] = DISP_COLOR_BLACK;
+      bigDispBoard[bump_row - 2][bump_disp_col] = DISP_COLOR_HALF_RED;
     }
+    if ((bump_disp_col + 1) < 21)
+    {
+      bigDispBoard[bump_row][bump_disp_col + 1] = DISP_COLOR_BLACK;
+      bigDispBoard[bump_row - 2][bump_disp_col + 1] = DISP_COLOR_HALF_RED;
+    }
+  }
+  else if (mario_bump_brick_count > 0)
+  {
+    bumping_brick = false;
+    mario_bump_brick_count = 0;
   }
 
 }
@@ -2724,50 +2729,34 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
     }
     else
     {
-
       /* Check for bricks */
       for(i = 0; i < NUM_BRICKS; i++)
       {
-        if ((current_mario_row == low_row) && ((locations_low_bricks[i] == current_mario_col) || (locations_low_bricks[i] == current_mario_col + 1) || (locations_low_bricks[i] == current_mario_col - 1)))
+        if (can_go_up == true)
         {
-          can_go_up = false;
-          if ((left_is_low_q == false) && (right_is_low_q == false))
+          if ((current_mario_row == low_row) && ((locations_low_bricks[i] == current_mario_col) || (locations_low_bricks[i] == current_mario_col + 1) || (locations_low_bricks[i] == current_mario_col - 1)))
           {
+            can_go_up = false;            
             if (mario_is_big)
             {
+              set_breaking_brick(current_mario_row - 4, locations_low_bricks[i], false);
               locations_low_bricks[i] = 22; /* Break brick */
-              if (locations_low_bricks[i - 1] == current_mario_col - 1)
-                locations_low_bricks[i - 1] = 22; /* Break brick */
-              else if (locations_low_bricks[i + 1] == current_mario_col + 2)
-                locations_low_bricks[i + 1] = 22; /* Break brick */
-              if (locations_low_bricks[i + 1] == current_mario_col + 1)
-                locations_low_bricks[i + 1] = 22; /* Break brick */
-              set_breaking_brick(current_mario_row - 4, current_mario_col, false);
             }
-            else
-              set_breaking_brick(current_mario_row - 2, current_mario_col, true);
+            else              
+              set_breaking_brick(current_mario_row - 2, locations_low_bricks[i], true);
           }
-        }
-        else if ((current_mario_row == high_row) && ((locations_high_bricks[i] == current_mario_col) || (locations_high_bricks[i] == current_mario_col + 1) | (locations_high_bricks[i] == current_mario_col - 1)))
-        {
-          can_go_up = false;
-          if ((left_is_high_q == false) && (right_is_high_q == false))
+          else if ((current_mario_row == high_row) && ((locations_high_bricks[i] == current_mario_col) || (locations_high_bricks[i] == current_mario_col + 1) | (locations_high_bricks[i] == current_mario_col - 1)))
           {
+            can_go_up = false;              
             if (mario_is_big)
             {
+              set_breaking_brick(current_mario_row - 4, locations_high_bricks[i], false);
               locations_high_bricks[i] = 22; /* Break brick */
-              if (locations_high_bricks[i - 1] == current_mario_col - 1)
-                locations_high_bricks[i - 1] = 22; /* Break brick */
-              else if (locations_high_bricks[i + 1] == current_mario_col + 2)
-                locations_high_bricks[i + 1] = 22; /* Break brick */
-              if (locations_high_bricks[i + 1] == current_mario_col + 1)
-                locations_high_bricks[i + 1] = 22; /* Break brick */
-              set_breaking_brick(current_mario_row - 4, current_mario_col, false);
             }
-            else
-              set_breaking_brick(current_mario_row - 2, current_mario_col, true);
+            else              
+              set_breaking_brick(current_mario_row - 2, locations_high_bricks[i], true);
           }
-        }
+        } /* broke brick (can go up is false) */
       }
     }
 
@@ -2923,9 +2912,21 @@ void init_mario()
   mario_multi_brick_count = 0;
   mario_bump_brick_count = 0;
   mush_is_flower = false;
+  bumping_brick = false;
+
+  /* Init breaking brick arrays */
+  unsigned int i;
+  for(i = 0; i < 4; i++)
+  {
+    breaking_brick_row[0][i] = 22.0;
+    breaking_brick_row[1][i] = 22.0;
+    breaking_brick_col[0][i] = 0.0;
+    breaking_brick_col[1][i] = 0.0;
+    breaking_brick_vert_speed[0][i] = 0.0;
+    breaking_brick_vert_speed[1][i] = 0.0;
+  }
 
   /* Initialize ? Arrays */
-  unsigned int i;
   high_q_i = 0;
   low_q_i = 0;
   for(i = 0; i < NUM_Q; i++)
