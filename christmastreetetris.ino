@@ -5,12 +5,8 @@
 
 /* TODO: */
 /* Mario 
- * 1UP
- * Lives
  *  - Restart level
- * Bump bricks
- *  - affect Mushroom
- * Multiple coin brick
+ * Bump bricks - affect Mushroom
  * Star
  * Bad Guys
  *  - Goomba
@@ -19,8 +15,6 @@
  * Underworld?
  * Mario duck
  * Display score
- * Top block mushroom/fire
- * Better looking steps
  * Death animation
  * 
 */
@@ -1567,7 +1561,7 @@ bool display_mario_run()
 
 /* MARIO GAME */
 
-#define MARIO_FACE_COLOR DISP_COLOR_HALF_WHITE
+#define MARIO_FACE_COLOR DISP_COLOR_Q_ORANGE
 #define MARIO_HAT_COLOR DISP_COLOR_RED
 #define LUIGI_HAT_COLOR DISP_COLOR_GREEN
 #define MARIO_PANTS_COLOR DISP_COLOR_BLUE
@@ -1989,9 +1983,16 @@ void disp_mario(bool mario_is_green, int current_mario_row, int current_mario_co
 {
   unsigned char mario_col_now = current_mario_col - current_display_col;
   unsigned char hat_color = MARIO_HAT_COLOR;
+  unsigned char pants_color = MARIO_PANTS_COLOR;
+  unsigned char hair_color = MARIO_SHOE_COLOR;
   bool mario_is_jumping = mario_jump_count > 0;
   if (mario_is_green)
     hat_color = LUIGI_HAT_COLOR;
+  if (mario_is_fire)
+  {
+    pants_color = DISP_COLOR_RED;
+    hat_color = DISP_COLOR_WHITE;
+  }
 
   if (current_mario_row > 0)
   {
@@ -2001,8 +2002,8 @@ void disp_mario(bool mario_is_green, int current_mario_row, int current_mario_co
       {
         bigDispBoard[current_mario_row - 1][mario_col_now] = hat_color; // top left pixel
         bigDispBoard[current_mario_row - 1][mario_col_now + 1] = MARIO_FACE_COLOR; // top right pixel
-        bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_PANTS_COLOR; // bottom right pixel
-        bigDispBoard[current_mario_row][mario_col_now] = MARIO_PANTS_COLOR; // bottom left pixel
+        bigDispBoard[current_mario_row][mario_col_now + 1] = pants_color; // bottom right pixel
+        bigDispBoard[current_mario_row][mario_col_now] = pants_color; // bottom left pixel
         /* blink front shoe when walking */
         if ((mario_is_trying == true) && (mario_is_jumping == false) && ((mario_count % 8) < 4))
           bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_SHOE_COLOR; // bottom right pixel
@@ -2011,8 +2012,8 @@ void disp_mario(bool mario_is_green, int current_mario_row, int current_mario_co
       {
         bigDispBoard[current_mario_row - 1][mario_col_now] = MARIO_FACE_COLOR; // top left pixel
         bigDispBoard[current_mario_row - 1][mario_col_now + 1] = hat_color; // top right pixel
-        bigDispBoard[current_mario_row][mario_col_now] = MARIO_PANTS_COLOR; // bottom left pixel
-        bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_PANTS_COLOR; // bottom right pixel
+        bigDispBoard[current_mario_row][mario_col_now] = pants_color; // bottom left pixel
+        bigDispBoard[current_mario_row][mario_col_now + 1] = pants_color; // bottom right pixel
         /* blink front shoe when walking */
         if ((mario_is_trying == true) && (mario_is_jumping == false) && ((mario_count % 8) < 4))
           bigDispBoard[current_mario_row][mario_col_now] = MARIO_SHOE_COLOR; // bottom left pixel
@@ -2025,13 +2026,13 @@ void disp_mario(bool mario_is_green, int current_mario_row, int current_mario_co
         bigDispBoard[current_mario_row - 3][mario_col_now] = hat_color; // top left pixel
         bigDispBoard[current_mario_row - 3][mario_col_now + 1] = hat_color; // top right pixel
       }
-      bigDispBoard[current_mario_row - 1][mario_col_now] = MARIO_PANTS_COLOR; // 2/4 left pixel
-      bigDispBoard[current_mario_row - 1][mario_col_now + 1] = MARIO_PANTS_COLOR; // 2/4 right pixel
+      bigDispBoard[current_mario_row - 1][mario_col_now] = pants_color; // 2/4 left pixel
+      bigDispBoard[current_mario_row - 1][mario_col_now + 1] = pants_color; // 2/4 right pixel
       if (mario_face_right == true)
       {
         if (current_mario_row > 1)
         {
-          bigDispBoard[current_mario_row - 2][mario_col_now] = hat_color; // 3/4 left pixel
+          bigDispBoard[current_mario_row - 2][mario_col_now] = hair_color; // 3/4 left pixel
           bigDispBoard[current_mario_row - 2][mario_col_now + 1] = MARIO_FACE_COLOR; // 3/4 right pixel
         }
         bigDispBoard[current_mario_row][mario_col_now] = MARIO_SHOE_COLOR; // bottom left pixel
@@ -2043,7 +2044,7 @@ void disp_mario(bool mario_is_green, int current_mario_row, int current_mario_co
       {
         if (current_mario_row > 1)
         {
-          bigDispBoard[current_mario_row - 2][mario_col_now + 1] = hat_color; // 3/4 left pixel
+          bigDispBoard[current_mario_row - 2][mario_col_now + 1] = hair_color; // 3/4 left pixel
           bigDispBoard[current_mario_row - 2][mario_col_now] = MARIO_FACE_COLOR; // 3/4 right pixel
         }
         bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_SHOE_COLOR; // bottom left pixel
@@ -2560,7 +2561,66 @@ void disp_breaking_brick(int current_display_col)
 }
 
 
+unsigned int fireball_col[2] = {0,0};
+unsigned int fireball_row[2] = {0,0}; /* 0 - 43, divide by 2 for row */
+int fireball_dir[2] = {1,1};
+bool fireball_going_down[2] = {true,true}; /* used for simple vert speed */
+unsigned int fireball_count = 0;
 
+/* Manages creation, propagation, and display of fireballs */
+void display_mario_fireballs(int current_display_col, int current_mario_row, int current_mario_col, unsigned char button_press)
+{
+  bool fireball_pressed = ((button_press & MOVE_ROTATE_LEFT) > 0); /* B Button pressed */
+
+  unsigned char location = 0;
+  if (fireball_col[0] > 0)
+    location = 1;
+  if (fireball_col[1] > 0)
+    location = 2;
+
+  if ((mario_is_fire) && (fireball_pressed) && (location < 2) && ((mario_count - fireball_count) > 8)) /* open slot for fireball */
+  {
+    fireball_row[location] = current_mario_row * 2;
+    fireball_col[location] = current_mario_col;
+    fireball_going_down[location] = true;
+    fireball_count = mario_count;
+    if (mario_face_right == true)
+      fireball_dir[location] = 1;
+    else
+      fireball_dir[location] = -1;
+  }
+
+  /* update fireball locations */
+  if ((mario_count % 2) == 0)
+    for (unsigned int i = 0; i < 2; i++)
+    {
+      if (fireball_col[i] > 0) /* fireball is active */
+      {
+        if (fireball_row[i] == 41)
+          fireball_going_down[i] = false;
+        else if (fireball_row[i] == 38)
+          fireball_going_down[i] = true;
+
+        if (fireball_going_down[i])
+          fireball_row[i] = fireball_row[i] + 1;
+        else
+          fireball_row[i] = fireball_row[i] - 1;
+        fireball_col[i] = fireball_col[i] + fireball_dir[i];
+
+        unsigned int fireball_disp_col = fireball_col[i] - current_display_col;
+        if ((fireball_disp_col == 0) || (fireball_disp_col >= 21))
+          fireball_col[i] = 0;
+        else
+        {
+          unsigned char fireball_disp_color = DISP_COLOR_RED;
+          if ((mario_count % 4) < 2)
+            fireball_disp_color = DISP_COLOR_WHITE;
+          /* display fireball */
+          bigDispBoard[fireball_row[i] / 2][fireball_disp_col] = fireball_disp_color;
+        }
+      }
+    }
+}
 
 
 
@@ -3001,6 +3061,7 @@ void play_mario(bool mario_is_green)
     disp_breaking_brick(current_display_col);
     display_coin_animation(current_display_col);
     display_mush(current_display_col, current_mario_row, current_mario_col);
+    display_mario_fireballs(current_display_col, current_mario_row, current_mario_col, (move_dir >> 4) & 0xF);
     displayLEDs(true);
 
     delay(5);
