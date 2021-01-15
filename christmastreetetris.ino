@@ -16,7 +16,7 @@
  * Mario duck
  * Display score
  * Death animation
- * 
+ * Fireworks
 */
 
 
@@ -28,10 +28,6 @@
 
 /* Xmas Tree Spiral LEDs */
 #define NUM_TREE_LEDS    550
-
-//#ifdef TEN_X_TWENTY
-//#define NUM_LEDS    200
-//#endif
 
 /* 22x22 Snaked Display */
 #define NUM_LEDS    484
