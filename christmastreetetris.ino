@@ -1993,20 +1993,20 @@ void disp_mario(bool mario_is_green, int current_mario_row, int current_mario_co
   }
   if (mario_is_star)
   {
-    if ((mario_count % 3) == 0)
+    if ((mario_count % 6) < 2)
     {
        pants_color = DISP_COLOR_RED;
-       hat_color = DISP_COLOR_RED;
-    }
-    else if ((mario_count % 3) == 1)
-    {
-       pants_color = DISP_COLOR_WHITE;
        hat_color = DISP_COLOR_WHITE;
     }
-    else if ((mario_count % 3) == 2)
+    else if ((mario_count % 6) < 4)
+    {
+       pants_color = DISP_COLOR_WHITE;
+       hat_color = DISP_COLOR_GREEN;
+    }
+    else 
     {
        pants_color = DISP_COLOR_GREEN;
-       hat_color = DISP_COLOR_GREEN;
+       hat_color = DISP_COLOR_RED;
     }
   }
 
@@ -2424,8 +2424,8 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
     unsigned int mush_disp_col = mush_col - current_display_col;  
   
     /* Check for Mario eating flower */
-    if (((current_mario_row == mush_row) || ((current_mario_row - 1) == mush_row)) && 
-        ((current_mario_col == mush_col) || ((current_mario_col + 1) == mush_col)) && (mush_count != 0))
+    if (((current_mario_row == mush_row) || ((current_mario_row - 1) == mush_row) || ((current_mario_row + 1) == mush_row)) && 
+        ((current_mario_col == mush_col) || ((current_mario_col + 1) == mush_col) || ((current_mario_col - 1) == mush_col)) && (mush_count != 0))
     {
       if (mario_is_big == false)
         mario_is_big = true;
@@ -2635,7 +2635,7 @@ void display_mario_fireballs(int current_display_col, int current_mario_row, int
           if ((mario_count % 4) < 2)
             fireball_disp_color = DISP_COLOR_WHITE;
           /* display fireball */
-          bigDispBoard[fireball_row[i] / 2][fireball_disp_col] = fireball_disp_color;
+          bigDispBoard[fireball_row[i]][fireball_disp_col] = fireball_disp_color;
         }
       }
     }
@@ -2649,9 +2649,9 @@ unsigned int mar_star_count = 0;
 
 void set_star(unsigned char input_row, unsigned int input_col)
 {
-  mar_star_row = input_row - 2.0;
+  mar_star_row = input_row - 3.0;
   mar_star_col = input_col;
-  mar_star_vert_speed = 2.0;
+  mar_star_vert_speed = 0.0;
   mar_star_dir_is_right = true;
 }
 
@@ -2708,8 +2708,8 @@ void display_mario_star(int current_mario_row, int current_mario_col, int curren
       }
 
       /* Check Mario eat star */
-      if (((current_mario_row == mar_star_row) || ((current_mario_row - 1) == mar_star_row) || ((current_mario_row + 1) == mar_star_row)) && 
-        ((current_mario_col == mar_star_col) || ((current_mario_col + 1) == mar_star_col) || ((current_mario_col - 1) == mar_star_col)) )
+      if (((current_mario_row == (int)mar_star_row) || ((current_mario_row - 1) == (int)mar_star_row) || ((current_mario_row + 1) == (int)mar_star_row)) && 
+        ((current_mario_col == (int)mar_star_col) || ((current_mario_col + 1) == (int)mar_star_col) || ((current_mario_col - 1) == (int)mar_star_col)) )
       {
         mar_star_col = 0.0; /* star is gone */
         mar_star_count = mario_count; /* eaten */
