@@ -2290,6 +2290,125 @@ bool can_go_dir(bool is_right, bool is_big, int input_row, int input_col, int cu
 
 
 
+
+#define GOOMBA_COL_1  50
+#define GOOMBA_COL_2  88
+#define GOOMBA_COL_3  104
+#define GOOMBA_COL_4  108
+#define GOOMBA_COL_5  206
+#define GOOMBA_COL_6  210
+#define GOOMBA_COL_7  242
+#define GOOMBA_COL_8  246
+#define GOOMBA_COL_9  264
+#define GOOMBA_COL_10 266
+#define GOOMBA_COL_11 272 
+#define GOOMBA_COL_12 276
+#define GOOMBA_COL_13 364
+#define GOOMBA_COL_14 368
+
+#define HIGH_GOOMBA_COL_1 176
+#define HIGH_GOOMBA_COL_2 180
+
+#define KOOPA_COL = 254
+
+/* up to 4 active goombas */
+float goomba_row[4] = {0.0,0.0,0.0,0.0};
+float goomba_col[4] = {0.0,0.0,0.0,0.0};
+bool goomba_face_right[4] = {false, false, false, false};
+
+void display_goombas(int current_display_col)
+{
+  float new_goomba_col = 0.0;
+  float new_goomba_row = 0.0;
+  if (current_display_col == GOOMBA_COL_1 - 20)
+    new_goomba_col = GOOMBA_COL_1;
+  else if (current_display_col == GOOMBA_COL_2 - 20)
+    new_goomba_col = GOOMBA_COL_2;
+  else if (current_display_col == GOOMBA_COL_3 - 20)
+    new_goomba_col = GOOMBA_COL_3;
+  else if (current_display_col == GOOMBA_COL_4 - 20)
+    new_goomba_col = GOOMBA_COL_4;
+  else if (current_display_col == GOOMBA_COL_5 - 20)
+    new_goomba_col = GOOMBA_COL_5;
+  else if (current_display_col == GOOMBA_COL_6 - 20)
+    new_goomba_col = GOOMBA_COL_6;
+  else if (current_display_col == GOOMBA_COL_7 - 20)
+    new_goomba_col = GOOMBA_COL_7;
+  else if (current_display_col == GOOMBA_COL_8 - 20)
+    new_goomba_col = GOOMBA_COL_8;
+  else if (current_display_col == GOOMBA_COL_9 - 20)
+    new_goomba_col = GOOMBA_COL_9;
+  else if (current_display_col == GOOMBA_COL_10 - 20)
+    new_goomba_col = GOOMBA_COL_10;
+  else if (current_display_col == GOOMBA_COL_11 - 20)
+    new_goomba_col = GOOMBA_COL_11;
+  else if (current_display_col == GOOMBA_COL_12 - 20)
+    new_goomba_col = GOOMBA_COL_12;
+  else if (current_display_col == GOOMBA_COL_13 - 20)
+    new_goomba_col = GOOMBA_COL_13;
+  else if (current_display_col == GOOMBA_COL_14 - 20)
+    new_goomba_col = GOOMBA_COL_14;
+
+  if (new_goomba_col > 0.0)
+    new_goomba_row = 20.0;
+
+  if (current_display_col == HIGH_GOOMBA_COL_1 - 20)
+  {
+    new_goomba_col = HIGH_GOOMBA_COL_1;
+    new_goomba_row = 4.0;
+  }
+  else if (current_display_col == HIGH_GOOMBA_COL_2 - 20)
+  {
+    new_goomba_col = HIGH_GOOMBA_COL_2;
+    new_goomba_row = 4.0;
+  }
+
+  /* new goomba */
+  if (new_goomba_col > 0.0)
+  {
+    if (goomba_col[0] < 1.0)
+    {
+      goomba_col[0] = new_goomba_col;
+      goomba_row[0] = new_goomba_row;
+      goomba_face_right[0] = false;
+    }
+    else if (goomba_col[1] < 1.0)
+    {
+      goomba_col[1] = new_goomba_col;
+      goomba_row[1] = new_goomba_row;
+      goomba_face_right[1] = false;
+    }
+    else if (goomba_col[2] < 1.0)
+    {
+      goomba_col[2] = new_goomba_col;
+      goomba_row[2] = new_goomba_row;
+      goomba_face_right[2] = false;
+    }
+    else if (goomba_col[3] < 1.0)
+    {
+      goomba_col[3] = new_goomba_col;
+      goomba_row[3] = new_goomba_row;
+      goomba_face_right[3] = false;
+    }
+  }
+
+  /* Update goomba positions */
+
+  /* Display goombas */
+
+  /* Check for mario gets goomba */
+  /* Stomp, fireball, star, bump/smash, koopa kick */
+
+  /* Check for goomba gets mario */
+  
+}
+
+
+
+
+
+
+
 unsigned int coin_row = 0;
 unsigned int coin_col = 0;
 unsigned int coin_count = 0;
