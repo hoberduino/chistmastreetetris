@@ -1572,6 +1572,7 @@ bool mario_face_right = true;
 bool mario_is_big = false;
 bool mario_is_fire = false;
 bool mario_is_trying = false;
+bool mario_is_star = false;
 unsigned int mario_count = 0; /* count of loop cycles for current game */
 unsigned int mario_jump_count = 0; /* time when mario most recently started jumping */
 unsigned int mario_multi_brick_count = 0; /* count used for multi-brick */
@@ -1643,7 +1644,7 @@ const unsigned int PROGMEM marioDispForeItems[NUM_MARIO_COLUMNS] =
 
 
 #define NUM_BRICKS 16
-#define NUM_Q 12
+#define NUM_Q 13
 #define NUM_HIGH_Q 6
 
 #define MARIO_1UP_COL 130
@@ -1656,7 +1657,7 @@ unsigned int locations_high_bricks[NUM_BRICKS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 unsigned int locations_low_bricks[NUM_BRICKS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 /* These are per Q */
 /* These represent if a Q has been hit */
-unsigned int locations_low_q[NUM_Q] = {0,0,0,0,0,0,0,0,0,0,0,0}; /* Added 1 for 1UP, 1 for repeat brick */
+unsigned int locations_low_q[NUM_Q] = {0,0,0,0,0,0,0,0,0,0,0,0}; /* Added 1 for 1UP, 1 for repeat brick, 1 for star */
 unsigned int locations_high_q[NUM_HIGH_Q] = {0,0,0,0,0,0};
 
 unsigned char high_q_i = 0;
@@ -1673,6 +1674,7 @@ unsigned int mush_count = 0;
 unsigned char mario_lives = 2;
 bool mario_1up_hit = false;
 bool mush_is_flower = false;
+bool mario_star_hit = false;
 
 
 #define MARIO_DISP_CLOUD_1       0x1     /* low height cloud */
@@ -1988,6 +1990,24 @@ void disp_mario(bool mario_is_green, int current_mario_row, int current_mario_co
   {
     pants_color = DISP_COLOR_RED;
     hat_color = DISP_COLOR_WHITE;
+  }
+  if (mario_is_star)
+  {
+    if ((mario_count % 3) == 0)
+    {
+       pants_color = DISP_COLOR_RED;
+       hat_color = DISP_COLOR_RED;
+    }
+    else if ((mario_count % 3) == 1)
+    {
+       pants_color = DISP_COLOR_WHITE;
+       hat_color = DISP_COLOR_WHITE;
+    }
+    else if ((mario_count % 3) == 2)
+    {
+       pants_color = DISP_COLOR_GREEN;
+       hat_color = DISP_COLOR_GREEN;
+    }
   }
 
   if (current_mario_row > 0)
@@ -2558,9 +2578,8 @@ void disp_breaking_brick(int current_display_col)
 
 
 unsigned int fireball_col[2] = {0,0};
-unsigned int fireball_row[2] = {0,0}; /* 0 - 43, divide by 2 for row */
+unsigned char fireball_row[2] = {0,0};
 int fireball_dir[2] = {1,1};
-bool fireball_going_down[2] = {true,true}; /* used for simple vert speed */
 unsigned int fireball_count = 0;
 
 /* Manages creation, propagation, and display of fireballs */
@@ -2576,9 +2595,8 @@ void display_mario_fireballs(int current_display_col, int current_mario_row, int
 
   if ((mario_is_fire) && (fireball_pressed) && (location < 2) && ((mario_count - fireball_count) > 8)) /* open slot for fireball */
   {
-    fireball_row[location] = current_mario_row * 2;
+    fireball_row[location] = current_mario_row;
     fireball_col[location] = current_mario_col;
-    fireball_going_down[location] = true;
     fireball_count = mario_count;
     if (mario_face_right == true)
       fireball_dir[location] = 1;
@@ -2592,18 +2610,23 @@ void display_mario_fireballs(int current_display_col, int current_mario_row, int
     {
       if (fireball_col[i] > 0) /* fireball is active */
       {
-        if (fireball_row[i] == 41)
-          fireball_going_down[i] = false;
-        else if (fireball_row[i] == 38)
-          fireball_going_down[i] = true;
-
-        if (fireball_going_down[i])
+        bool fire_is_right = (fireball_dir[location] > 0);
+        if (can_go_dir(fire_is_right, false, fireball_row[i], fireball_col[i], current_display_col))
+          fireball_col[i] = fireball_col[i] + fireball_dir[i];
+        else
+          fireball_col[i] = 0;
+        
+        if (on_solid_ground(fireball_row[i], fireball_col[i]))
+          fireball_row[i] = fireball_row[i] - 1;
+        else if (fireball_row[i] < 21)
           fireball_row[i] = fireball_row[i] + 1;
         else
-          fireball_row[i] = fireball_row[i] - 1;
-        fireball_col[i] = fireball_col[i] + fireball_dir[i];
+          fireball_col[i] = 0; /* make it inactive */
 
-        unsigned int fireball_disp_col = fireball_col[i] - current_display_col;
+        unsigned int fireball_disp_col = 0;
+        if  (fireball_col[i] > 0)
+          fireball_disp_col = fireball_col[i] - current_display_col;
+          
         if ((fireball_disp_col == 0) || (fireball_disp_col >= 21))
           fireball_col[i] = 0;
         else
@@ -2618,7 +2641,92 @@ void display_mario_fireballs(int current_display_col, int current_mario_row, int
     }
 }
 
+float mar_star_row = 0.0;
+float mar_star_col = 0.0;
+float mar_star_vert_speed = 0.0;
+bool mar_star_dir_is_right = true;
+unsigned int mar_star_count = 0;
 
+void set_star(unsigned char input_row, unsigned int input_col)
+{
+  mar_star_row = input_row - 2.0;
+  mar_star_col = input_col;
+  mar_star_vert_speed = 2.0;
+  mar_star_dir_is_right = true;
+}
+
+void display_mario_star(int current_mario_row, int current_mario_col, int current_display_col)
+{
+  if (mar_star_col > 0.0) /* active star */
+  {
+    if(mar_star_row < 22.0) /* star not in pit */
+    {
+      /* Update star vertical speed */
+      mar_star_vert_speed = mar_star_vert_speed - MARIO_ACCELERATION;
+      if (mar_star_vert_speed < -2.0)
+        mar_star_vert_speed = -2.0;
+
+      if (on_solid_ground((int)mar_star_row, (int)mar_star_col))
+        mar_star_vert_speed = 2.0;
+
+      /* Update star row position */
+      mar_star_row = mar_star_row - mar_star_vert_speed / 8;
+
+      /* Update star col position */
+      if (can_go_dir(mar_star_dir_is_right, false, mar_star_row, mar_star_col, current_display_col) == false)
+        mar_star_dir_is_right = !mar_star_dir_is_right;
+      if (mar_star_dir_is_right)
+        mar_star_col = mar_star_col + 2.0 / 8;
+      else
+        mar_star_col = mar_star_col - 2.0 / 8;
+
+      /* Display star */
+      int star_disp_col = (int)mar_star_col - current_display_col;
+      int star_disp_row = (int)mar_star_row;
+
+      if ((star_disp_col == 0) || (star_disp_col == 20) || (star_disp_row == 21))
+        mar_star_col = 0.0;
+      else
+      {
+        unsigned char star_color_1 = DISP_COLOR_RED;
+        unsigned char star_color_2 = DISP_COLOR_WHITE;
+        if ((mario_count % 3) == 1)
+        {
+          star_color_1 = DISP_COLOR_WHITE;
+          star_color_2 = DISP_COLOR_YELLOW;
+        }
+        else if ((mario_count % 3) == 2)
+        {
+          star_color_1 = DISP_COLOR_YELLOW;
+          star_color_2 = DISP_COLOR_RED;
+        }
+ 
+        bigDispBoard[star_disp_row][star_disp_col] = star_color_1;
+        bigDispBoard[star_disp_row][star_disp_col + 1] = star_color_2;
+        bigDispBoard[star_disp_row - 1][star_disp_col] = star_color_2;
+        bigDispBoard[star_disp_row - 1][star_disp_col + 1] = star_color_1;
+      }
+
+      /* Check Mario eat star */
+      if (((current_mario_row == mar_star_row) || ((current_mario_row - 1) == mar_star_row) || ((current_mario_row + 1) == mar_star_row)) && 
+        ((current_mario_col == mar_star_col) || ((current_mario_col + 1) == mar_star_col) || ((current_mario_col - 1) == mar_star_col)) )
+      {
+        mar_star_col = 0.0; /* star is gone */
+        mar_star_count = mario_count; /* eaten */
+        mario_is_star = true;
+        delay(600);
+      }
+
+    }
+      
+  } /* star is active */
+
+  if ((mar_star_count > 0) && (mario_count - mar_star_count < 200))
+    mario_is_star = true;
+  else
+    mario_is_star = false;
+
+}
 
 /* Updates current_mario_speed (used by update_mario_vert_speed, update_mario_location, 
  *         mario_face_right (used by disp_mario), mario_is_walking (used by disp_mario)
@@ -2755,6 +2863,17 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
         mario_multi_brick_count = 1;
       }
       
+    }
+    else if ((current_mario_row == low_row) && ((current_mario_col == MARIO_STAR_COL) || (current_mario_col + 1 == MARIO_STAR_COL) || (current_mario_col - 1 == MARIO_STAR_COL)))
+    {
+      can_go_up = false;
+      if (mario_star_hit == false)
+      {
+        locations_low_q[low_q_i] = MARIO_STAR_COL;
+        low_q_i++;
+        set_star(14, MARIO_STAR_COL);
+        mario_star_hit = true;
+      }
     }
     else if ((current_mario_row == high_row) && (left_is_high_q || right_is_high_q))
     {
@@ -2952,6 +3071,7 @@ void init_mario()
   mario_is_big = false;
   mario_is_fire = false;
   mario_is_trying = false;
+  mario_is_star = false;
   mario_jump_count = 0;
   mario_count = 0;
   total_score = 0;
@@ -2965,10 +3085,14 @@ void init_mario()
   mush_count = 0;
   mario_lives = 2;
   mario_1up_hit = false;
+  mario_star_hit = false;
   mario_multi_brick_count = 0;
   mario_bump_brick_count = 0;
   mush_is_flower = false;
   bumping_brick = false;
+  mar_star_row = 0;
+  mar_star_col = 0;
+  mar_star_count = 0;
 
   /* Init breaking brick arrays */
   unsigned int i;
@@ -3058,6 +3182,7 @@ void play_mario(bool mario_is_green)
     display_coin_animation(current_display_col);
     display_mush(current_display_col, current_mario_row, current_mario_col);
     display_mario_fireballs(current_display_col, current_mario_row, current_mario_col, (move_dir >> 4) & 0xF);
+    display_mario_star(current_mario_row, current_mario_col, current_display_col);
     displayLEDs(true);
 
     delay(5);
