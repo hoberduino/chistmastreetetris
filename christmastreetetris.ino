@@ -1573,6 +1573,7 @@ bool mario_is_big = false;
 bool mario_is_fire = false;
 bool mario_is_trying = false;
 bool mario_is_star = false;
+bool mario_is_duck = false;
 unsigned int mario_count = 0; /* count of loop cycles for current game */
 unsigned int mario_jump_count = 0; /* time when mario most recently started jumping */
 unsigned int mario_multi_brick_count = 0; /* count used for multi-brick */
@@ -2013,7 +2014,7 @@ void disp_mario(bool mario_is_green, int current_mario_row, int current_mario_co
 
   if (current_mario_row > 0)
   {
-    if (mario_is_big == false)
+    if ((mario_is_big == false) || (mario_is_duck == true))
     {
       if (mario_face_right == true)
       {
@@ -2458,7 +2459,20 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
           delay(100);
         }
         else if ((mario_count - mario_invulnerable_count) > MARIO_INVUL_COUNT)
-          return_value = true;
+        {
+          if (mario_is_fire)
+            mario_is_fire = false;
+          else if (mario_is_big)
+            mario_is_big = false;
+          else
+            return_value = true;
+
+          if (return_value == false)
+          {
+            mario_invulnerable_count = mario_count;
+            delay(100);
+          }
+        }
       }
       else if ((current_mario_row == goomba_row_now - 2) && 
                ((mario_col_now == goomba_col_now) || ((mario_col_now + 1) == goomba_col_now) || ((mario_col_now - 1) == goomba_col_now)))
@@ -2541,7 +2555,20 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
           delay(100);
         }
         else if ((mario_count - mario_invulnerable_count) > MARIO_INVUL_COUNT)
-          return_value = true;
+        {
+          if (mario_is_fire)
+            mario_is_fire = false;
+          else if (mario_is_big)
+            mario_is_big = false;
+          else
+            return_value = true;
+
+          if (return_value == false)
+          {
+            mario_invulnerable_count = mario_count;
+            delay(100);
+          }
+        }
       }
       else if ((current_mario_row == 18) && 
                 ((mario_col_now == koopa_col_now) || ((mario_col_now + 1) == koopa_col_now) || ((mario_col_now - 1) == koopa_col_now)))
@@ -2605,7 +2632,20 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
           delay(100);
         }
         else if ((mario_count - mario_invulnerable_count) > MARIO_INVUL_COUNT)
-          return_value = true;
+        {
+          if (mario_is_fire)
+            mario_is_fire = false;
+          else if (mario_is_big)
+            mario_is_big = false;
+          else
+            return_value = true;
+
+          if (return_value == false)
+          {
+            mario_invulnerable_count = mario_count;
+            delay(100);
+          }
+        }
       }
 
       /* Check for goombas */
@@ -3108,9 +3148,10 @@ void display_mario_star(int current_mario_row, int current_mario_col, int curren
 void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press, int current_mario_row, int current_mario_col, int current_display_col, float * current_mario_speed)
 {
   float mario_accel = MARIO_ACCELERATION; /* how quickly mario accelerates */
-  bool button_right = (move_dir & MOVE_RIGHT) > 0;
-  bool button_left = (move_dir & MOVE_LEFT) > 0;
-  bool mario_is_running = (button_press & MOVE_ROTATE_LEFT) > 0; /* B Button pressed */
+  mario_is_duck = (move_dir & MOVE_DOWN) > 0;
+  bool button_right = ((move_dir & MOVE_RIGHT) > 0) && (mario_is_duck == false);
+  bool button_left = ((move_dir & MOVE_LEFT) > 0)  && (mario_is_duck == false);
+  bool mario_is_running = ((button_press & MOVE_ROTATE_LEFT) > 0)  && (mario_is_duck == false); /* B Button pressed */
   mario_is_trying = button_right || button_left;
 
   /* Accelerate Mario from 2->3 at half the time Mario goes from 1->2 */
