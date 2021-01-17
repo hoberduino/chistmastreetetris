@@ -8,7 +8,6 @@
  *  - Restart level
  * Bump bricks - affect Mushroom
  * Bad Guys
- *  - Goomba
  *  - Koopa Troopa
  * Underworld?
  * Mario duck
@@ -1635,7 +1634,7 @@ const unsigned int PROGMEM marioDispForeItems[NUM_MARIO_COLUMNS] =
  0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0001,0x0001,0x0001,0x0001,0x0100,0x0100,0x0300,0x0300, // 24
  
  0x0700,0x0700,0x0F00,0x0F00,0x1F00,0x1F00,0x3F00,0x3F00,0x7F00,0x7F00,0xFF00,0xFF00,0xFF00,0xFF00,0x0000,0x0000, // 25
- 0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0100,0x0100,0x0000,0x0000,0x0000,0x0000, // 26
+ 0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0100,0x0100,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000, // 26
  
  0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000, // 27
  0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};// 28
@@ -1692,7 +1691,7 @@ bool mario_star_hit = false;
 #define MARIO_CASTLE_HIGH_TURRET 0x4000   /* 1 pixel height lower turret */
 #define MARIO_DISP_CLOUD_3       0x8000   /* high height cloud */
 
-#define MARIO_FLAG_POLE_COL      411
+#define MARIO_FLAG_POLE_COL      409
 
  /* Mario Background Display Items */
 const unsigned int PROGMEM marioDispBackItems[NUM_MARIO_COLUMNS] =
@@ -1734,7 +1733,7 @@ const unsigned int PROGMEM marioDispBackItems[NUM_MARIO_COLUMNS] =
  0x0003,0x0003,0x0001,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0002,0x8002,0x8002,0x0002, // 24
  
  0x8002,0x8002,0x0002,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0010,0x0030, // 25
- 0x0070,0x00F0,0x01F0,0x01F0,0x00F0,0x0070,0x0030,0x0010,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x8000, // 26
+ 0x0070,0x00F0,0x01F0,0x01F0,0x00F0,0x0070,0x0030,0x0010,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000, // 26
  
  0x0000,0x0000,0x0001,0x0003,0x0003,0x0001,0x0A00,0x0200,0x5A00,0x3200,0x5E00,0x5E00,0x3200,0x5A00,0x0200,0x0A00, // 27
  0x0004,0x0000,0x0010,0x0030,0x0070,0x0070,0x0030,0x0010,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};// 28
@@ -2294,6 +2293,9 @@ unsigned char fireball_row[2] = {0,0};
 int fireball_dir[2] = {1,1};
 unsigned int fireball_count = 0;
 
+unsigned int brick_bump_break_row = 0;
+unsigned int brick_bump_break_col = 0;
+unsigned int brick_bump_break_count = 0;
 
 
 #define GOOMBA_COL_1  50
@@ -2320,6 +2322,7 @@ unsigned int fireball_count = 0;
 float goomba_row[4] = {0.0,0.0,0.0,0.0};
 float goomba_col[4] = {0.0,0.0,0.0,0.0};
 bool goomba_face_right[4] = {false, false, false, false};
+unsigned int goomba_col_done = 0;
 
 /* returns True if Goomba got Mario */
 bool display_goombas(int current_mario_row, int current_mario_col, int current_display_col) 
@@ -2370,9 +2373,16 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
     new_goomba_row = 4.0;
   }
 
+  if ((unsigned int)new_goomba_col == goomba_col_done)
+  {
+    new_goomba_col = 0.0;
+    new_goomba_row = 0.0;
+  }
+
   /* new goomba */
   if (new_goomba_col > 0.0)
   {
+    goomba_col_done = (unsigned int)new_goomba_col;
     if (goomba_col[0] < 1.0)
     {
       goomba_col[0] = new_goomba_col;
@@ -2404,8 +2414,9 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
     /* Update goomba positions */
     if (goomba_col[i] > 0.5) /* active goomba */
     {
+      int goomba_col_now = (int)goomba_col[i] - current_display_col;
       /* Horizontal */
-      if (can_go_dir(goomba_face_right[i], false, (int)goomba_row[i], (int)goomba_col[i], current_display_col) == false)
+      if ((can_go_dir(goomba_face_right[i], false, (int)goomba_row[i], (int)goomba_col[i], current_display_col) == false) && (goomba_col_now != 0))
         goomba_face_right[i] = !goomba_face_right[i];
       if (goomba_face_right[i] == true)
         goomba_col[i] = goomba_col[i] + 1.0 / 8; /* goomba col */
@@ -2414,45 +2425,65 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
 
       /* Vertical */
       if (on_solid_ground((int)goomba_row[i], (int)goomba_col[i]) == false)
-        goomba_row[i] = goomba_row[i] + 1.0 / 8; /* goomba row */
+        goomba_row[i] = goomba_row[i] + 3.0 / 8; /* goomba row */
       
    
 
       /* Display goombas */
-      int goomba_col_now = (int)goomba_col[i] - current_display_col;
+      goomba_col_now = (int)goomba_col[i] - current_display_col;
       int goomba_row_now = (int)goomba_row[i];
-      if ((goomba_col_now >= 0) && (goomba_col_now < 22) && (goomba_row_now < 22))
+      if ((goomba_col_now >= 0) && (goomba_col_now < 21) && (goomba_row_now < 22))
       {
         bigDispBoard[goomba_row_now - 1][goomba_col_now] = DISP_COLOR_RED;
         bigDispBoard[goomba_row_now - 1][goomba_col_now + 1] = DISP_COLOR_RED;
-        if ((mario_count % 6) < 3)
+        if ((mario_count % 20) < 10)
           bigDispBoard[goomba_row_now][goomba_col_now] = DISP_COLOR_WHITE;
         else
           bigDispBoard[goomba_row_now][goomba_col_now + 1] = DISP_COLOR_WHITE;
       }
-      else if (goomba_col_now <= 0)
-        goomba_col[i] = 0.0; /* remove the goomba */
 
       /* Stomp, fireball, star, bump/smash, koopa kick */
       /* Check for goomba gets mario */
       /* Check for mario gets goomba, star, stomp, fireball */
+      int mario_col_now = current_mario_col - current_display_col;
       if (((current_mario_row == goomba_row_now) || ((current_mario_row - 1) == goomba_row_now) || ((current_mario_row + 1) == goomba_row_now)) && 
-        ((current_mario_col == goomba_col_now) || ((current_mario_col + 1) == goomba_col_now) || ((current_mario_col - 1) == goomba_col_now)))
+        ((mario_col_now == goomba_col_now) || ((mario_col_now + 1) == goomba_col_now) || ((mario_col_now - 1) == goomba_col_now)))
         {
-          if (mario_is_fire)
+          if (mario_is_star)
+          {
             goomba_col[i] = 0.0; /* remove the goomba */
+            delay(100);
+          }
           else
             return_value = true;
         }
       else if ((current_mario_row == goomba_row_now - 2) && 
-               ((current_mario_col == goomba_col_now) || ((current_mario_col + 1) == goomba_col_now) || ((current_mario_col - 1) == goomba_col_now)))
+               ((mario_col_now == goomba_col_now) || ((mario_col_now + 1) == goomba_col_now) || ((mario_col_now - 1) == goomba_col_now)))
+      {
         goomba_col[i] = 0.0; /* remove the goomba */
+        delay(100);
+      }
       else if (((fireball_row[0] == goomba_row_now) || (fireball_row[0] == (goomba_row_now - 1))) && 
-               ((fireball_col[0] == goomba_col_now) || (fireball_col[0] == (goomba_col_now + 1))))
+               (((fireball_col[0] - current_display_col) == goomba_col_now) || ((fireball_col[0] - current_display_col) == (goomba_col_now + 1))))
+      {
         goomba_col[i] = 0.0; /* remove the goomba */
+        delay(100);
+      }
       else if (((fireball_row[1] == goomba_row_now) || (fireball_row[1] == (goomba_row_now - 1))) && 
-               ((fireball_col[1] == goomba_col_now) || (fireball_col[1] == (goomba_col_now + 1))))
+               (((fireball_col[1] - current_display_col) == goomba_col_now) || ((fireball_col[1] - current_display_col) == (goomba_col_now + 1))))
+      {
         goomba_col[i] = 0.0; /* remove the goomba */
+        delay(100);
+      }
+      else if ((brick_bump_break_row == goomba_row_now) && ((mario_count - brick_bump_break_count) < 20) &&
+               (((brick_bump_break_col - current_display_col) == goomba_col_now) || ((brick_bump_break_col - current_display_col - 1) == goomba_col_now) || ((brick_bump_break_col - current_display_col + 1) == goomba_col_now)))
+      {
+        goomba_col[i] = 0.0; /* remove the goomba */
+      }
+
+      if (goomba_col_now < -20)
+        goomba_col[i] = 0.0; /* remove the goomba */
+
     }
 
   }
@@ -2526,6 +2557,9 @@ void set_mush_fire(unsigned char input_row, unsigned int input_col, bool mush_is
     mush_is_flower = true;
   else
     mush_is_flower = false;
+  brick_bump_break_row = input_row - 2;
+  brick_bump_break_col = input_col;
+  brick_bump_break_count = mario_count;
 }
 
 void display_mush(int current_display_col, int current_mario_row, int current_mario_col)
@@ -2651,6 +2685,10 @@ void set_breaking_brick(unsigned char input_row, unsigned int input_col, bool bu
   else if (breaking_brick_row[0][0] < 22.0)
     location = 1;
 
+  brick_bump_break_row = input_row - 2;
+  brick_bump_break_col = input_col;
+  brick_bump_break_count = mario_count;
+
   if (bump_brick == false)
   {
     breaking_brick_row[location][0] = input_row - 1;
@@ -2751,11 +2789,20 @@ void disp_breaking_brick(int current_display_col)
 
 }
 
+bool fireball_been_pressed = false;
 
 /* Manages creation, propagation, and display of fireballs */
 void display_mario_fireballs(int current_display_col, int current_mario_row, int current_mario_col, unsigned char button_press)
 {
-  bool fireball_pressed = ((button_press & MOVE_ROTATE_LEFT) > 0); /* B Button pressed */
+  
+  bool fireball_pressed = false;
+  if (((button_press & MOVE_ROTATE_LEFT) > 0) && (fireball_been_pressed == false)) /* B Button pressed */
+  {
+    fireball_pressed = true;
+    fireball_been_pressed = true;
+  }
+  else if ((button_press & MOVE_ROTATE_LEFT) == 0)
+    fireball_been_pressed = false;
 
   unsigned char location = 0;
   if (fireball_col[0] > 0)
@@ -3263,6 +3310,10 @@ void init_mario()
   mar_star_row = 0;
   mar_star_col = 0;
   mar_star_count = 0;
+  goomba_col_done = 0;
+  brick_bump_break_row == 0;
+  brick_bump_break_col == 0;
+  brick_bump_break_count = 0;
 
 
   /* Init breaking brick arrays */
