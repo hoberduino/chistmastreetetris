@@ -6,6 +6,8 @@
 /* TODO: */
 /* Mario 
  *  - Restart level
+ * Hit downgrades Mario
+ *  - Invulnerable for a bit
  * Bump bricks - affect Mushroom
  * Bad Guys
  *  - Koopa Troopa
@@ -2316,7 +2318,7 @@ unsigned int brick_bump_break_count = 0;
 #define HIGH_GOOMBA_COL_1 176
 #define HIGH_GOOMBA_COL_2 180
 
-#define KOOPA_COL = 254
+#define KOOPA_COL 254
 
 /* up to 4 active goombas */
 float goomba_row[4] = {0.0,0.0,0.0,0.0};
@@ -2448,15 +2450,15 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
       int mario_col_now = current_mario_col - current_display_col;
       if (((current_mario_row == goomba_row_now) || ((current_mario_row - 1) == goomba_row_now) || ((current_mario_row + 1) == goomba_row_now)) && 
         ((mario_col_now == goomba_col_now) || ((mario_col_now + 1) == goomba_col_now) || ((mario_col_now - 1) == goomba_col_now)))
-        {
-          if (mario_is_star)
+      {
+        if (mario_is_star)
           {
-            goomba_col[i] = 0.0; /* remove the goomba */
-            delay(100);
-          }
-          else
-            return_value = true;
+          goomba_col[i] = 0.0; /* remove the goomba */
+          delay(100);
         }
+        else
+          return_value = true;
+      }
       else if ((current_mario_row == goomba_row_now - 2) && 
                ((mario_col_now == goomba_col_now) || ((mario_col_now + 1) == goomba_col_now) || ((mario_col_now - 1) == goomba_col_now)))
       {
@@ -2464,22 +2466,14 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
         delay(100);
       }
       else if (((fireball_row[0] == goomba_row_now) || (fireball_row[0] == (goomba_row_now - 1))) && 
-               (((fireball_col[0] - current_display_col) == goomba_col_now) || ((fireball_col[0] - current_display_col) == (goomba_col_now + 1))))
-      {
+               ((fireball_col[0] - current_display_col) == goomba_col_now))
         goomba_col[i] = 0.0; /* remove the goomba */
-        delay(100);
-      }
       else if (((fireball_row[1] == goomba_row_now) || (fireball_row[1] == (goomba_row_now - 1))) && 
-               (((fireball_col[1] - current_display_col) == goomba_col_now) || ((fireball_col[1] - current_display_col) == (goomba_col_now + 1))))
-      {
+               ((fireball_col[1] - current_display_col) == goomba_col_now))
         goomba_col[i] = 0.0; /* remove the goomba */
-        delay(100);
-      }
       else if ((brick_bump_break_row == goomba_row_now) && ((mario_count - brick_bump_break_count) < 20) &&
                (((brick_bump_break_col - current_display_col) == goomba_col_now) || ((brick_bump_break_col - current_display_col - 1) == goomba_col_now) || ((brick_bump_break_col - current_display_col + 1) == goomba_col_now)))
-      {
         goomba_col[i] = 0.0; /* remove the goomba */
-      }
 
       if (goomba_col_now < -20)
         goomba_col[i] = 0.0; /* remove the goomba */
@@ -2492,6 +2486,154 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
 
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+/* koopa troopa */
+float koopa_col = 0.0;
+bool koopa_moving = true; /* true if koopa walking, not stomped */
+bool koopa_kicked_right = false;
+bool koopa_kicked_left = false;
+unsigned int koopa_count = 0;
+
+/* returns True if Koopa got Mario */
+bool display_koopa(int current_mario_row, int current_mario_col, int current_display_col, float *current_mario_jump_speed) 
+{
+  bool return_value = false;
+  int mario_col_now = current_mario_row - current_display_col;
+
+  /* check if koopa active */
+  if (current_display_col == KOOPA_COL - 20)
+    koopa_col = KOOPA_COL;
+
+  /* Update koopa position */
+  if (koopa_col > 0.5) /* active koopa */
+  {
+    int koopa_col_now = (int)koopa_col - current_display_col;
+    /* Horizontal */
+    if (koopa_moving) /* always walking left, don't need to check for obstacles while walking */
+    {
+      /* update position */
+      koopa_col = koopa_col - 1.0 / 8; /* goomba col */  
+      koopa_col_now = (int)koopa_col - current_display_col;
+
+      /* display koopa head */
+      bigDispBoard[18][koopa_col_now] = DISP_COLOR_Q_YELLOW;
+
+      /* check for koopa get mario, star, stomp */
+      int mario_col_now = current_mario_col - current_display_col;
+      if (((current_mario_row == 20) || (current_mario_row == 19)) && 
+        ((mario_col_now == koopa_col_now) || ((mario_col_now + 1) == koopa_col_now) || ((mario_col_now - 1) == koopa_col_now)))
+      {
+        if (mario_is_star)
+        {
+          koopa_col = 0.0; /* remove koopa */
+          delay(100);
+        }
+        else
+          return_value = true;
+      }
+      else if ((current_mario_row == 18) && 
+                ((mario_col_now == koopa_col_now) || ((mario_col_now + 1) == koopa_col_now) || ((mario_col_now - 1) == koopa_col_now)))
+      {
+        koopa_moving = false; /* koopa stops moving */
+        koopa_kicked_right = false;
+        koopa_kicked_left = false;
+        koopa_count = mario_count;
+        (*current_mario_jump_speed) = 2.0;
+      }
+    } /* koopa moving */
+    else if ((koopa_kicked_right == false) && (koopa_kicked_left == false))
+    { /* koopa shell */
+      if (((current_mario_row == 18) || (current_mario_row == 19) || (current_mario_row == 17)) && ((mario_col_now == koopa_col_now) || (mario_col_now == (koopa_col_now - 1)) || (mario_col_now == (koopa_col_now - 2))))
+        koopa_kicked_right = true;
+      else if (((current_mario_row == 18) || (current_mario_row == 19) || (current_mario_row == 17)) && (mario_col_now == (koopa_col_now + 1) || ((mario_col_now + 1) == (koopa_col_now + 2))))
+        koopa_kicked_left = true;
+      else if ((koopa_count > 0) && ((mario_count - koopa_count) > 40))
+      {
+        koopa_moving = true;
+        koopa_count = 0;
+      }
+    }
+    else
+    { /* koopa has been kicked */
+      if ((koopa_kicked_right) && (can_go_dir(true, false, 20, (int)koopa_col, current_display_col) == false))
+      {
+        koopa_kicked_right = false;
+        koopa_kicked_left = true;
+      }
+
+      /* Update position */
+      if (koopa_kicked_right)
+        koopa_col = koopa_col + 3.0 / 8; /* goomba col */
+      else if (koopa_kicked_left)
+        koopa_col = koopa_col - 3.0 / 8; /* goomba col */
+      koopa_col_now = (int)koopa_col - current_display_col;
+
+      /* Check for hit goomba, mario, or re-stomp */
+      if ((current_mario_row == 18) && 
+                ((mario_col_now == koopa_col_now) || ((mario_col_now + 1) == koopa_col_now) || ((mario_col_now - 1) == koopa_col_now)))
+      {
+        koopa_moving = false; /* koopa stops moving */
+        koopa_kicked_right = false;
+        koopa_kicked_left = false;
+        koopa_count = mario_count;
+        (*current_mario_jump_speed) = 2.0;
+      }
+      else if (((current_mario_row == 20) || (current_mario_row == 19)) && 
+        ((mario_col_now == koopa_col_now) || ((mario_col_now + 1) == koopa_col_now) || ((mario_col_now - 1) == koopa_col_now)))
+      {
+        if (mario_is_star)
+        {
+          koopa_col = 0.0; /* remove koopa */
+          delay(100);
+        }
+        else
+          return_value = true;
+      }
+
+      /* Check for goombas */
+      for(unsigned int i = 0; i < 4; i++)
+      {
+        int goomba_col_now = goomba_col[i] - current_display_col;
+        if ((koopa_col_now == goomba_col_now) || ((koopa_col_now + 1) == goomba_col_now) || ((koopa_col_now - 1) == goomba_col_now))
+          goomba_col[i] = 0.0; /* remove the goomba */
+      }
+    } /* kicked koopa */
+
+    if ((koopa_col_now == 0) || (koopa_col_now == 21))
+      koopa_col = 0.0; /* remove koopa */
+    else if (((fireball_row[0] == 20) || (fireball_row[0] == 19)) && 
+               ((fireball_col[0] - current_display_col) == koopa_col_now))
+    {
+      koopa_col = 0.0; /* remove koopa */
+    }
+    else if (((fireball_row[1] == 20) || (fireball_row[1] == 19)) && 
+             ((fireball_col[1] - current_display_col) == koopa_col_now))
+    {
+      koopa_col = 0.0; /* remove koopa */
+    }
+
+    /* Display koopa body */
+    bigDispBoard[20][koopa_col_now] = DISP_COLOR_WHITE;
+    bigDispBoard[20][koopa_col_now + 1] = DISP_COLOR_WHITE;
+    bigDispBoard[19][koopa_col_now] = DISP_COLOR_GREEN;
+    bigDispBoard[19][koopa_col_now + 1] = DISP_COLOR_GREEN;   
+
+  } /* active koopa */
+
+  return return_value;
+
+}
 
 
 
@@ -2938,7 +3080,7 @@ void display_mario_star(int current_mario_row, int current_mario_col, int curren
       
   } /* star is active */
 
-  if ((mar_star_count > 0) && (mario_count - mar_star_count < 200))
+  if ((mar_star_count > 0) && (mario_count - mar_star_count < 400))
     mario_is_star = true;
   else
     mario_is_star = false;
@@ -3173,7 +3315,7 @@ unsigned char mario_jump_time_accel = NORMAL_JUMP_TIME;
 void update_mario_vert_speed(unsigned char button_press, int current_mario_row, int current_mario_col, float *current_mario_jump_speed, float current_mario_speed)
 {
   
-  float mario_accel = MARIO_ACCELERATION * 2.0;
+  float mario_accel = MARIO_ACCELERATION;
   bool mario_in_air = on_solid_ground(current_mario_row, current_mario_col) == false;
   bool mario_can_up = false;
   if (*current_mario_jump_speed > 0)
@@ -3314,7 +3456,11 @@ void init_mario()
   brick_bump_break_row == 0;
   brick_bump_break_col == 0;
   brick_bump_break_count = 0;
-
+  koopa_col = 0.0;
+  koopa_moving = true;
+  koopa_count = 0;
+  koopa_kicked_right = false;
+  koopa_kicked_left = false;
 
   /* Init breaking brick arrays */
   unsigned int i;
@@ -3405,6 +3551,8 @@ void play_mario(bool mario_is_green)
     display_mario_fore_items(current_display_col);
     disp_mario(mario_is_green, current_mario_row, current_mario_col, current_display_col);
     if (display_goombas(current_mario_row, current_mario_col, current_display_col)) /* Goomba got him */
+      mario_over = true;
+    if (display_koopa(current_mario_row, current_mario_col, current_display_col, &current_mario_jump_speed))
       mario_over = true;
     disp_breaking_brick(current_display_col);
     display_coin_animation(current_display_col);
