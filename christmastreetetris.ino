@@ -1566,6 +1566,7 @@ bool display_mario_run()
 
 #define MARIO_ACCELERATION 0.2
 #define NUM_MARIO_COLUMNS 448
+#define MARIO_INVUL_COUNT 60
 
 bool mario_face_right = true;
 bool mario_is_big = false;
@@ -1576,6 +1577,7 @@ unsigned int mario_count = 0; /* count of loop cycles for current game */
 unsigned int mario_jump_count = 0; /* time when mario most recently started jumping */
 unsigned int mario_multi_brick_count = 0; /* count used for multi-brick */
 unsigned int mario_bump_brick_count = 0; /* count used for bump brick */
+unsigned int mario_invulnerable_count = 0; /* count used for when mario invulnerable for a bit */
 
 unsigned int total_score = 0;
         
@@ -2455,7 +2457,7 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
           goomba_col[i] = 0.0; /* remove the goomba */
           delay(100);
         }
-        else
+        else if ((mario_count - mario_invulnerable_count) > MARIO_INVUL_COUNT)
           return_value = true;
       }
       else if ((current_mario_row == goomba_row_now - 2) && 
@@ -2538,7 +2540,7 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
           koopa_col = 0.0; /* remove koopa */
           delay(100);
         }
-        else
+        else if ((mario_count - mario_invulnerable_count) > MARIO_INVUL_COUNT)
           return_value = true;
       }
       else if ((current_mario_row == 18) && 
@@ -2554,10 +2556,16 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
     else if ((koopa_kicked_right == false) && (koopa_kicked_left == false))
     { /* koopa shell */
       if (((current_mario_row == 18) || (current_mario_row == 19) || (current_mario_row == 17)) && ((mario_col_now == koopa_col_now) || (mario_col_now == (koopa_col_now - 1)) || (mario_col_now == (koopa_col_now - 2))))
+      {
         koopa_kicked_right = true;
+        mario_invulnerable_count = mario_count;
+      }
       else if (((current_mario_row == 18) || (current_mario_row == 19) || (current_mario_row == 17)) && (mario_col_now == (koopa_col_now + 1) || ((mario_col_now + 1) == (koopa_col_now + 2))))
+      {
         koopa_kicked_left = true;
-      else if ((koopa_count > 0) && ((mario_count - koopa_count) > 40))
+        mario_invulnerable_count = mario_count;
+      }
+      else if ((koopa_count > 0) && ((mario_count - koopa_count) > 100))
       {
         koopa_moving = true;
         koopa_count = 0;
@@ -2596,7 +2604,7 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
           koopa_col = 0.0; /* remove koopa */
           delay(100);
         }
-        else
+        else if ((mario_count - mario_invulnerable_count) > MARIO_INVUL_COUNT)
           return_value = true;
       }
 
@@ -3465,6 +3473,7 @@ void init_mario()
   koopa_count = 0;
   koopa_kicked_right = false;
   koopa_kicked_left = false;
+  mario_invulnerable_count = 0;
 
   /* Init breaking brick arrays */
   unsigned int i;
