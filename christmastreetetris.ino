@@ -2289,6 +2289,11 @@ bool can_go_dir(bool is_right, bool is_big, int input_row, int input_col, int cu
 }
 
 
+unsigned int fireball_col[2] = {0,0};
+unsigned char fireball_row[2] = {0,0};
+int fireball_dir[2] = {1,1};
+unsigned int fireball_count = 0;
+
 
 
 #define GOOMBA_COL_1  50
@@ -2316,8 +2321,10 @@ float goomba_row[4] = {0.0,0.0,0.0,0.0};
 float goomba_col[4] = {0.0,0.0,0.0,0.0};
 bool goomba_face_right[4] = {false, false, false, false};
 
-void display_goombas(int current_display_col)
+/* returns True if Goomba got Mario */
+bool display_goombas(int current_mario_row, int current_mario_col, int current_display_col) 
 {
+  bool return_value = false;
   float new_goomba_col = 0.0;
   float new_goomba_row = 0.0;
   if (current_display_col == GOOMBA_COL_1 - 20)
@@ -2392,15 +2399,66 @@ void display_goombas(int current_display_col)
     }
   }
 
-  /* Update goomba positions */
+  for(unsigned int i = 0; i < 4; i++)
+  {
+    /* Update goomba positions */
+    if (goomba_col[i] > 0.5) /* active goomba */
+    {
+      /* Horizontal */
+      if (can_go_dir(goomba_face_right[i], false, (int)goomba_row[i], (int)goomba_col[i], current_display_col) == false)
+        goomba_face_right[i] = !goomba_face_right[i];
+      if (goomba_face_right[i] == true)
+        goomba_col[i] = goomba_col[i] + 1.0 / 8; /* goomba col */
+      else
+        goomba_col[i] = goomba_col[i] - 1.0 / 8; /* goomba col */
 
-  /* Display goombas */
+      /* Vertical */
+      if (on_solid_ground((int)goomba_row[i], (int)goomba_col[i]) == false)
+        goomba_row[i] = goomba_row[i] + 1.0 / 8; /* goomba row */
+      
+   
 
-  /* Check for mario gets goomba */
-  /* Stomp, fireball, star, bump/smash, koopa kick */
+      /* Display goombas */
+      int goomba_col_now = (int)goomba_col[i] - current_display_col;
+      int goomba_row_now = (int)goomba_row[i];
+      if ((goomba_col_now >= 0) && (goomba_col_now < 22) && (goomba_row_now < 22))
+      {
+        bigDispBoard[goomba_row_now - 1][goomba_col_now] = DISP_COLOR_RED;
+        bigDispBoard[goomba_row_now - 1][goomba_col_now + 1] = DISP_COLOR_RED;
+        if ((mario_count % 6) < 3)
+          bigDispBoard[goomba_row_now][goomba_col_now] = DISP_COLOR_WHITE;
+        else
+          bigDispBoard[goomba_row_now][goomba_col_now + 1] = DISP_COLOR_WHITE;
+      }
+      else if (goomba_col_now <= 0)
+        goomba_col[i] = 0.0; /* remove the goomba */
 
-  /* Check for goomba gets mario */
-  
+      /* Stomp, fireball, star, bump/smash, koopa kick */
+      /* Check for goomba gets mario */
+      /* Check for mario gets goomba, star, stomp, fireball */
+      if (((current_mario_row == goomba_row_now) || ((current_mario_row - 1) == goomba_row_now) || ((current_mario_row + 1) == goomba_row_now)) && 
+        ((current_mario_col == goomba_col_now) || ((current_mario_col + 1) == goomba_col_now) || ((current_mario_col - 1) == goomba_col_now)))
+        {
+          if (mario_is_fire)
+            goomba_col[i] = 0.0; /* remove the goomba */
+          else
+            return_value = true;
+        }
+      else if ((current_mario_row == goomba_row_now - 2) && 
+               ((current_mario_col == goomba_col_now) || ((current_mario_col + 1) == goomba_col_now) || ((current_mario_col - 1) == goomba_col_now)))
+        goomba_col[i] = 0.0; /* remove the goomba */
+      else if (((fireball_row[0] == goomba_row_now) || (fireball_row[0] == (goomba_row_now - 1))) && 
+               ((fireball_col[0] == goomba_col_now) || (fireball_col[0] == (goomba_col_now + 1))))
+        goomba_col[i] = 0.0; /* remove the goomba */
+      else if (((fireball_row[1] == goomba_row_now) || (fireball_row[1] == (goomba_row_now - 1))) && 
+               ((fireball_col[1] == goomba_col_now) || (fireball_col[1] == (goomba_col_now + 1))))
+        goomba_col[i] = 0.0; /* remove the goomba */
+    }
+
+  }
+
+  return return_value;
+
 }
 
 
@@ -2693,11 +2751,6 @@ void disp_breaking_brick(int current_display_col)
 
 }
 
-
-unsigned int fireball_col[2] = {0,0};
-unsigned char fireball_row[2] = {0,0};
-int fireball_dir[2] = {1,1};
-unsigned int fireball_count = 0;
 
 /* Manages creation, propagation, and display of fireballs */
 void display_mario_fireballs(int current_display_col, int current_mario_row, int current_mario_col, unsigned char button_press)
@@ -3211,6 +3264,7 @@ void init_mario()
   mar_star_col = 0;
   mar_star_count = 0;
 
+
   /* Init breaking brick arrays */
   unsigned int i;
   for(i = 0; i < 4; i++)
@@ -3221,6 +3275,10 @@ void init_mario()
     breaking_brick_col[1][i] = 0.0;
     breaking_brick_vert_speed[0][i] = 0.0;
     breaking_brick_vert_speed[1][i] = 0.0;
+    
+    goomba_row[i] = 0.0;
+    goomba_col[i] = 0.0;
+    goomba_face_right[i] = false;
   }
 
   /* Initialize ? Arrays */
@@ -3295,6 +3353,8 @@ void play_mario(bool mario_is_green)
     display_mario_back_items(current_display_col);
     display_mario_fore_items(current_display_col);
     disp_mario(mario_is_green, current_mario_row, current_mario_col, current_display_col);
+    if (display_goombas(current_mario_row, current_mario_col, current_display_col)) /* Goomba got him */
+      mario_over = true;
     disp_breaking_brick(current_display_col);
     display_coin_animation(current_display_col);
     display_mush(current_display_col, current_mario_row, current_mario_col);
