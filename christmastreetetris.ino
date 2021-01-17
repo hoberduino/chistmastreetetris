@@ -2295,7 +2295,6 @@ unsigned char fireball_row[2] = {0,0};
 int fireball_dir[2] = {1,1};
 unsigned int fireball_count = 0;
 
-unsigned int brick_bump_break_row = 0;
 unsigned int brick_bump_break_col = 0;
 unsigned int brick_bump_break_count = 0;
 
@@ -2471,7 +2470,7 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
       else if (((fireball_row[1] == goomba_row_now) || (fireball_row[1] == (goomba_row_now - 1))) && 
                ((fireball_col[1] - current_display_col) == goomba_col_now))
         goomba_col[i] = 0.0; /* remove the goomba */
-      else if ((brick_bump_break_row == goomba_row_now) && ((mario_count - brick_bump_break_count) < 20) &&
+      else if ((goomba_row_now == 12) && ((mario_count - brick_bump_break_count) < 20) &&
                (((brick_bump_break_col - current_display_col) == goomba_col_now) || ((brick_bump_break_col - current_display_col - 1) == goomba_col_now) || ((brick_bump_break_col - current_display_col + 1) == goomba_col_now)))
         goomba_col[i] = 0.0; /* remove the goomba */
 
@@ -2699,7 +2698,6 @@ void set_mush_fire(unsigned char input_row, unsigned int input_col, bool mush_is
     mush_is_flower = true;
   else
     mush_is_flower = false;
-  brick_bump_break_row = input_row - 2;
   brick_bump_break_col = input_col;
   brick_bump_break_count = mario_count;
 }
@@ -2719,6 +2717,14 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
     {
       if (can_go_dir(mush_go_right, false, mush_row, mush_col, current_display_col) == false) /* can't go this way, go other way */
         mush_go_right = !mush_go_right;
+
+      /* Check for bumps */
+      if ((mush_row == 12) && ((mario_count - brick_bump_break_count) < 10) && (mush_go_right == true) &&
+               ((brick_bump_break_col == mush_col) || (brick_bump_break_col == (mush_col + 1) || (brick_bump_break_col == (mush_col + 2)))))
+        mush_go_right = false;
+      else if ((mush_row == 12) && ((mario_count - brick_bump_break_count) < 10) && (mush_go_right == false) &&
+               ((brick_bump_break_col == (mush_col - 1)) || (brick_bump_break_col == (mush_col - 2))))
+        mush_go_right = true;
       
       if (mush_go_right) /* move horizontally */
         mush_col++;
@@ -2827,7 +2833,6 @@ void set_breaking_brick(unsigned char input_row, unsigned int input_col, bool bu
   else if (breaking_brick_row[0][0] < 22.0)
     location = 1;
 
-  brick_bump_break_row = input_row - 2;
   brick_bump_break_col = input_col;
   brick_bump_break_count = mario_count;
 
@@ -3453,7 +3458,6 @@ void init_mario()
   mar_star_col = 0;
   mar_star_count = 0;
   goomba_col_done = 0;
-  brick_bump_break_row == 0;
   brick_bump_break_col == 0;
   brick_bump_break_count = 0;
   koopa_col = 0.0;
