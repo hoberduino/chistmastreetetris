@@ -1640,22 +1640,24 @@ const unsigned int PROGMEM marioDispForeItems[NUM_MARIO_COLUMNS] =
  0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};// 28
 
 
-#define NUM_BRICKS 16
+#define NUM_BRICKS 20
 #define NUM_Q 13
-#define NUM_HIGH_Q 8
+#define NUM_HIGH_Q 10
 
 #define MARIO_1UP_COL 130
 #define MARIO_REPEAT_BRICK_COL 202
 #define MARIO_STAR_COL 216
 
+#define MARIO_RESTART_COL 186
+
 /* These are per column */
 /* These represent current locations of bricks (haven't been hit), populated from marioDispForeItems */
-unsigned int locations_high_bricks[NUM_BRICKS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+unsigned int locations_high_bricks[NUM_BRICKS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 unsigned int locations_low_bricks[NUM_BRICKS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 /* These are per Q */
 /* These represent if a Q has been hit */
 unsigned int locations_low_q[NUM_Q] = {0,0,0,0,0,0,0,0,0,0,0,0}; /* Added 1 for 1UP, 1 for repeat brick, 1 for star */
-unsigned int locations_high_q[NUM_HIGH_Q] = {0,0,0,0,0,0,0,0};
+unsigned int locations_high_q[NUM_HIGH_Q] = {0,0,0,0,0,0,0,0,0,0};
 
 unsigned char high_q_i = 0;
 unsigned char low_q_i = 0;
@@ -2487,7 +2489,7 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
         goomba_col[i] = 0.0; /* remove the goomba */
         fireball_col[1] = 0;
       }
-      else if ((goomba_row_now == 12) && ((mario_count - brick_bump_break_count) < 20) &&
+      else if ((goomba_row_now == 12) && ((mario_count - brick_bump_break_count) < 10) &&
                (((brick_bump_break_col - current_display_col) == goomba_col_now) || ((brick_bump_break_col - current_display_col - 1) == goomba_col_now) || ((brick_bump_break_col - current_display_col + 1) == goomba_col_now)))
         goomba_col[i] = 0.0; /* remove the goomba */
 
@@ -2609,9 +2611,9 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
 
       /* Update position */
       if (koopa_kicked_right)
-        koopa_col = koopa_col + 3.0 / 8; /* goomba col */
+        koopa_col = koopa_col + 3.0 / 6; /* goomba col */
       else if (koopa_kicked_left)
-        koopa_col = koopa_col - 3.0 / 8; /* goomba col */
+        koopa_col = koopa_col - 3.0 / 6; /* goomba col */
       koopa_col_now = (int)koopa_col - current_display_col;
 
       /* Check for hit goomba, mario, or re-stomp */
@@ -3489,8 +3491,6 @@ void init_mario()
   mario_is_trying = false;
   mario_is_star = false;
   mario_jump_count = 0;
-  mario_count = 0;
-  total_score = 0;
   coin_row = 0;
   coin_col = 0;
   coin_count = 0;
@@ -3499,7 +3499,8 @@ void init_mario()
   mush_is_red = true;
   mush_go_right = true;
   mush_count = 0;
-  mario_lives = 2;
+  mario_count = 0;
+  
   mario_1up_hit = false;
   mario_star_hit = false;
   mario_multi_brick_count = 0;
@@ -3572,8 +3573,11 @@ void play_mario(bool mario_is_green)
 
   /* Re-init globabls */
   int current_mario_row = NUM_DISP_ROWS - 2; /* bottom left of mario */
-  int current_mario_col = 3; /* (0 - 438), bottom left of mario */
+  int current_mario_col = 6; /* (0 - 438), bottom left of mario */
   int current_display_col = 0; /* leftmost column of display as level column */
+
+  total_score = 0;
+  mario_lives = 2;
 
   float current_mario_speed = 0; /* (-3,3) */
   float current_mario_jump_speed = 0; /* (-3,3) */
@@ -3618,6 +3622,24 @@ void play_mario(bool mario_is_green)
     display_mario_fireballs(current_display_col, current_mario_row, current_mario_col, (move_dir >> 4) & 0xF);
     display_mario_star(current_mario_row, current_mario_col, current_display_col);
     displayLEDs(true);
+
+    /* Check for restart */
+    if ((mario_over == true) && (mario_lives > 0))
+    {
+      mario_over = false;
+      bool temp = mario_1up_hit;
+      init_mario();
+      if (temp)
+        mario_1up_hit = true;
+      current_mario_row = 20;
+      unsigned int col_adjust = 0;
+      if (current_mario_col >= MARIO_RESTART_COL)
+        col_adjust = MARIO_RESTART_COL - 12;
+      current_mario_col = col_adjust + 6;
+      current_display_col = col_adjust;
+      mario_lives--;
+      delay(1000);
+    }
 
     delay(5);
   }
