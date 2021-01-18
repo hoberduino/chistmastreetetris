@@ -7,7 +7,6 @@
 /* Mario 
  * Underworld?
  * Display score
- * Death animation
  * End Level Animation
  *  - Fireworks
  * Debug
