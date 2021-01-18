@@ -5,12 +5,12 @@
 
 /* TODO: */
 /* Mario 
- *  - Restart level
  * Underworld?
  * Display score
  * Death animation
  * End Level Animation
  *  - Fireworks
+ * Debug
 */
 
 
