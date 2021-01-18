@@ -2305,6 +2305,7 @@ void set_goodbye_char(int input_row, int input_col, char character, char char_di
   goodbye_character = character;
   goodbye_char_dir = char_direction;
   goodbye_vert_speed = 2.0;
+  total_score++;
 }
 
 void display_goodbye_char(bool mario_is_green, int current_display_col)
@@ -2563,6 +2564,7 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
       {
         /* stomp */
         goomba_col[i] = 0.0; /* remove the goomba */
+        total_score++;
         delay(100);
       }
       else if (((fireball_row[0] == goomba_row_now) || (fireball_row[0] == (goomba_row_now - 1))) && 
@@ -2809,6 +2811,7 @@ void set_coin_animation(unsigned char input_row, unsigned int input_col)
   coin_row = input_row;
   coin_col = input_col;
   coin_count = mario_count;
+  total_score++;
 }
 
 void display_coin_animation(int current_display_col)
@@ -2913,6 +2916,7 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
       mush_row = 0;
       mush_col = 0;
       mush_is_red = true; /* assume next is red */
+      total_score++;
       delay(600);
     }
     else if ((mush_count > 0) && (mush_disp_col > 0) && (mush_disp_col < 21) && (mush_row > 0) && (mush_row < 21)) /* Display mush */
@@ -2953,6 +2957,7 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
       mush_count = 0; /* eaten */
       mush_row = 0;
       mush_col = 0;
+      total_score++;
       delay(600);
     }
     else if ((mush_count > 0) && (mush_disp_col > 0) && (mush_disp_col < 21)) /* Display flower */
@@ -3240,6 +3245,7 @@ void display_mario_star(int current_mario_row, int current_mario_col, int curren
         mar_star_col = 0.0; /* star is gone */
         mar_star_count = mario_count; /* eaten */
         mario_is_star = true;
+        total_score++;
         delay(600);
       }
 
@@ -3355,10 +3361,7 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
         if ((q_col == low_mush_fire[0]) || (q_col == low_mush_fire[1]))
           set_mush_fire(14, q_col, false);
         else
-        {
-          total_score++;
           set_coin_animation(14, q_col);
-        }
       }
     }
     else if ((current_mario_row == low_row) && ((current_mario_col == MARIO_1UP_COL) || (current_mario_col + 1 == MARIO_1UP_COL) || (current_mario_col - 1 == MARIO_1UP_COL)))
@@ -3379,7 +3382,6 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
         mario_multi_brick_count = mario_count;
       if ((mario_count - mario_multi_brick_count) < 60)
       {
-        total_score++;
         set_coin_animation(14, MARIO_REPEAT_BRICK_COL);
         set_breaking_brick(14, MARIO_REPEAT_BRICK_COL, true);
       }
@@ -3423,10 +3425,7 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
         if (q_col == high_mush_fire)
           set_mush_fire(6, q_col, false);
         else
-        {
-          total_score++;
           set_coin_animation(6, q_col);
-        }
       }
     }
     else
@@ -3678,7 +3677,7 @@ void init_mario()
 
 #define MARIO_COUNT_END 2000
 
-void play_mario(bool mario_is_green)
+unsigned int play_mario(bool mario_is_green)
 {
   bool mario_over = false;
   unsigned int move_dir = MOVE_NONE;
@@ -3770,8 +3769,10 @@ void play_mario(bool mario_is_green)
 
     delay(5);
   }
-  delay(500);
   
+  delay(500);
+  total_score = total_score + (MARIO_COUNT_END - mario_count) / 10;
+  return total_score;
 }
 
 
