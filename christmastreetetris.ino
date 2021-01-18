@@ -2289,6 +2289,80 @@ bool can_go_dir(bool is_right, bool is_big, int input_row, int input_col, int cu
   return can_go_dir;
 }
 
+#define MARIO_GOODBYE_GOOMBA 1
+#define MARIO_GOODBYE_KOOPA 2
+#define MARIO_GOODBYE_MARIO 3
+
+float goodbye_row = 0.0;
+float goodbye_col = 0.0;
+float goodbye_vert_speed = 0.0;
+char goodbye_character = 0;
+char goodbye_char_dir = MOVE_NONE;
+
+void set_goodbye_char(int input_row, int input_col, char character, char char_direction)
+{
+  goodbye_row = (float)input_row;
+  goodbye_col = (float)input_col;
+  goodbye_character = character;
+  goodbye_char_dir = char_direction;
+  goodbye_vert_speed = 1.0;
+}
+
+void display_goodbye_char(bool mario_is_green, int current_display_col)
+{
+  if (goodbye_col > 0.5)
+  {
+    /* update position */
+    goodbye_vert_speed = goodbye_vert_speed - MARIO_ACCELERATION;
+    if (goodbye_vert_speed < -3.0)
+      goodbye_vert_speed = -3.0;
+
+    /* Update char row position */
+    goodbye_row = goodbye_row - goodbye_row / 8;
+    
+    /* Update char col position */
+    if (goodbye_char_dir == MOVE_RIGHT)
+      goodbye_col = goodbye_col + 1.0 / 8;
+    else if (goodbye_char_dir == MOVE_LEFT)
+      goodbye_col = goodbye_col - 1.0 / 8;
+
+    /* Display character */
+    int char_col_now = (int)goodbye_col - current_display_col;
+    int char_row_now = (int)goodbye_row;
+    if ((char_col_now >= 0) && (char_col_now < 22) && (char_row_now >= 0) && (char_row_now < 22) )
+    {
+      if (goodbye_character == MARIO_GOODBYE_GOOMBA)
+      {
+        bigDispBoard[char_row_now][char_col_now] = DISP_COLOR_RED;
+        bigDispBoard[char_row_now][char_col_now + 1] = DISP_COLOR_RED;
+        bigDispBoard[char_row_now - 1][char_col_now] = DISP_COLOR_WHITE;
+        bigDispBoard[char_row_now - 1][char_col_now + 1] = DISP_COLOR_WHITE;
+      }
+      else if (goodbye_character == MARIO_GOODBYE_KOOPA)
+      {
+        bigDispBoard[char_row_now][char_col_now] = DISP_COLOR_GREEN;
+        bigDispBoard[char_row_now][char_col_now + 1] = DISP_COLOR_GREEN;
+        bigDispBoard[char_row_now - 1][char_col_now] = DISP_COLOR_WHITE;
+        bigDispBoard[char_row_now - 1][char_col_now + 1] = DISP_COLOR_WHITE;
+      }
+      else if (goodbye_character == MARIO_GOODBYE_KOOPA)
+      {
+        unsigned char hat_color = MARIO_HAT_COLOR;
+        if (mario_is_green)
+          hat_color = LUIGI_HAT_COLOR;
+        bigDispBoard[char_row_now][char_col_now] = MARIO_PANTS_COLOR;
+        bigDispBoard[char_row_now][char_col_now + 1] = MARIO_PANTS_COLOR;
+        bigDispBoard[char_row_now - 1][char_col_now] = hat_color;
+        bigDispBoard[char_row_now - 1][char_col_now + 1] = MARIO_FACE_COLOR;
+      }
+    }
+    else
+      goodbye_col = 0.0;
+      
+  } /* animation active */
+}
+
+
 
 unsigned int fireball_col[2] = {0,0};
 unsigned char fireball_row[2] = {0,0};
@@ -2451,7 +2525,11 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
         ((mario_col_now == goomba_col_now) || ((mario_col_now + 1) == goomba_col_now) || ((mario_col_now - 1) == goomba_col_now)))
       {
         if (mario_is_star)
-          {
+        {
+          char char_direction = MOVE_RIGHT;
+          if (goomba_face_right[i] == false)
+            char_direction = MOVE_LEFT;
+          set_goodbye_char((int)goomba_row[i], (int)goomba_col[i], MARIO_GOODBYE_GOOMBA, char_direction);
           goomba_col[i] = 0.0; /* remove the goomba */
           delay(100);
         }
@@ -2474,24 +2552,39 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
       else if ((current_mario_row == goomba_row_now - 2) && 
                ((mario_col_now == goomba_col_now) || ((mario_col_now + 1) == goomba_col_now) || ((mario_col_now - 1) == goomba_col_now)))
       {
+        /* stomp */
         goomba_col[i] = 0.0; /* remove the goomba */
         delay(100);
       }
       else if (((fireball_row[0] == goomba_row_now) || (fireball_row[0] == (goomba_row_now - 1))) && 
                ((fireball_col[0] - current_display_col) == goomba_col_now))
       {
-        goomba_col[i] = 0.0; /* remove the goomba */
+        char char_direction = MOVE_RIGHT;
+        if (goomba_face_right[i] == false)
+          char_direction = MOVE_LEFT;
+        set_goodbye_char((int)goomba_row[i], (int)goomba_col[i], MARIO_GOODBYE_GOOMBA, char_direction);
         fireball_col[0] = 0;
+        goomba_col[i] = 0.0; /* remove the goomba */
       }
       else if (((fireball_row[1] == goomba_row_now) || (fireball_row[1] == (goomba_row_now - 1))) && 
                ((fireball_col[1] - current_display_col) == goomba_col_now))
       {
-        goomba_col[i] = 0.0; /* remove the goomba */
+        char char_direction = MOVE_RIGHT;
+        if (goomba_face_right[i] == false)
+          char_direction = MOVE_LEFT;
+        set_goodbye_char((int)goomba_row[i], (int)goomba_col[i], MARIO_GOODBYE_GOOMBA, char_direction);
         fireball_col[1] = 0;
+        goomba_col[i] = 0.0; /* remove the goomba */
       }
       else if ((goomba_row_now == 12) && ((mario_count - brick_bump_break_count) < 10) &&
                (((brick_bump_break_col - current_display_col) == goomba_col_now) || ((brick_bump_break_col - current_display_col - 1) == goomba_col_now) || ((brick_bump_break_col - current_display_col + 1) == goomba_col_now)))
+      {
+        char char_direction = MOVE_RIGHT;
+        if (goomba_face_right[i] == false)
+          char_direction = MOVE_LEFT;
+        set_goodbye_char((int)goomba_row[i], (int)goomba_col[i], MARIO_GOODBYE_GOOMBA, char_direction);
         goomba_col[i] = 0.0; /* remove the goomba */
+      }
 
       if (goomba_col_now < -20)
         goomba_col[i] = 0.0; /* remove the goomba */
@@ -2554,6 +2647,7 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
       {
         if (mario_is_star)
         {
+          set_goodbye_char(20, (int)koopa_col, MARIO_GOODBYE_KOOPA, MOVE_LEFT);
           koopa_col = 0.0; /* remove koopa */
           delay(100);
         }
@@ -2611,9 +2705,9 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
 
       /* Update position */
       if (koopa_kicked_right)
-        koopa_col = koopa_col + 3.0 / 6; /* goomba col */
+        koopa_col = koopa_col + 3.0 / 6; /* koopa col */
       else if (koopa_kicked_left)
-        koopa_col = koopa_col - 3.0 / 6; /* goomba col */
+        koopa_col = koopa_col - 3.0 / 6; /* koopa col */
       koopa_col_now = (int)koopa_col - current_display_col;
 
       /* Check for hit goomba, mario, or re-stomp */
@@ -2631,6 +2725,7 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
       {
         if (mario_is_star)
         {
+          set_goodbye_char(20, (int)koopa_col, MARIO_GOODBYE_KOOPA, MOVE_LEFT);
           koopa_col = 0.0; /* remove koopa */
           delay(100);
         }
@@ -2656,7 +2751,10 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
       {
         int goomba_col_now = goomba_col[i] - current_display_col;
         if ((koopa_col_now == goomba_col_now) || ((koopa_col_now + 1) == goomba_col_now) || ((koopa_col_now - 1) == goomba_col_now))
+        {
+          set_goodbye_char(20, (int)koopa_col, MARIO_GOODBYE_GOOMBA, MOVE_LEFT);
           goomba_col[i] = 0.0; /* remove the goomba */
+        }
       }
     } /* kicked koopa */
 
@@ -2665,12 +2763,14 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
     else if (((fireball_row[0] == 20) || (fireball_row[0] == 19)) && 
                ((fireball_col[0] - current_display_col) == koopa_col_now))
     {
+      set_goodbye_char(20, (int)koopa_col, MARIO_GOODBYE_KOOPA, MOVE_LEFT);
       koopa_col = 0.0; /* remove koopa */
       fireball_col[0] = 0;
     }
     else if (((fireball_row[1] == 20) || (fireball_row[1] == 19)) && 
              ((fireball_col[1] - current_display_col) == koopa_col_now))
     {
+      set_goodbye_char(20, (int)koopa_col, MARIO_GOODBYE_KOOPA, MOVE_LEFT);
       koopa_col = 0.0; /* remove koopa */
       fireball_col[1] = 0;
     }
@@ -3520,6 +3620,7 @@ void init_mario()
   koopa_kicked_left = false;
   mario_invulnerable_count = 0;
   mario_is_duck = false;
+  goodbye_col = 0.0;
 
   /* Init breaking brick arrays */
   unsigned int i;
@@ -3621,11 +3722,17 @@ void play_mario(bool mario_is_green)
     display_mush(current_display_col, current_mario_row, current_mario_col);
     display_mario_fireballs(current_display_col, current_mario_row, current_mario_col, (move_dir >> 4) & 0xF);
     display_mario_star(current_mario_row, current_mario_col, current_display_col);
+    display_goodbye_char(false, current_display_col);
     displayLEDs(true);
 
     /* Check for restart */
     if ((mario_over == true) && (mario_lives > 0))
     {
+      set_goodbye_char(current_mario_row, current_mario_col, MARIO_GOODBYE_MARIO, MOVE_NONE);
+      while (goodbye_col > 0.5)
+      {
+        display_goodbye_char(mario_is_green, current_display_col);
+      }
       mario_over = false;
       bool temp = mario_1up_hit;
       init_mario();
