@@ -6,16 +6,11 @@
 /* TODO: */
 /* Mario 
  *  - Restart level
- * Hit downgrades Mario
- *  - Invulnerable for a bit
- * Bump bricks - affect Mushroom
- * Bad Guys
- *  - Koopa Troopa
  * Underworld?
- * Mario duck
  * Display score
  * Death animation
- * Fireworks
+ * End Level Animation
+ *  - Fireworks
 */
 
 
@@ -1647,7 +1642,7 @@ const unsigned int PROGMEM marioDispForeItems[NUM_MARIO_COLUMNS] =
 
 #define NUM_BRICKS 16
 #define NUM_Q 13
-#define NUM_HIGH_Q 6
+#define NUM_HIGH_Q 8
 
 #define MARIO_1UP_COL 130
 #define MARIO_REPEAT_BRICK_COL 202
@@ -1660,7 +1655,7 @@ unsigned int locations_low_bricks[NUM_BRICKS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 /* These are per Q */
 /* These represent if a Q has been hit */
 unsigned int locations_low_q[NUM_Q] = {0,0,0,0,0,0,0,0,0,0,0,0}; /* Added 1 for 1UP, 1 for repeat brick, 1 for star */
-unsigned int locations_high_q[NUM_HIGH_Q] = {0,0,0,0,0,0};
+unsigned int locations_high_q[NUM_HIGH_Q] = {0,0,0,0,0,0,0,0};
 
 unsigned char high_q_i = 0;
 unsigned char low_q_i = 0;
@@ -2310,15 +2305,15 @@ unsigned int brick_bump_break_count = 0;
 #define GOOMBA_COL_6  210
 #define GOOMBA_COL_7  242
 #define GOOMBA_COL_8  246
-#define GOOMBA_COL_9  264
+#define GOOMBA_COL_9  262
 #define GOOMBA_COL_10 266
 #define GOOMBA_COL_11 272 
 #define GOOMBA_COL_12 276
 #define GOOMBA_COL_13 364
 #define GOOMBA_COL_14 368
 
-#define HIGH_GOOMBA_COL_1 176
-#define HIGH_GOOMBA_COL_2 180
+#define HIGH_GOOMBA_COL_1 172
+#define HIGH_GOOMBA_COL_2 176
 
 #define KOOPA_COL 254
 
@@ -2482,10 +2477,16 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
       }
       else if (((fireball_row[0] == goomba_row_now) || (fireball_row[0] == (goomba_row_now - 1))) && 
                ((fireball_col[0] - current_display_col) == goomba_col_now))
+      {
         goomba_col[i] = 0.0; /* remove the goomba */
+        fireball_col[0] = 0;
+      }
       else if (((fireball_row[1] == goomba_row_now) || (fireball_row[1] == (goomba_row_now - 1))) && 
                ((fireball_col[1] - current_display_col) == goomba_col_now))
+      {
         goomba_col[i] = 0.0; /* remove the goomba */
+        fireball_col[1] = 0;
+      }
       else if ((goomba_row_now == 12) && ((mario_count - brick_bump_break_count) < 20) &&
                (((brick_bump_break_col - current_display_col) == goomba_col_now) || ((brick_bump_break_col - current_display_col - 1) == goomba_col_now) || ((brick_bump_break_col - current_display_col + 1) == goomba_col_now)))
         goomba_col[i] = 0.0; /* remove the goomba */
@@ -2524,7 +2525,7 @@ unsigned int koopa_count = 0;
 bool display_koopa(int current_mario_row, int current_mario_col, int current_display_col, float *current_mario_jump_speed) 
 {
   bool return_value = false;
-  int mario_col_now = current_mario_row - current_display_col;
+  int mario_col_now = current_mario_col - current_display_col;
 
   /* check if koopa active */
   if (current_display_col == KOOPA_COL - 20)
@@ -2582,12 +2583,12 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
     } /* koopa moving */
     else if ((koopa_kicked_right == false) && (koopa_kicked_left == false))
     { /* koopa shell */
-      if (((current_mario_row == 18) || (current_mario_row == 19) || (current_mario_row == 17)) && ((mario_col_now == koopa_col_now) || (mario_col_now == (koopa_col_now - 1)) || (mario_col_now == (koopa_col_now - 2))))
+      if (((current_mario_row == 18) || (current_mario_row == 19) || (current_mario_row == 20)) && ((mario_col_now == koopa_col_now) || (mario_col_now == (koopa_col_now - 1)) || (mario_col_now == (koopa_col_now - 2))))
       {
         koopa_kicked_right = true;
         mario_invulnerable_count = mario_count;
       }
-      else if (((current_mario_row == 18) || (current_mario_row == 19) || (current_mario_row == 17)) && (mario_col_now == (koopa_col_now + 1) || ((mario_col_now + 1) == (koopa_col_now + 2))))
+      else if (((current_mario_row == 18) || (current_mario_row == 19) || (current_mario_row == 20)) && (mario_col_now == (koopa_col_now + 1) || ((mario_col_now + 1) == (koopa_col_now + 2))))
       {
         koopa_kicked_left = true;
         mario_invulnerable_count = mario_count;
@@ -2663,11 +2664,13 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
                ((fireball_col[0] - current_display_col) == koopa_col_now))
     {
       koopa_col = 0.0; /* remove koopa */
+      fireball_col[0] = 0;
     }
     else if (((fireball_row[1] == 20) || (fireball_row[1] == 19)) && 
              ((fireball_col[1] - current_display_col) == koopa_col_now))
     {
       koopa_col = 0.0; /* remove koopa */
+      fireball_col[1] = 0;
     }
 
     /* Display koopa body */
@@ -3148,9 +3151,9 @@ void display_mario_star(int current_mario_row, int current_mario_col, int curren
 void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press, int current_mario_row, int current_mario_col, int current_display_col, float * current_mario_speed)
 {
   float mario_accel = MARIO_ACCELERATION; /* how quickly mario accelerates */
-  mario_is_duck = (move_dir & MOVE_DOWN) > 0;
-  bool button_right = ((move_dir & MOVE_RIGHT) > 0) && (mario_is_duck == false);
-  bool button_left = ((move_dir & MOVE_LEFT) > 0)  && (mario_is_duck == false);
+  //mario_is_duck = (move_dir & MOVE_DOWN) > 0;
+  bool button_right = ((move_dir & MOVE_RIGHT) > 0);// && (mario_is_duck == false);
+  bool button_left = ((move_dir & MOVE_LEFT) > 0);//  && (mario_is_duck == false);
   bool mario_is_running = ((button_press & MOVE_ROTATE_LEFT) > 0)  && (mario_is_duck == false); /* B Button pressed */
   mario_is_trying = button_right || button_left;
 
@@ -3369,7 +3372,7 @@ unsigned char mario_jump_time_accel = NORMAL_JUMP_TIME;
 void update_mario_vert_speed(unsigned char button_press, int current_mario_row, int current_mario_col, float *current_mario_jump_speed, float current_mario_speed)
 {
   
-  float mario_accel = MARIO_ACCELERATION;
+  float mario_accel = MARIO_ACCELERATION * 2.0;
   bool mario_in_air = on_solid_ground(current_mario_row, current_mario_col) == false;
   bool mario_can_up = false;
   if (*current_mario_jump_speed > 0)
@@ -3515,6 +3518,7 @@ void init_mario()
   koopa_kicked_right = false;
   koopa_kicked_left = false;
   mario_invulnerable_count = 0;
+  mario_is_duck = false;
 
   /* Init breaking brick arrays */
   unsigned int i;
