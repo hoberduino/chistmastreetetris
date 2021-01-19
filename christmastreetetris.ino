@@ -3676,6 +3676,9 @@ void init_mario()
 }
 
 #define MARIO_COUNT_END 2000
+unsigned int mario_end_row = 0;
+unsigned int mario_end_col = 0;
+bool mario_end_green = true;
 
 unsigned int play_mario(bool mario_is_green)
 {
@@ -3767,16 +3770,135 @@ unsigned int play_mario(bool mario_is_green)
       }
     } /* mario over */
 
+    if (current_mario_col >= MARIO_FLAG_POLE_COL)
+      mario_over = true;
+
     delay(5);
   }
   
   delay(500);
-  total_score = total_score + (MARIO_COUNT_END - mario_count) / 10;
+  total_score = total_score + (MARIO_COUNT_END - mario_count) / 10 + (20 - current_mario_row);
+  mario_end_row = current_mario_row;
+  mario_end_col = current_mario_col;
+  mario_end_green = mario_is_green;
   return total_score;
 }
 
 
 
+
+void display_mario_end_animation()
+{
+  unsigned int current_mario_row = mario_end_row;
+  unsigned int current_mario_col = mario_end_col;
+  unsigned int current_display_col = current_mario_col - 11;
+  if (current_mario_col >= MARIO_FLAG_POLE_COL)
+  {
+    current_mario_col = MARIO_FLAG_POLE_COL;
+    bool mario_animation_over = false;
+    mario_count = 0;
+    bool display_mario_now = true;
+    mario_face_right = true;
+    unsigned char firework_display_count = 0;
+
+    while (mario_animation_over == false)
+    {
+      /* only move on count */
+      if ((mario_count % 8) == 0)
+      {
+        /* First, descend the flag pole */
+        if ((current_mario_col == MARIO_FLAG_POLE_COL) && (current_mario_row < 18))
+          current_mario_row++;
+        else if (current_mario_col == MARIO_FLAG_POLE_COL) /* then flip around */
+        {
+          current_mario_col++;
+          mario_face_right = false;
+        }
+        else if ((current_mario_col == (MARIO_FLAG_POLE_COL + 1)) && (current_mario_row < 20)) /* then jump down */
+          current_mario_row++;
+        else if (current_mario_col < 426) /* then walk over */
+        {
+          mario_face_right = true;
+          current_mario_col++;
+        }
+        else /* then disappear */
+           display_mario_now = false;
+      }
+
+      disp_mario_back(current_display_col, mario_end_green);
+      display_mario_back_items(current_display_col);
+      display_mario_fore_items(current_display_col);
+      if (display_mario_now)
+        disp_mario(mario_end_green, current_mario_row, current_mario_col, current_display_col);
+      displayLEDs(true);
+
+      mario_count++;
+      delay(5);
+
+      /* then fireworks */
+      if (display_mario_now == false)
+        mario_animation_over = true;
+    }
+
+    current_mario_row = 5;
+    current_display_col = 8;
+    while (firework_display_count < 18)
+    {
+      if (firework_display_count > 14)
+      {
+        current_mario_row = 7;
+        current_display_col = 5;
+      }
+      else if (firework_display_count > 11)
+      {
+        current_mario_row = 2;
+        current_display_col = 11;
+      }
+      else if (firework_display_count > 8)
+      {
+        current_mario_row = 10;
+        current_display_col = 15;
+      }
+      else if (firework_display_count > 5)
+      {
+        current_mario_row = 5;
+        current_display_col = 14;
+      }
+      else if (firework_display_count > 2)
+      {
+        current_mario_row = 9;
+        current_display_col = 6;
+      }
+
+      if ((firework_display_count % 3) == 0)
+      {
+        bigDispBoard[current_mario_row][current_display_col] = DISP_COLOR_RED;
+        bigDispBoard[current_mario_row - 1][current_display_col] = DISP_COLOR_RED;
+        bigDispBoard[current_mario_row][current_display_col + 1] = DISP_COLOR_RED;
+        bigDispBoard[current_mario_row - 1][current_display_col + 1] = DISP_COLOR_RED;
+      }
+      else if ((firework_display_count % 3) == 1)
+      {
+        bigDispBoard[current_mario_row][current_display_col] = DISP_COLOR_WHITE;
+        bigDispBoard[current_mario_row - 1][current_display_col] = DISP_COLOR_WHITE;
+        bigDispBoard[current_mario_row][current_display_col + 1] = DISP_COLOR_WHITE;
+        bigDispBoard[current_mario_row - 1][current_display_col + 1] = DISP_COLOR_WHITE;
+      }
+      else if ((firework_display_count % 3) == 1)
+      {
+        bigDispBoard[current_mario_row][current_display_col] = DISP_COLOR_BLACK;
+        bigDispBoard[current_mario_row - 1][current_display_col] = DISP_COLOR_BLACK;
+        bigDispBoard[current_mario_row][current_display_col + 1] = DISP_COLOR_BLACK;
+        bigDispBoard[current_mario_row - 1][current_display_col + 1] = DISP_COLOR_BLACK;
+      }
+      
+      displayLEDs(true);
+
+      firework_display_count++;
+      delay(20);
+    }
+  }
+}
 
 
 
@@ -4664,6 +4786,10 @@ void displayGameMenu()
 }
 
 
+#define PLAY_MARIO_RED   1
+#define PLAY_MARIO_GREEN 2
+
+unsigned char mario_play_now = 0;
 
 void start_menu()
 {
@@ -4700,7 +4826,10 @@ void start_menu()
   else if (game_selection == 2)
   {
     bool mario_is_green = display_mario_run();
-    play_mario(mario_is_green);
+    if (mario_is_green)
+      mario_play_now = PLAY_MARIO_GREEN;
+    else
+      mario_play_now = PLAY_MARIO_RED;
   }
   delay(300);
   
@@ -4972,6 +5101,19 @@ void loop() {
   /* If tetris, init and kick out of loop */
   if (moveDir == MOVE_START) //|| (digitalRead(RESET_SWITCH_IN) == HIGH))
     start_menu();
+
+  if (mario_play_now > 0)
+  {
+    init_mario();
+    unsigned int mario_score = 0;
+    if (mario_play_now == PLAY_MARIO_GREEN)
+      mario_score = play_mario(true);
+    else
+      mario_score = play_mario(false);
+    display_mario_end_animation();
+    /* display score */
+    mario_play_now = 0;
+  }
     
   else if (moveDir == MOVE_SELECT) /* Calibrate if SELECT, A, B pressed in order */
   {
