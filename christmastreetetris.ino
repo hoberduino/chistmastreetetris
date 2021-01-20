@@ -3,15 +3,6 @@
 
 #include <avr/pgmspace.h>
 
-/* TODO: */
-/* Mario 
- * Underworld?
- * Display score
- * End Level Animation
- *  - Fireworks
- * Debug
-*/
-
 
 /*  Display everything on a 22x22 board, top left is (0,0)
  *  Convert board to 22x22 snaked display, 20x10 snaked display, 
@@ -90,13 +81,13 @@
 #define DISP_COLOR_PIPE_GREEN  23
 #define DISP_COLOR_Q_YELLOW    24
 #define DISP_COLOR_Q_ORANGE    25
-#define DISP_COLOR_HALF_ORANGE 26
+#define DISP_COLOR_ORANGE      26
 #define NUM_DISP_COLORS        27
 const CRGB numToColor[NUM_DISP_COLORS] = 
 {CRGB::Black, CRGB::Blue, CRGB::Orange, CRGB::Yellow, CRGB::Red, CRGB::Green, CRGB::Cyan, CRGB::PeachPuff,
  CRGB::Purple, 0xD7FF00, 0x002332, CRGB::White, CRGB::Gray, 0x2F1010, 0x0000A0, 0x808080, 
  0x000080, 0x800000, 0x404040, 0xff69b4, 0x00cccc, 0x408820, 0x124012, 0x008000, 
- 0x888800, 0xFF6500, 0x883200};
+ 0x888800, 0xFF6500, 0xFF8C00};
 
 /* Tetris stuff */
 #define NUM_ROWS      24 /*middle twenty are visible */
@@ -157,6 +148,8 @@ const int RIGHT_BUTTON     = 7;
 /* Outputs: */
 #define NES_CLOCK          26    // The clock pin for the NES controller
 #define NES_LATCH          30    // The latch pin for the NES controller
+#define PICTURE_INPUT_1    34
+#define PICTURE_INPUT_2    38
 #define LED_PIN            48
 #define LED_TREE_PIN       52
 //#define RESET_SWITCH_IN    8
@@ -295,8 +288,8 @@ int blockLoc[2] = {0, 0};
 unsigned int firstRow = 99;
 
 // All those LEDs
-CRGB leds[NUM_LEDS];
-CRGB leds_tree[NUM_LEDS];
+CRGB leds[NUM_LEDS  + NUM_TREE_LEDS];
+//CRGB leds_tree[NUM_LEDS];
 
 /* Number of display rows on tree */
 #define NUM_ROWS_EEPROM_ADDRESS 0 
@@ -313,8 +306,8 @@ CRGB leds_tree[NUM_LEDS];
 void setup() {
   
   delay( 3000 ); // power-up safety delay
-  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<LED_TYPE, LED_TREE_PIN, COLOR_ORDER>(leds, NUM_TREE_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS + NUM_TREE_LEDS).setCorrection( TypicalLEDStrip );
+  //FastLED.addLeds<LED_TYPE, LED_TREE_PIN, COLOR_ORDER>(leds, NUM_TREE_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.setBrightness(  BRIGHTNESS );
   
   Serial.begin(9600);
@@ -324,6 +317,8 @@ void setup() {
 
   // Set appropriate pins to inputs
   pinMode(NES_DATA, INPUT);
+  pinMode(PICTURE_INPUT_1, INPUT);
+  pinMode(PICTURE_INPUT_2, INPUT);
   
   // Set appropriate pins to outputs
   pinMode(NES_CLOCK, OUTPUT);
@@ -443,7 +438,7 @@ void displayBigBoardTwoTwo(bool showLed)
 void displayLEDTree(bool showLed)
 {
   int i, j;
-  unsigned int currentLED = 0;
+  unsigned int currentLED = NUM_LEDS;
   
   unsigned int unused_rows_top = (NUM_DISP_ROWS - num_tree_rows) / 2 + num_tree_rows;
   unsigned int unused_cols_left = (NUM_DISP_COLS - num_tree_cols) / 2 + num_tree_cols;
@@ -455,20 +450,20 @@ void displayLEDTree(bool showLed)
     for(j = 0; j < ledsBeforeRows[i]; j++)
     {      
       if (showLed == true)
-        leds_tree[currentLED] = CRGB::Black;
+        leds[currentLED] = CRGB::Black;
       currentLED++;
     }
 
     for(j = num_tree_cols - 1; j >= 0; j--)
     {      
-      leds_tree[currentLED] = numToColor[bigDispBoard[(num_tree_rows - i - 1) + unused_rows_top][j + unused_cols_left]];
+      leds[currentLED] = numToColor[bigDispBoard[(num_tree_rows - i - 1) + unused_rows_top][j + unused_cols_left]];
       currentLED++;
     }
   }
 
   for(i = currentLED; i < NUM_TREE_LEDS; i++)
     if (showLed == true)
-      leds_tree[currentLED] = CRGB::Black;
+      leds[currentLED] = CRGB::Black;
 
   if (showLed == true)
     FastLED.show();
@@ -478,7 +473,7 @@ void displayLEDTree(bool showLed)
 void displayLEDs(bool showLed)
 {
     displayBigBoardTwoTwo(showLed);
- //   displayLEDTree(showLed);
+    displayLEDTree(showLed);
 //    displayLEDBoardTwentyTen(showLed);
 }
 
@@ -498,7 +493,7 @@ void displayScore(unsigned int totalScore, bool show_leds)
   for(j = 0; j < 5; j++) // for each column
   {
     if (totalScore > 99)
-      bigDispBoard[14+j][1] = 5; // Green
+      bigDispBoard[14+j][7] = 5; // Green
       
     if (((pgm_read_byte(&left_column[tens_digit]) >> j) & 0x1) > 0)
       bigDispBoard[14+j][9] = 4; // Red
@@ -1117,7 +1112,7 @@ unsigned int light_twinkle = 0;
 void display_green_red()
 {
   int i;
-  for(i = 0; i < NUM_LEDS; i++)
+  for(i = 0; i < NUM_LEDS + NUM_TREE_LEDS; i++)
   {
     /* LEDS snake from 1 row to next */
     if (((i + light_twinkle / 100) % 3) == 0)
@@ -1127,16 +1122,16 @@ void display_green_red()
     else
       leds[i] = CRGB::White;
   }
-  for(i = 0; i < NUM_TREE_LEDS; i++)
-  {
+//  for(i = 0; i < NUM_TREE_LEDS; i++)
+//  {
     /* LEDS snake from 1 row to next */
-    if (((i + light_twinkle / 100) % 3) == 0)
-      leds_tree[i] = CRGB::Red;
-    else if (((i + light_twinkle / 100) % 3) == 1)
-      leds_tree[i] = CRGB::Green;
-    else
-      leds_tree[i] = CRGB::White;
-  }
+//    if (((i + light_twinkle / 100) % 3) == 0)
+//      leds_tree[i] = CRGB::Red;
+//    else if (((i + light_twinkle / 100) % 3) == 1)
+//      leds_tree[i] = CRGB::Green;
+//    else
+//      leds_tree[i] = CRGB::White;
+//  }
   
   if (light_twinkle < 300)
     light_twinkle++;
@@ -1151,11 +1146,11 @@ uint8_t gHue = 0;
 void display_rainbow()
 {
 
-  fill_rainbow( leds, NUM_LEDS, gHue, 7); 
-  fill_rainbow( leds_tree, NUM_TREE_LEDS, gHue, 7); 
+  fill_rainbow( leds, NUM_LEDS + NUM_TREE_LEDS, gHue, 7); 
+ // fill_rainbow( leds_tree, NUM_TREE_LEDS, gHue, 7); 
   if( random8() < CHANCE_OF_TWINKLE) {
-    leds[ random16(NUM_LEDS) ] += CRGB::White;
-    leds_tree[ random16(NUM_TREE_LEDS) ] += CRGB::White;
+    leds[ random16(NUM_LEDS + NUM_TREE_LEDS) ] += CRGB::White;
+ //   leds_tree[ random16(NUM_TREE_LEDS) ] += CRGB::White;
   }
      
   FastLED.show();
@@ -1167,12 +1162,12 @@ void display_rainbow()
 void display_lights()
 {
   // random colored speckles that blink in and fade smoothly
-  fadeToBlackBy( leds, NUM_LEDS, 10);
-  fadeToBlackBy( leds_tree, NUM_TREE_LEDS, 10);
-  int pos = random16(NUM_LEDS);
+  fadeToBlackBy( leds, NUM_LEDS + NUM_TREE_LEDS, 10);
+  //fadeToBlackBy( leds_tree, NUM_TREE_LEDS, 10);
+  int pos = random16(NUM_LEDS + NUM_TREE_LEDS);
   leds[pos] += CHSV( gHue + random8(64), 200, 255);
-  pos = random16(NUM_TREE_LEDS);
-  leds_tree[pos] += CHSV( gHue + random8(64), 200, 255);
+ // pos = random16(NUM_TREE_LEDS);
+ // leds_tree[pos] += CHSV( gHue + random8(64), 200, 255);
   
   gHue++;
   FastLED.show();
@@ -1181,10 +1176,10 @@ void display_lights()
 
 void display_one_color()
 {
-  for(int i = 0; i < NUM_LEDS; i++)
+  for(int i = 0; i < NUM_LEDS + NUM_TREE_LEDS; i++)
     leds[i] = CHSV( gHue, 200, 255);
-  for(int i = 0; i < NUM_TREE_LEDS; i++)
-    leds_tree[i] = CHSV( gHue, 200, 255);
+ // for(int i = 0; i < NUM_TREE_LEDS; i++)
+ //   leds_tree[i] = CHSV( gHue, 200, 255);
   gHue++;
   FastLED.show();
   delay(200);
@@ -1193,12 +1188,12 @@ void display_one_color()
 void display_sinelon()
 {
   // a colored dot sweeping back and forth, with fading trails
-  fadeToBlackBy( leds, NUM_LEDS, 20);
-  fadeToBlackBy( leds_tree, NUM_TREE_LEDS, 20);
-  int pos = beatsin16( 13, 0, NUM_LEDS-1 );
+  fadeToBlackBy( leds, NUM_LEDS + NUM_TREE_LEDS, 20);
+  //fadeToBlackBy( leds_tree, NUM_TREE_LEDS, 20);
+  int pos = beatsin16( 13, 0, NUM_LEDS + NUM_TREE_LEDS - 1 );
   leds[pos] += CHSV( gHue, 255, 192);
-  pos = beatsin16( 13, 0, NUM_TREE_LEDS-1 );
-  leds_tree[pos] += CHSV( gHue, 255, 192);
+  //pos = beatsin16( 13, 0, NUM_TREE_LEDS-1 );
+  //leds_tree[pos] += CHSV( gHue, 255, 192);
   FastLED.show();
   delay(50);
 }
@@ -1206,13 +1201,13 @@ void display_sinelon()
 void display_juggle()
 {
   // eight colored dots, weaving in and out of sync with each other
-  fadeToBlackBy( leds, NUM_LEDS, 20);
-  fadeToBlackBy( leds_tree, NUM_TREE_LEDS, 20);
+  fadeToBlackBy( leds, NUM_LEDS + NUM_TREE_LEDS, 20);
+  //fadeToBlackBy( leds_tree, NUM_TREE_LEDS, 20);
   byte dothue = 0;
   
   for( int i = 0; i < 8; i++) {
-    leds[beatsin16( i+7, 0, NUM_LEDS-1 )] |= CHSV(dothue, 200, 255);
-    leds_tree[beatsin16( i+7, 0, NUM_TREE_LEDS-1 )] |= CHSV(dothue, 200, 255);
+    leds[beatsin16( i+7, 0, NUM_LEDS + NUM_TREE_LEDS - 1 )] |= CHSV(dothue, 200, 255);
+    //leds_tree[beatsin16( i+7, 0, NUM_TREE_LEDS-1 )] |= CHSV(dothue, 200, 255);
     dothue += 32;
   }
 
@@ -1244,21 +1239,21 @@ void display_castle()
 
 
   // random colored speckles that blink in and fade smoothly
-  fadeToBlackBy( leds, NUM_LEDS, 5);
-  fadeToBlackBy( leds_tree, NUM_TREE_LEDS, 5);
+  fadeToBlackBy( leds, NUM_LEDS + NUM_TREE_LEDS, 5);
+  //fadeToBlackBy( leds_tree, NUM_TREE_LEDS, 5);
   if( random8() < CHANCE_OF_TWINKLE) 
   {
-    pos = random16(NUM_LEDS);
+    pos = random16(NUM_LEDS + NUM_TREE_LEDS);
     leds[pos] += CHSV( 150, 200, 255);
-    pos = random16(NUM_TREE_LEDS);
-    leds_tree[pos] += CHSV( 150, 200, 255);
+  //  pos = random16(NUM_TREE_LEDS);
+  //  leds_tree[pos] += CHSV( 150, 200, 255);
   }
   if( random8() < CHANCE_OF_TWINKLE) 
   {
-    pos = random16(NUM_LEDS);
+    pos = random16(NUM_LEDS + NUM_TREE_LEDS);
     leds[pos] += CRGB::White;
-    pos = random16(NUM_TREE_LEDS);
-    leds_tree[pos] += CRGB::White;
+  //  pos = random16(NUM_TREE_LEDS);
+  //  leds_tree[pos] += CRGB::White;
   }
   
   for(i = 0; i < NUM_DISP_ROWS; i++)
@@ -1532,7 +1527,7 @@ bool display_mario_run()
     }
 
     displayLEDBoardMarioRun(mario_frame, mario_dir, disp_mario_luigi);
-    delay(20);
+    delay(10);
   }
 
   return (disp_mario_luigi == 1);
@@ -3253,7 +3248,7 @@ void display_mario_star(int current_mario_row, int current_mario_col, int curren
       
   } /* star is active */
 
-  if ((mar_star_count > 0) && (mario_count - mar_star_count < 400))
+  if ((mar_star_count > 0) && (mario_count - mar_star_count < 300))
     mario_is_star = true;
   else
     mario_is_star = false;
@@ -3267,7 +3262,7 @@ void display_mario_star(int current_mario_row, int current_mario_col, int curren
  */
 void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press, int current_mario_row, int current_mario_col, int current_display_col, float * current_mario_speed)
 {
-  float mario_accel = MARIO_ACCELERATION; /* how quickly mario accelerates */
+  float mario_accel = MARIO_ACCELERATION * 2; /* how quickly mario accelerates */
   //mario_is_duck = (move_dir & MOVE_DOWN) > 0;
   bool button_right = ((move_dir & MOVE_RIGHT) > 0);// && (mario_is_duck == false);
   bool button_left = ((move_dir & MOVE_LEFT) > 0);//  && (mario_is_duck == false);
@@ -3475,14 +3470,14 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
  * Reads button presses to determine and apply affects of vert accelearation (updates current_mario_jump_speed)  
  * TODO: Add broken bricks, creatures landed on to be handled elsewhere
  */
-#define NORMAL_JUMP_TIME 6
+#define NORMAL_JUMP_TIME 8
 bool mario_was_in_air = false;
 bool mario_let_go_of_a = false; /* user let go of a button */
 unsigned char mario_jump_time_accel = NORMAL_JUMP_TIME;
 void update_mario_vert_speed(unsigned char button_press, int current_mario_row, int current_mario_col, float *current_mario_jump_speed, float current_mario_speed)
 {
   
-  float mario_accel = MARIO_ACCELERATION * 2.0;
+  float mario_accel = MARIO_ACCELERATION * 4.0;
   bool mario_in_air = on_solid_ground(current_mario_row, current_mario_col) == false;
   bool mario_can_up = false;
   if (*current_mario_jump_speed > 0)
@@ -3491,7 +3486,7 @@ void update_mario_vert_speed(unsigned char button_press, int current_mario_row, 
   /* Determine Jump Height */
   /* Mario jumps higher based on horizontal speed, how long press A button */
   if (abs(current_mario_speed) > 2.0)
-    mario_jump_time_accel = 8;
+    mario_jump_time_accel = 10;
 
   /* If land on ground, stop jump (look for pits)
    * If hit head, stop going up
@@ -3545,8 +3540,12 @@ void update_mario_hor_location(float current_mario_speed, int *current_mario_col
   /* Only update if abs(speed) > 0 */
   if (mario_speed != 0)
   {
-    update_rate = 6 / abs((int)mario_speed);
-    if ((mario_count % update_rate) == 0)
+    //update_rate = 6 / abs((int)mario_speed);
+
+    //if ((mario_count % update_rate) == 0)
+    if (((abs((int)mario_speed) == 1) && ((mario_count % 2) == 0)) || 
+        ((abs((int)mario_speed) == 2) && ((mario_count % 3) < 2)) || 
+        ((abs((int)mario_speed) == 3) && ((mario_count % 4) < 3)))
     {
       /* Mario stays on left half of screen
        * If move right past midpoint -> move display right (current_display_col++)
@@ -3578,8 +3577,11 @@ void update_mario_vert_location(float current_mario_jump_speed, int *current_mar
   /* UPDATE VERTICAL POSITION */
   if (mario_speed != 0)
   {
-    update_rate = 3 / abs(mario_speed);
-    if ((mario_count % update_rate) == 0)
+    //update_rate = 3 / abs(mario_speed);
+    //if ((mario_count % update_rate) == 0)
+    if (((abs(mario_speed) == 1) && ((mario_count % 3) < 2)) || 
+        ((abs(mario_speed) == 2) && ((mario_count % 5) < 4)) || 
+        (abs(mario_speed) == 3))
     {
       /* current_mario_jump_speed > 0 means moving up, < 0 is down */
       if ((mario_speed > 0) && (*current_mario_row > 0))
@@ -3766,18 +3768,22 @@ unsigned int play_mario(bool mario_is_green)
         current_mario_col = col_adjust + 6;
         current_display_col = col_adjust;
         mario_lives--;
+        if (total_score > 10)
+          total_score = total_score - 10;
         delay(1000);
       }
     } /* mario over */
 
     if (current_mario_col >= MARIO_FLAG_POLE_COL)
+    {
       mario_over = true;
+      total_score = total_score + (MARIO_COUNT_END - mario_count) / 10 + (20 - current_mario_row);
+    }
 
     delay(5);
   }
   
   delay(500);
-  total_score = total_score + (MARIO_COUNT_END - mario_count) / 10 + (20 - current_mario_row);
   mario_end_row = current_mario_row;
   mario_end_col = current_mario_col;
   mario_end_green = mario_is_green;
@@ -3804,7 +3810,7 @@ void display_mario_end_animation()
     while (mario_animation_over == false)
     {
       /* only move on count */
-      if ((mario_count % 8) == 0)
+      if ((mario_count % 4) == 0)
       {
         /* First, descend the flag pole */
         if ((current_mario_col == MARIO_FLAG_POLE_COL) && (current_mario_row < 18))
@@ -3812,6 +3818,7 @@ void display_mario_end_animation()
         else if (current_mario_col == MARIO_FLAG_POLE_COL) /* then flip around */
         {
           current_mario_col++;
+          current_display_col++;
           mario_face_right = false;
         }
         else if ((current_mario_col == (MARIO_FLAG_POLE_COL + 1)) && (current_mario_row < 20)) /* then jump down */
@@ -3820,6 +3827,7 @@ void display_mario_end_animation()
         {
           mario_face_right = true;
           current_mario_col++;
+          current_display_col++;
         }
         else /* then disappear */
            display_mario_now = false;
@@ -3857,12 +3865,12 @@ void display_mario_end_animation()
       else if (firework_display_count > 8)
       {
         current_mario_row = 10;
-        current_display_col = 15;
+        current_display_col = 16;
       }
       else if (firework_display_count > 5)
       {
         current_mario_row = 5;
-        current_display_col = 14;
+        current_display_col = 15;
       }
       else if (firework_display_count > 2)
       {
@@ -3884,7 +3892,7 @@ void display_mario_end_animation()
         bigDispBoard[current_mario_row][current_display_col + 1] = DISP_COLOR_WHITE;
         bigDispBoard[current_mario_row - 1][current_display_col + 1] = DISP_COLOR_WHITE;
       }
-      else if ((firework_display_count % 3) == 1)
+      else if ((firework_display_count % 3) == 2)
       {
         bigDispBoard[current_mario_row][current_display_col] = DISP_COLOR_BLACK;
         bigDispBoard[current_mario_row - 1][current_display_col] = DISP_COLOR_BLACK;
@@ -3895,7 +3903,7 @@ void display_mario_end_animation()
       displayLEDs(true);
 
       firework_display_count++;
-      delay(20);
+      delay(200);
     }
   }
 }
@@ -4516,12 +4524,12 @@ bool time_to_move(unsigned char input_speed)
   bool it_is_time_to_move = false;
   /* Bool Timers used to determine when to move Pac */
   /* Updated here, but used in individual ghost,pac move functions */
-  timer_50 = pac_counter % 7 == 0; // 12.5 Hz -> 100 (mod 8) == 0
-  timer_60 = pac_counter % 6 == 0; // 15 Hz -> 100 (mod 7) == 0
-  timer_70 = pac_counter % 5 == 0; // 17.5 Hz -> 100 (mod 6) == 0 || 100 (mod 100) == 1
-  timer_80 = pac_counter % 4 == 0; // 20 Hz -> 100 (mod 5) == 0
-  timer_90 = pac_counter % 3 == 0; // 22.5 Hz (100 (mod 5) == 0 || 100 (mod 40) == 19 
-  timer_100 = pac_counter % 2 == 0; // 25 Hz -> 100 (mod 4) == 0
+  timer_50 = (pac_counter % 3) == 1; // 12.5 Hz -> 100 (mod 8) == 0
+  timer_60 = (pac_counter % 2) == 0; // 15 Hz -> 100 (mod 7) == 0
+  timer_70 = (pac_counter % 3) < 2; // 17.5 Hz -> 100 (mod 6) == 0 || 100 (mod 100) == 1
+  timer_80 = (pac_counter % 4) < 3; // 20 Hz -> 100 (mod 5) == 0
+  timer_90 = (pac_counter % 5) < 4; // 22.5 Hz (100 (mod 5) == 0 || 100 (mod 40) == 19 
+  timer_100 = (pac_counter % 6) < 5;//pac_counter % 2 == 0; // 25 Hz -> 100 (mod 4) == 0
 
   it_is_time_to_move =
        (((input_speed == PAC_SPEED_50) && (timer_50 == true)) ||
@@ -4728,7 +4736,7 @@ void play_pac_man()
       pac_man_over = true;
 
     
-    delay(5);
+    delay(10);
   }
   /* Display Splash Screen */
   displayPacStart();
@@ -4847,7 +4855,7 @@ void start_menu()
 void displayLEDTreeCal()
 {
   unsigned int i, j;
-  unsigned int currentLED = 0;
+  unsigned int currentLED = NUM_LEDS;
   unsigned int unused_rows_top = (NUM_DISP_ROWS - num_tree_rows) / 2 + num_tree_rows;
   unsigned int unused_cols_left = (NUM_DISP_COLS - num_tree_cols) / 2 + num_tree_cols;
   
@@ -4857,22 +4865,22 @@ void displayLEDTreeCal()
     /* ledsBeforeRows starts at bottom row of tree, right to left */
     for(j = 0; j < ledsBeforeRows[i]; j++)
     {      
-      leds_tree[currentLED] = CRGB::Black;
+      leds[currentLED] = CRGB::Black;
       currentLED++;
     }
 
     for(j = num_tree_cols - 1; j >= 0; j--)
     { 
       if ((i % 2) == 0)     
-        leds_tree[currentLED] = DISP_COLOR_GREEN;
+        leds[currentLED] = DISP_COLOR_GREEN;
       else
-        leds_tree[currentLED] = DISP_COLOR_RED;
+        leds[currentLED] = DISP_COLOR_RED;
       currentLED++;
     }
   }
 
   for(i = currentLED; i < NUM_TREE_LEDS; i++)
-    leds_tree[currentLED] = CRGB::Black;
+    leds[currentLED] = CRGB::Black;
 
   FastLED.show();
 }
@@ -5075,6 +5083,77 @@ void calibrate_tree()
   
 }
 
+/* Picture One Display */
+const unsigned char PROGMEM picOneDisp[NUM_DISP_ROWS_MENU][NUM_DISP_COLS_MENU] =
+  {{0,0,0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,3,3,3,3,0,0,0,0},
+   {0,0,3,3,0,0,0,0,3,3,0,0},
+   {0,3,0,0,0,0,0,0,0,0,3,0},
+   {0,3,0,0,3,0,0,3,0,0,3,0},
+   {3,0,0,0,3,0,0,3,0,0,0,3},
+   {3,0,0,0,0,0,0,0,0,0,0,3},
+   {3,0,0,3,0,0,0,0,3,0,0,3},
+   {3,0,0,3,0,0,0,0,3,0,0,3},
+   {0,3,0,0,3,0,0,3,0,0,3,0},
+   {0,3,0,0,0,3,3,0,0,0,3,0},
+   {0,0,3,3,0,0,0,0,3,3,0,0},
+   {0,0,0,0,3,3,3,3,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0,0,0},
+   {0,0,0,0,0,0,0,0,0,0,0,0}};
+
+const unsigned char PROGMEM picTwoDisp[NUM_DISP_ROWS_MENU][17] =
+  {{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+   { 0, 0, 0, 0, 0, 0,26,26, 0,26,26, 0, 0, 0, 0, 0, 0},
+   { 0, 0, 0, 0,26,26,26,26, 0,26,26,26,26, 0, 0, 0, 0},
+   { 0, 0, 0,26,26,26,26,26, 0,26,26,26,26,26, 0, 0, 0},
+   { 0, 0,26, 0,26,26,26,26, 0,26,26,26,26, 0,26, 0, 0},
+   { 0,26,26,26, 0,26,26,26, 0,26,26,26, 0,26,26,26, 0},
+   { 0,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26, 0},
+   {26,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26,26},
+   {26,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26,26},
+   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+   {26,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26,26},
+   {26,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26,26},
+   { 0,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26, 0},
+   { 0,26,26,26, 0,26,26,26, 0,26,26,26, 0,26,26,26, 0},
+   { 0, 0,26, 0,26,26,26,26, 0,26,26,26,26, 0,26, 0, 0},
+   { 0, 0, 0,26,26,26,26,26, 0,26,26,26,26,26, 0, 0, 0},
+   { 0, 0, 0, 0,26,26,26,26, 0,26,26,26,26, 0, 0, 0, 0},
+   { 0, 0, 0, 0, 0, 0,26,26, 0,26,26, 0, 0, 0, 0, 0, 0},
+   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+
+void display_picture_one()
+{
+  const unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_MENU) / 2;
+  const unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_MENU) / 2;
+  unsigned char i,j;
+  for(i = 0; i < NUM_DISP_ROWS_MENU; i++)
+    for(j = 0; j < NUM_DISP_COLS_MENU; j++)
+      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&picOneDisp[i][j]);
+  displayLEDs(true);
+  delay(3000);
+}
+
+void display_picture_two()
+{
+  const unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_MENU) / 2;
+  const unsigned int unused_cols_left = (NUM_DISP_COLS - 17) / 2;
+  unsigned char i,j;
+  for(i = 0; i < NUM_DISP_ROWS_MENU; i++)
+    for(j = 0; j < 17; j++)
+      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&picTwoDisp[i][j]);
+  displayLEDs(true);
+  delay(3000);
+}
+
+
+
 /* Main Function */
 
 
@@ -5082,8 +5161,10 @@ unsigned char display_mode = DISP_LIGHT;
 unsigned char calibration_mode = 0;
 void loop() {
   unsigned int moveDir = MOVE_NONE;
-  unsigned char i;
+  unsigned char i, j;
   unsigned char num_leds = 0;
+  const unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_MENU) / 2;
+  const unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_MENU) / 2;
   //digitalWrite(MUSIC_PIN_TETRIS, LOW);
   //digitalWrite(MUSIC_PIN_PAC, LOW);
   //digitalWrite(MUSIC_PIN_MARIO, LOW);
@@ -5112,14 +5193,25 @@ void loop() {
       mario_score = play_mario(false);
     display_mario_end_animation();
     /* display score */
+    for(i = 0; i < NUM_DISP_ROWS; i++)
+    for(j = 0; j < NUM_DISP_COLS; j++)
+      bigDispBoard[i][j] = DISP_COLOR_BLACK;
+    
+    for(i = 12; i < 17; i++)
+      for(j = 0; j < NUM_DISP_COLS_MENU; j++)
+        bigDispBoard[i + unused_rows_top - 12][j + unused_cols_left] = pgm_read_byte_near(&gameMenuDisp[i][j]);
+
+    if (mario_score > 199)
+      mario_score = 199;
+    displayScore(mario_score, true);
+    delay(3000);
     mario_play_now = 0;
   }
     
   else if (moveDir == MOVE_SELECT) /* Calibrate if SELECT, A, B pressed in order */
   {
-    init_mario(); /* Placed here for memory reasons */
-    play_mario(true);
     calibration_mode = 1;
+    display_picture_two();
   }
   else if ((moveDir >> 4 == MOVE_ROTATE_RIGHT) && (calibration_mode == 1))
     calibration_mode++;
@@ -5140,6 +5232,10 @@ void loop() {
     display_juggle();
   else if (display_mode == DISP_CASTLE)
     display_castle();  
+  else if (digitalRead(PICTURE_INPUT_1) == HIGH)
+    display_picture_one();
+  else if (digitalRead(PICTURE_INPUT_2) == HIGH)
+    display_picture_two();
     
   delay(50);
 
