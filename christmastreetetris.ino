@@ -1628,7 +1628,7 @@ const unsigned int PROGMEM marioDispForeItems[NUM_MARIO_COLUMNS] =
  0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0001,0x0001,0x0001,0x0001,0x0100,0x0100,0x0300,0x0300, // 24
  
  0x0700,0x0700,0x0F00,0x0F00,0x1F00,0x1F00,0x3F00,0x3F00,0x7F00,0x7F00,0xFF00,0xFF00,0xFF00,0xFF00,0x0000,0x0000, // 25
- 0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0100,0x0100,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000, // 26
+ 0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0100,0x0100,0x0000,0x0000, // 26
  
  0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000, // 27
  0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};// 28
@@ -1687,7 +1687,7 @@ bool mario_star_hit = false;
 #define MARIO_CASTLE_HIGH_TURRET 0x4000   /* 1 pixel height lower turret */
 #define MARIO_DISP_CLOUD_3       0x8000   /* high height cloud */
 
-#define MARIO_FLAG_POLE_COL      409
+#define MARIO_FLAG_POLE_COL      413
 
  /* Mario Background Display Items */
 const unsigned int PROGMEM marioDispBackItems[NUM_MARIO_COLUMNS] =
@@ -2869,28 +2869,32 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
     if (((((mush_row == 14) || (mush_row == 13)) && ((mush_col == low_mush_fire[0]) || (mush_col == low_mush_fire[1]) || (mush_col == MARIO_1UP_COL)))
               || (((mush_row == 5) || (mush_row == 6)) && (mush_col == high_mush_fire))) && ((mario_count - mush_count) < 34)) /* going up */
     {
-      if (((mario_count - mush_count) % 6) == 0)
+      brick_bump_break_col = 0;
+      if (((mario_count - mush_count) % 3) == 0)
         mush_row--;
     }
-    else if (((mario_count - mush_count) % 3) == 0) /* time to move */
+    else 
     {
-      if (can_go_dir(mush_go_right, false, mush_row, mush_col, current_display_col) == false) /* can't go this way, go other way */
-        mush_go_right = !mush_go_right;
+      if (((mario_count - mush_count) % 3) == 0) /* time to move */
+      {
+        if (can_go_dir(mush_go_right, false, mush_row, mush_col, current_display_col) == false) /* can't go this way, go other way */
+          mush_go_right = !mush_go_right;
 
-      /* Check for bumps */
-      if ((mush_row == 12) && ((mario_count - brick_bump_break_count) < 10) && (mush_go_right == true) &&
+        /* Check for bumps */
+        if ((mush_row == 12) && ((mario_count - brick_bump_break_count) < 10) && (mush_go_right == true) &&
                ((brick_bump_break_col == mush_col) || (brick_bump_break_col == (mush_col + 1) || (brick_bump_break_col == (mush_col + 2)))))
-        mush_go_right = false;
-      else if ((mush_row == 12) && ((mario_count - brick_bump_break_count) < 10) && (mush_go_right == false) &&
+          mush_go_right = false;
+        else if ((mush_row == 12) && ((mario_count - brick_bump_break_count) < 10) && (mush_go_right == false) &&
                ((brick_bump_break_col == (mush_col - 1)) || (brick_bump_break_col == (mush_col - 2))))
-        mush_go_right = true;
+          mush_go_right = true;
       
-      if (mush_go_right) /* move horizontally */
-        mush_col++;
-      else
-        mush_col--;
+        if (mush_go_right) /* move horizontally */
+          mush_col++;
+        else
+          mush_col--;
+      }
 
-      if (on_solid_ground(mush_row, mush_col) == false) /* dropping */ 
+      if ((((mario_count - mush_count) % 2) == 0) && (on_solid_ground(mush_row, mush_col) == false)) /* dropping */ 
         mush_row++;
     }
 
@@ -5208,10 +5212,7 @@ void loop() {
   }
     
   else if (moveDir == MOVE_SELECT) /* Calibrate if SELECT, A, B pressed in order */
-  {
     calibration_mode = 1;
-    display_picture_two();
-  }
   else if ((moveDir >> 4 == MOVE_ROTATE_RIGHT) && (calibration_mode == 1))
     calibration_mode++;
   else if ((moveDir >> 4 == MOVE_ROTATE_LEFT) && (calibration_mode == 2))
