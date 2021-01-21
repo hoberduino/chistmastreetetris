@@ -2323,13 +2323,13 @@ void display_goodbye_char(bool mario_is_green, int current_display_col)
       goodbye_vert_speed = -3.0;
 
     /* Update char row position */
-    goodbye_row = goodbye_row - goodbye_vert_speed / 4;
+    goodbye_row = goodbye_row - goodbye_vert_speed / 2;
     
     /* Update char col position */
     if (goodbye_char_dir == MOVE_RIGHT)
-      goodbye_col = goodbye_col + 1.0 / 6;
+      goodbye_col = goodbye_col + 1.0 / 3;
     else if (goodbye_char_dir == MOVE_LEFT)
-      goodbye_col = goodbye_col - 1.0 / 6;
+      goodbye_col = goodbye_col - 1.0 / 3;
 
     /* Display character */
     char_col_now = (int)goodbye_col - current_display_col;
@@ -2499,13 +2499,13 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
       if ((can_go_dir(goomba_face_right[i], false, (int)goomba_row[i], (int)goomba_col[i], current_display_col) == false) && (goomba_col_now != 0))
         goomba_face_right[i] = !goomba_face_right[i];
       if (goomba_face_right[i] == true)
-        goomba_col[i] = goomba_col[i] + 1.0 / 8; /* goomba col */
+        goomba_col[i] = goomba_col[i] + 1.0 / 4; /* goomba col */
       else
-        goomba_col[i] = goomba_col[i] - 1.0 / 8; /* goomba col */
+        goomba_col[i] = goomba_col[i] - 1.0 / 4; /* goomba col */
 
       /* Vertical */
       if (on_solid_ground((int)goomba_row[i], (int)goomba_col[i]) == false)
-        goomba_row[i] = goomba_row[i] + 3.0 / 8; /* goomba row */
+        goomba_row[i] = goomba_row[i] + 3.0 / 4; /* goomba row */
       
    
 
@@ -2640,7 +2640,7 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
     if (koopa_moving) /* always walking left, don't need to check for obstacles while walking */
     {
       /* update position */
-      koopa_col = koopa_col - 1.0 / 8; /* goomba col */  
+      koopa_col = koopa_col - 1.0 / 4; /* goomba col */  
       koopa_col_now = (int)koopa_col - current_display_col;
 
       /* display koopa head */
@@ -2711,9 +2711,9 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
 
       /* Update position */
       if (koopa_kicked_right)
-        koopa_col = koopa_col + 3.0 / 6; /* koopa col */
+        koopa_col = koopa_col + 3.0 / 3; /* koopa col */
       else if (koopa_kicked_left)
-        koopa_col = koopa_col - 3.0 / 6; /* koopa col */
+        koopa_col = koopa_col - 3.0 / 3; /* koopa col */
       koopa_col_now = (int)koopa_col - current_display_col;
 
       /* Check for hit goomba, mario, or re-stomp */
@@ -2816,8 +2816,7 @@ void display_coin_animation(int current_display_col)
   /* Update coin position */
   if ((coin_row > 0) && ((mario_count - coin_count) < 12))
   {
-    if (((mario_count - coin_count) % 2) == 0)
-      coin_row--;
+    coin_row--;
   }
   else
   {
@@ -2870,10 +2869,10 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
     if (((((mush_row == 14) || (mush_row == 13)) && ((mush_col == low_mush_fire[0]) || (mush_col == low_mush_fire[1]) || (mush_col == MARIO_1UP_COL)))
               || (((mush_row == 5) || (mush_row == 6)) && (mush_col == high_mush_fire))) && ((mario_count - mush_count) < 34)) /* going up */
     {
-      if (((mario_count - mush_count) % 16) == 0)
+      if (((mario_count - mush_count) % 6) == 0)
         mush_row--;
     }
-    else if (((mario_count - mush_count) % 6) == 0) /* time to move */
+    else if (((mario_count - mush_count) % 3) == 0) /* time to move */
     {
       if (can_go_dir(mush_go_right, false, mush_row, mush_col, current_display_col) == false) /* can't go this way, go other way */
         mush_go_right = !mush_go_right;
@@ -3049,16 +3048,16 @@ void disp_breaking_brick(int current_display_col)
             breaking_brick_vert_speed[i][j] = -3.0;
 
           /* Update brick row position */
-          breaking_brick_row[i][j] = breaking_brick_row[i][j] - breaking_brick_vert_speed[i][j] / 8;
+          breaking_brick_row[i][j] = breaking_brick_row[i][j] - breaking_brick_vert_speed[i][j] / 4;
         }
       }
       /* Update brick col position */
       if (breaking_brick_row[i][0] < 22.0) /* active bricks in top row */
       {
-        breaking_brick_col[i][0] = breaking_brick_col[i][0] - 2.0 / 8; /* top left brick col */
-        breaking_brick_col[i][1] = breaking_brick_col[i][1] - 1.0 / 8; /* bottom left brick col */
-        breaking_brick_col[i][2] = breaking_brick_col[i][2] + 2.0 / 8; /* top right brick col */
-        breaking_brick_col[i][3] = breaking_brick_col[i][3] + 1.0 / 8; /* bottom right brick col */
+        breaking_brick_col[i][0] = breaking_brick_col[i][0] - 2.0 / 4; /* top left brick col */
+        breaking_brick_col[i][1] = breaking_brick_col[i][1] - 1.0 / 4; /* bottom left brick col */
+        breaking_brick_col[i][2] = breaking_brick_col[i][2] + 2.0 / 4; /* top right brick col */
+        breaking_brick_col[i][3] = breaking_brick_col[i][3] + 1.0 / 4; /* bottom right brick col */
       }
 
       /* Display breaking bricks */
@@ -3131,7 +3130,7 @@ void display_mario_fireballs(int current_display_col, int current_mario_row, int
   }
 
   /* update fireball locations */
-  if ((mario_count % 2) == 0)
+  //if ((mario_count % 2) == 0)
     for (unsigned int i = 0; i < 2; i++)
     {
       if (fireball_col[i] > 0) /* fireball is active */
@@ -3196,15 +3195,15 @@ void display_mario_star(int current_mario_row, int current_mario_col, int curren
         mar_star_vert_speed = 2.0;
 
       /* Update star row position */
-      mar_star_row = mar_star_row - mar_star_vert_speed / 8;
+      mar_star_row = mar_star_row - mar_star_vert_speed / 6;
 
       /* Update star col position */
       if (can_go_dir(mar_star_dir_is_right, false, mar_star_row, mar_star_col, current_display_col) == false)
         mar_star_dir_is_right = !mar_star_dir_is_right;
       if (mar_star_dir_is_right)
-        mar_star_col = mar_star_col + 2.0 / 8;
+        mar_star_col = mar_star_col + 2.0 / 6;
       else
-        mar_star_col = mar_star_col - 2.0 / 8;
+        mar_star_col = mar_star_col - 2.0 / 6;
 
       /* Display star */
       int star_disp_col = (int)mar_star_col - current_display_col;
@@ -3810,7 +3809,7 @@ void display_mario_end_animation()
     while (mario_animation_over == false)
     {
       /* only move on count */
-      if ((mario_count % 4) == 0)
+      if ((mario_count % 2) == 0)
       {
         /* First, descend the flag pole */
         if ((current_mario_col == MARIO_FLAG_POLE_COL) && (current_mario_row < 18))
