@@ -2405,7 +2405,7 @@ bool goomba_face_right[4] = {false, false, false, false};
 unsigned int goomba_col_done = 0;
 
 /* returns True if Goomba got Mario */
-bool display_goombas(int current_mario_row, int current_mario_col, int current_display_col) 
+bool display_goombas(int current_mario_row, int current_mario_col, int current_display_col, int current_mario_jump_speed) 
 {
   bool return_value = false;
   float new_goomba_col = 0.0;
@@ -2499,13 +2499,13 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
       if ((can_go_dir(goomba_face_right[i], false, (int)goomba_row[i], (int)goomba_col[i], current_display_col) == false) && (goomba_col_now != 0))
         goomba_face_right[i] = !goomba_face_right[i];
       if (goomba_face_right[i] == true)
-        goomba_col[i] = goomba_col[i] + 1.0 / 4; /* goomba col */
+        goomba_col[i] = goomba_col[i] + 1.0 / 5; /* goomba col */
       else
-        goomba_col[i] = goomba_col[i] - 1.0 / 4; /* goomba col */
+        goomba_col[i] = goomba_col[i] - 1.0 / 5; /* goomba col */
 
       /* Vertical */
       if (on_solid_ground((int)goomba_row[i], (int)goomba_col[i]) == false)
-        goomba_row[i] = goomba_row[i] + 3.0 / 4; /* goomba row */
+        goomba_row[i] = goomba_row[i] + 3.0 / 5; /* goomba row */
       
    
 
@@ -2554,7 +2554,7 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
           }
         }
       }
-      else if ((current_mario_row == goomba_row_now - 2) && 
+      else if ((current_mario_row == goomba_row_now - 2) && (current_mario_jump_speed < 0.0) &&
                ((mario_col_now == goomba_col_now) || ((mario_col_now + 1) == goomba_col_now) || ((mario_col_now - 1) == goomba_col_now)))
       {
         /* stomp */
@@ -2582,7 +2582,7 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
         fireball_col[1] = 0;
         goomba_col[i] = 0.0; /* remove the goomba */
       }
-      else if ((goomba_row_now == 12) && ((mario_count - brick_bump_break_count) < 10) &&
+      else if (((goomba_row_now == 12) || (goomba_row_now == 11)) && ((mario_count - brick_bump_break_count) < 10) &&
                (((brick_bump_break_col - current_display_col) == goomba_col_now) || ((brick_bump_break_col - current_display_col - 1) == goomba_col_now) || ((brick_bump_break_col - current_display_col + 1) == goomba_col_now)))
       {
         char char_direction = MOVE_RIGHT;
@@ -2594,10 +2594,12 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
 
       if (goomba_col_now < -20)
         goomba_col[i] = 0.0; /* remove the goomba */
+    
 
     }
 
   }
+  
 
   return return_value;
 
@@ -2673,7 +2675,7 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
           }
         }
       }
-      else if ((current_mario_row == 18) && 
+      else if ((current_mario_row == 18) && ((*current_mario_jump_speed) < 0.0) &&
                 ((mario_col_now == koopa_col_now) || ((mario_col_now + 1) == koopa_col_now) || ((mario_col_now - 1) == koopa_col_now)))
       {
         koopa_moving = false; /* koopa stops moving */
@@ -3000,6 +3002,7 @@ void set_breaking_brick(unsigned char input_row, unsigned int input_col, bool bu
 
   brick_bump_break_col = input_col;
   brick_bump_break_count = mario_count;
+  Serial.println(brick_bump_break_count);
 
   if (bump_brick == false)
   {
@@ -3251,7 +3254,7 @@ void display_mario_star(int current_mario_row, int current_mario_col, int curren
       
   } /* star is active */
 
-  if ((mar_star_count > 0) && (mario_count - mar_star_count < 300))
+  if ((mar_star_count > 0) && (mario_count - mar_star_count < 200))
     mario_is_star = true;
   else
     mario_is_star = false;
@@ -3731,7 +3734,7 @@ unsigned int play_mario(bool mario_is_green)
     display_mario_back_items(current_display_col);
     display_mario_fore_items(current_display_col);
     disp_mario(mario_is_green, current_mario_row, current_mario_col, current_display_col);
-    if (display_goombas(current_mario_row, current_mario_col, current_display_col)) /* Goomba got him */
+    if (display_goombas(current_mario_row, current_mario_col, current_display_col, current_mario_jump_speed)) /* Goomba got him */
       mario_over = true;
     if (display_koopa(current_mario_row, current_mario_col, current_display_col, &current_mario_jump_speed))
       mario_over = true;
@@ -4028,10 +4031,7 @@ unsigned int big_dot_eaten_counter = 0;
 unsigned int dot_eaten_counter = 0;
 
 #define DOT_TIME_EFFECT_PAC 15
-#define BIG_DOT_TIME_EFFECT_GHOST 100
-
-#define GHOST_TWO_TIME_START 100 /* BIG_DOT_TIME_EFFECT_GHOST + 30 */
-#define GHOST_THREE_TIME_START 130 /* BIG_DOT_TIME_EFFECT_GHOST + 60 */
+#define BIG_DOT_TIME_EFFECT_GHOST 40
 
 #define MOVE_LEFT_MASK 0x1
 #define MOVE_RIGHT_MASK 0x2
@@ -5087,27 +5087,27 @@ void calibrate_tree()
 }
 
 /* Picture One Display */
-const unsigned char PROGMEM picOneDisp[NUM_DISP_ROWS_MENU][NUM_DISP_COLS_MENU] =
-  {{0,0,0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,3,3,3,3,0,0,0,0},
-   {0,0,3,3,0,0,0,0,3,3,0,0},
-   {0,3,0,0,0,0,0,0,0,0,3,0},
-   {0,3,0,0,3,0,0,3,0,0,3,0},
-   {3,0,0,0,3,0,0,3,0,0,0,3},
-   {3,0,0,0,0,0,0,0,0,0,0,3},
-   {3,0,0,3,0,0,0,0,3,0,0,3},
-   {3,0,0,3,0,0,0,0,3,0,0,3},
-   {0,3,0,0,3,0,0,3,0,0,3,0},
-   {0,3,0,0,0,3,3,0,0,0,3,0},
-   {0,0,3,3,0,0,0,0,3,3,0,0},
-   {0,0,0,0,3,3,3,3,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0,0,0},
-   {0,0,0,0,0,0,0,0,0,0,0,0}};
+const unsigned char PROGMEM picOneDisp[NUM_DISP_ROWS_MENU][19] =
+  {{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+   { 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0},
+   { 0, 0,19,19, 4, 4, 4, 4, 0, 0, 0, 4, 4, 4, 4,19,19, 0, 0},
+   { 0,19,19,19, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4,19,19,19, 0},
+   {19,19,19,19,19, 4, 4, 4, 4, 4, 4, 4, 4, 4,19,19,19,19,19},
+   {19,19,19,19,19, 4, 4, 4, 4, 4, 4, 4, 4, 4,19,19,19,19,19},
+   {19,19,19,19, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,19,19,19,19},
+   { 0,19,19,19, 4, 4, 4, 4, 4,19, 4, 4, 4, 4, 4,19,19,19, 0},
+   { 0, 0,19,19,19, 4, 4,19,19,19,19,19, 4, 4,19,19,19, 0, 0},
+   { 0, 0, 0, 0,19,19,19,19,19,19,19,19,19,19,19, 0, 0, 0, 0},
+   { 0, 0, 0,19,19,19,19,19,19,19,19,19,19,19,19,19, 0, 0, 0},
+   { 0, 0, 0,19,19,19,19,19,19,19,19,19,19,19,19,19, 0, 0, 0},
+   { 0, 0, 0,19,19,19,19,19,19,19,19,19,19,19,19,19, 0, 0, 0},
+   { 0, 0, 0, 0,19,19,19,19,19,19,19,19,19,19,19, 0, 0, 0, 0},
+   { 0, 0, 0, 0,19,19,19,19,19,19,19,19,19,19,19, 0, 0, 0, 0},
+   { 0, 0, 0, 0, 0,19,19,19,19,19,19,19,19,19, 0, 0, 0, 0, 0},
+   { 0, 0, 0, 0, 0, 0, 0,19,19,19,19,19, 0, 0, 0, 0, 0, 0, 0},
+   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
 const unsigned char PROGMEM picTwoDisp[NUM_DISP_ROWS_MENU][17] =
   {{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -5134,10 +5134,10 @@ const unsigned char PROGMEM picTwoDisp[NUM_DISP_ROWS_MENU][17] =
 void display_picture_one()
 {
   const unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_MENU) / 2;
-  const unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_MENU) / 2;
+  const unsigned int unused_cols_left = (NUM_DISP_COLS - 19) / 2;
   unsigned char i,j;
   for(i = 0; i < NUM_DISP_ROWS_MENU; i++)
-    for(j = 0; j < NUM_DISP_COLS_MENU; j++)
+    for(j = 0; j < 19; j++)
       bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&picOneDisp[i][j]);
   displayLEDs(true);
   delay(3000);
@@ -5212,7 +5212,10 @@ void loop() {
   }
     
   else if (moveDir == MOVE_SELECT) /* Calibrate if SELECT, A, B pressed in order */
+  {
     calibration_mode = 1;
+    display_picture_one();
+  }
   else if ((moveDir >> 4 == MOVE_ROTATE_RIGHT) && (calibration_mode == 1))
     calibration_mode++;
   else if ((moveDir >> 4 == MOVE_ROTATE_LEFT) && (calibration_mode == 2))
