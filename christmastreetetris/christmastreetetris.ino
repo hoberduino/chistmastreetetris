@@ -24,7 +24,9 @@
 #define DISP_CASTLE    4
 #define DISP_ONE_COLOR 5
 #define DISP_CAL_BOARD 6
-#define NUM_DISP_MODES 7
+#define DISP_VORTEX    7
+#define DISP_VORTEX_2  8
+#define NUM_DISP_MODES 9
 
 
 
@@ -53,7 +55,7 @@
 // NUM_DISP_ROWS 20 for full tetris
 #define NUM_DISP_COLS_MENU 12 /* middle ten are visible */
 
-#define NUM_ROWS_MARIO_RUN 17 
+#define NUM_ROWS_MARIO_RUN 18
 #define NUM_COLS_MARIO_RUN 17 
 
 
@@ -82,18 +84,20 @@
 #define DISP_COLOR_PIPE_GREEN  23
 #define DISP_COLOR_Q_YELLOW    24
 #define DISP_COLOR_Q_ORANGE    25
-//#define DISP_COLOR_Q_ORANGE    26
-#define NUM_DISP_COLORS        27
+#define DISP_COLOR_LIGHT_PINK  26
+#define DISP_COLOR_GOLD        27
+#define NUM_DISP_COLORS        28
+
 const CRGB numToColor[NUM_DISP_COLORS] = 
 {CRGB::Black, CRGB::Blue, CRGB::Orange, CRGB::Yellow, CRGB::Red, CRGB::Green, CRGB::Cyan, CRGB::PeachPuff,
  CRGB::Purple, 0xD7FF00, 0x00090C, CRGB::White, CRGB::Gray, 0x2F1010, 0x0000A0, 0x808080, 
  0x000080, 0x800000, 0x404040, 0xff69b4, 0x00cccc, 0x408820, 0x124012, 0x008000, 
- 0x888800, 0xFF6500, 0xFF8C00};
+ 0x888800, 0xFF6500, 0x7F345A, 0xDA9100};
  const CRGB numToColorTree[NUM_DISP_COLORS] = 
 {CRGB::Black, CRGB::Blue, 0xa5ff00, CRGB::Yellow, CRGB::Green, CRGB::Red, 0xff00ff, 0xdaffb9,
  0x008080, 0xFFD700, 0x230032, CRGB::White, CRGB::Gray, 0x102F10, 0x0000A0, 0x808080, 
  0x000080, 0x008000, 0x404040, 0x69ffb4, 0xcc00cc, 0x884020, 0x401212, 0x800000, 
- 0x888800, 0x65FF00, 0x8CFF00};
+ 0x888800, 0x65FF00, 0x347F5A, 0x91DA00};
 
 /* Tetris stuff */
 #define NUM_ROWS      24 /*middle twenty are visible */
@@ -1172,13 +1176,17 @@ void display_rainbow()
 void display_lights()
 {
   // random colored speckles that blink in and fade smoothly
-  fadeToBlackBy( leds, NUM_LEDS + NUM_TREE_LEDS, 10);
-  int pos = random16(NUM_LEDS + NUM_TREE_LEDS);
-  leds[pos] += CHSV( gHue + random8(64), 200, 255);
+  fadeToBlackBy( leds, NUM_LEDS + NUM_TREE_LEDS, 1);
+  int pos;
+  for(int i = 0; i < 10; i++)
+  {
+     pos = random16(NUM_LEDS + NUM_TREE_LEDS);
+     leds[pos] += CHSV( gHue + random8(64), 200, 255);
+     gHue++;
+  }
   
-  gHue++;
   FastLED.show();
-  delay(100);
+  delay(10);
 }
 
 void display_one_color()
@@ -1215,7 +1223,7 @@ void display_juggle()
   }
 
   FastLED.show();
-  delay(50);
+  delay(20);
 }
 
 /* Castle Display */
@@ -1283,9 +1291,148 @@ void display_cal_board()
 }
 
 
+void display_vortex()
+{
+//  unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
+//{8,27,29,27,17,
+// 14,16,15,12,
+// 12,8,9,5,
+// 7,5,4,1,
+// 1,0,0};
+// NUM_LEDS
+
+  int firstInRow[NUM_DISP_ROWS_TREE] =
+{8,55,104,151,188,
+ 222,258,293,325,357,
+ 385,414,439,466,491,
+ 515,536,1,0,0};
+  
+  int i, j;
+
+  for(i = 0; i < NUM_LEDS + NUM_TREE_LEDS; i++) 
+  {
+     leds[i] = CRGB::Black;
+  }
+
+  // (twinkle, twinkle + 19) are red
+  // (twinkle + 20, twinkle + 39) are green
+
+  // Imagine 40*16=640 tree lights
+  for(i = 0; i < 16; i++) // num rows
+  {
+    for(j = 0; j < 20; j++) // num lights
+    {
+      int lightOnCurrentRow = ((light_twinkle + j) % 40);
+      int lightOnCurrentRowBackMod = (int)(((float)((light_twinkle + j) % 20)) / 20.0f * ledsBeforeRows[i + 1]);
+      if (lightOnCurrentRow < 20) // on screen
+      {
+        leds[NUM_LEDS + firstInRow[i] + lightOnCurrentRow] = CRGB::Red;
+        leds[NUM_LEDS + firstInRow[i] + 20 + lightOnCurrentRowBackMod] = CRGB::Green;
+      }
+      else
+      {
+        leds[NUM_LEDS + firstInRow[i] + (lightOnCurrentRow % 20)] = CRGB::Green;
+        leds[NUM_LEDS + firstInRow[i] + 20 + lightOnCurrentRowBackMod] = CRGB::Red;
+      }
+    }
+  }
+  
+  
+  light_twinkle = (light_twinkle + 1) % 40; // which column
+
+  FastLED.show();
+  delay(5);
+}
+
+void display_vortex_2()
+{
+//  unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
+//{8,27,29,27,17,
+// 14,16,15,12,
+// 12,8,9,5,
+// 7,5,4,1,
+// 1,0,0};
+// NUM_LEDS
+
+  int firstInRow[NUM_DISP_ROWS_TREE] =
+{8,53,100,145,180,
+ 212,246,279,309,339,
+ 365,392,415,440,463,
+ 485,504,523,0,0};
+  
+  int i, j;
+
+  for(i = 0; i < NUM_LEDS + NUM_TREE_LEDS; i++) 
+  {
+     leds[i] = CRGB::Black;
+  }
+
+  // (twinkle, twinkle + 17) are red
+  // (twinkle + 18, twinkle + 35) are green
+
+  // Imagine 38*17=606 tree lights
+  for(i = 0; i < 18; i++) // num rows
+  {
+    for(j = 0; j < 18; j++) // num lights
+    {
+      int lightOnCurrentRow = ((light_twinkle + j) % 36);
+      int lightOnCurrentRowBackMod = (int)(((float)((light_twinkle + j) % 18)) / 18.0f * ledsBeforeRows[i + 1]);
+      if (lightOnCurrentRow < 18) // on screen
+      {
+        leds[NUM_LEDS + firstInRow[i] + lightOnCurrentRow] = CRGB::Red;
+        leds[NUM_LEDS + firstInRow[i] + 18 + lightOnCurrentRowBackMod] = CRGB::Green;
+      }
+      else
+      {
+        leds[NUM_LEDS + firstInRow[i] + (lightOnCurrentRow % 18)] = CRGB::Green;
+        leds[NUM_LEDS + firstInRow[i] + 18 + lightOnCurrentRowBackMod] = CRGB::Red;
+      }
+    }
+  }
+  
+  
+  light_twinkle = (light_twinkle + 1) % 36; // which column
+
+  FastLED.show();
+  delay(5);
+}
+
+
+
 
 /* MARIO Functions */
 
+
+
+
+
+//#define DISP_COLOR_BLACK        0
+//#define DISP_COLOR_BLUE         1
+//#define DISP_COLOR_ORANGE       2
+//#define DISP_COLOR_YELLOW       3
+//#define DISP_COLOR_RED          4
+//#define DISP_COLOR_GREEN        5
+//#define DISP_COLOR_CYAN         6
+//#define DISP_COLOR_PEACH        7
+//#define DISP_COLOR_PURPLE       8
+//#define DISP_COLOR_LIGHT_BLUE  10 //0x002332, 0x001219
+//#define DISP_COLOR_WHITE       11
+//#define DISP_COLOR_GRAY        12
+//#define DISP_COLOR_BROWN       13
+//#define DISP_COLOR_PAC_BLUE    14
+//#define DISP_COLOR_HALF_WHITE  15
+//#define DISP_COLOR_HALF_BLUE   16
+//#define DISP_COLOR_HALF_RED    17
+//#define DISP_COLOR_PAC_DOT     18
+//#define DISP_COLOR_PINK        19
+//#define DISP_COLOR_AQUA        20
+//#define DISP_COLOR_BUSH_GREEN  21
+//#define DISP_COLOR_HILL_GREEN  22
+//#define DISP_COLOR_PIPE_GREEN  23
+//#define DISP_COLOR_Q_YELLOW    24
+//#define DISP_COLOR_Q_ORANGE    25
+//#define DISP_COLOR_LIGHT_PINK  26
+//#define DISP_COLOR_GOLD        27
 
   /* Mario Left Standing Display */
 const unsigned char PROGMEM marioDispOne[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
@@ -1305,7 +1452,8 @@ const unsigned char PROGMEM marioDispOne[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN]
  {10,11,11,01,01,01,01,01,01,01,01,11,11,11,10,10,10}, // 13
  {10,10,10,01,01,01,01,10,01,01,01,01,10,10,10,10,10}, // 14
  {10,10,13,13,13,13,10,10,10,13,13,13,13,10,10,10,10}, // 15
- {10,13,13,13,13,13,10,10,10,13,13,13,13,13,10,10,10}  // 16
+ {10,13,13,13,13,13,10,10,10,13,13,13,13,13,10,10,10}, // 16
+ {10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10}  // 17
  };
 
  /* Mario Left Running One Display */
@@ -1326,7 +1474,8 @@ const unsigned char PROGMEM marioDispTwo[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN]
  {10,10,10,10,10,01,01,01,01,01,01,01,13,13,13,10,10}, // 13
  {10,10,10,10,10,10,13,13,13,13,10,10,10,13,13,10,10}, // 14
  {10,10,10,10,10,13,13,13,13,13,10,10,10,10,10,10,10}, // 15
- {10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10}  // 16
+ {10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10}, // 16
+ {10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10}  // 17
  };
 
  /* Mario Left Running Two Display */
@@ -1348,6 +1497,7 @@ const unsigned char PROGMEM marioDispThree[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RU
  {10,10,10,10,13,13,13,01,01,01,01,10,10,10,10,10,10}, // 14
  {10,10,10,13,13,13,13,13,13,13,13,10,10,10,10,10,10}, // 15
  {10,10,10,10,10,10,13,13,13,13,13,10,10,10,10,10,10}, // 16
+ {10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10}  // 17
  };
 
  /* Mario Left Running Three Display */
@@ -1369,6 +1519,7 @@ const unsigned char PROGMEM marioDispFour[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN
  {10,13,13,01,01,01,01,10,10,01,01,01,13,13,13,10,10}, // 14
  {10,10,10,10,10,10,10,10,10,10,10,13,13,13,13,10,10}, // 15
  {10,10,10,10,10,10,10,10,10,10,13,13,13,13,10,10,10}, // 16
+ {10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10}  // 17
  };
 
  /* Mario Left Skid Display */
@@ -1390,6 +1541,7 @@ const unsigned char PROGMEM marioDispFive[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN
  {10,10,10,10,10,01,13,13,13,01,01,13,13,13,13,10,10}, // 14
  {10,10,10,10,10,10,10,10,01,13,13,13,13,13,13,10,10}, // 15
  {10,10,10,10,10,10,10,10,10,13,13,13,13,13,10,10,10}, // 16
+ {10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10}  // 17
  };
 
  /* Mario Left Jump Display */
@@ -1411,17 +1563,69 @@ const unsigned char PROGMEM marioDispSix[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN]
  {10,10,10,10,10,01,01,01,01,01,01,01,13,13,13,13,10}, // 14
  {10,10,10,10,10,10,10,10,01,01,01,01,01,10,13,13,10}, // 15
  {10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10}, // 16
+ {10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10}  // 17
  };
 
+  /* Peach Left Standing Display */
+const unsigned char PROGMEM peachDispOne[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
+{{10,10,10,10,10,10,27,10,27,10,27,10,10,10,10,10,10}, // 0
+ {10,10,10,10,10,10,01,27,19,27,01,10,10,10,10,10,10}, // 1
+ {10,10,10,10,10,10,03,03,03,03,03,03,10,10,10,10,10}, // 2
+ {10,10,10,10,10,03,03,03,03,03,03,03,03,10,10,10,10}, // 3
+ {10,10,10,10,03,03,07,03,03,03,03,03,03,10,10,10,10}, // 4 
+ {10,10,10,10,03,03,07,01,07,03,03,03,03,03,03,10,10}, // 5
+ {10,10,10,10,10,07,07,10,07,03,07,03,03,03,10,10,10}, // 6 g
+ {10,10,10,10,10,07,07,07,07,03,01,03,03,10,10,10,10}, // 7 g
+ {10,10,10,10,10,10,07,07,07,07,03,03,03,03,10,10,10}, // 8 g
+ {10,10,10,10,10,26,01,03,19,19,19,03,03,03,03,10,10}, // 9 g
+ {10,10,10,10,26,26,26,26,26,26,26,26,03,03,10,10,10}, // 10 g
+ {10,10,10,10,07,26,26,26,26,26,07,07,03,10,10,10,10}, // 11 g
+ {10,10,10,11,11,19,19,19,19,19,19,11,11,10,10,10,10}, // 12 g
+ {10,10,11,11,19,19,26,26,19,19,19,19,11,11,10,10,10}, // 13 g
+ {10,10,10,10,19,26,26,26,26,26,19,19,10,10,10,10,10}, // 14 g
+ {10,10,10,10,26,26,26,26,26,26,26,26,10,10,10,10,10}, // 15 g
+ {10,10,10,26,26,26,26,26,26,26,26,26,26,10,10,10,10}, // 16 g
+ {10,10,10,19,19,19,19,19,19,19,19,19,19,19,10,10,10}  // 17
+ };
+
+ /* Daisy Left Standing Display */
+const unsigned char PROGMEM daisyDispOne[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
+{{10,10,10,10,10,10,27,10,27,10,27,10,10,10,10,10,10}, // 0
+ {10,10,10,10,10,10,19,27,22,27,19,10,10,10,10,10,10}, // 1
+ {10,10,10,10,10,10,13,13,13,13,13,13,10,10,10,10,10}, // 2
+ {10,10,10,10,10,13,13,13,13,13,13,13,13,10,10,10,10}, // 3
+ {10,10,10,10,13,13,07,13,13,13,13,13,13,10,10,10,10}, // 4
+ {10,10,10,10,13,13,07,01,07,13,13,13,13,13,13,10,10}, // 5
+ {10,10,10,10,10,07,07,10,07,13,11,13,13,13,10,10,10}, // 6 g
+ {10,10,10,10,10,07,07,07,07,11,22,11,13,10,10,10,10}, // 7 g
+ {10,10,10,10,10,10,07,07,07,07,11,13,13,13,10,10,10}, // 8 g
+ {10,10,10,10,10,03,11,11,11,11,03,13,13,13,13,10,10}, // 9 9
+ {10,10,10,10,03,03,22,11,03,03,03,03,13,13,10,10,10}, // 10 g
+ {10,10,10,10,07,03,03,03,03,03,07,07,13,10,10,10,10}, // 11 g
+ {10,10,10,11,11,02,02,02,02,02,02,11,11,10,10,10,10}, // 12 g
+ {10,10,11,11,02,02,03,03,02,02,02,02,11,11,10,10,10}, // 13 g
+ {10,10,10,10,02,03,03,03,03,03,02,02,10,10,10,10,10}, // 14 g
+ {10,10,10,10,03,03,03,03,03,03,03,03,10,10,10,10,10}, // 15 g
+ {10,10,10,03,03,03,03,03,03,03,03,03,03,10,10,10,10}, // 16 g
+ {10,10,10,02,02,02,02,02,02,02,02,02,02,02,10,10,10}  // 17
+ };
+
+#define PLAY_MARIO_RED   1
+#define PLAY_MARIO_GREEN 2
+#define PLAY_MARIO_PINK 3
+#define PLAY_MARIO_ORANGE 4
+
+
+unsigned char disp_mario_luigi = 0; // 0 - Mario, 1 - Luigi, 2 - Peach, 3 - Daisy
 
 /* Only called in 22x22 mode at the moment */
 /* Frames numbered 1-6 */
-/* disp_mario_luigi: 0 - Mario, 1 - Luigi */
-void displayLEDBoardMarioRun(unsigned char mario_frame, unsigned char mario_dir, unsigned char disp_mario_luigi)
+/* disp_mario_luigi: 0 - Mario, 1 - Luigi, 2 - Peach, 3 - Daisy */
+void displayLEDBoardMarioRun(unsigned char mario_frame, unsigned char mario_dir)
 {
   unsigned int i, j;
   unsigned int unused_cols_left = 2;
-  unsigned int unused_rows_top = 2;
+  unsigned int unused_rows_top = 1;
   unsigned int color_index = 0;
   unsigned int column_idx = 0;
   
@@ -1444,8 +1648,12 @@ void displayLEDBoardMarioRun(unsigned char mario_frame, unsigned char mario_dir,
         column_idx = j;
       else
         column_idx = NUM_COLS_MARIO_RUN - j - 1;
-        
-      if (mario_frame == 1)
+
+      if (disp_mario_luigi == 2) // peach
+        color_index = pgm_read_byte_near(&peachDispOne[i][column_idx]);
+      else if (disp_mario_luigi == 3) // daisy
+        color_index = pgm_read_byte_near(&daisyDispOne[i][column_idx]);
+      else if (mario_frame == 1)
         color_index = pgm_read_byte_near(&marioDispOne[i][column_idx]);
       else if (mario_frame == 2)
         color_index = pgm_read_byte_near(&marioDispTwo[i][column_idx]);
@@ -1461,6 +1669,8 @@ void displayLEDBoardMarioRun(unsigned char mario_frame, unsigned char mario_dir,
       if ((disp_mario_luigi == 1) and (color_index == DISP_COLOR_RED))
         color_index = DISP_COLOR_GREEN;
 
+      
+
       bigDispBoard[i + unused_rows_top][j + unused_cols_left] = color_index;
     }
   }
@@ -1471,13 +1681,12 @@ void displayLEDBoardMarioRun(unsigned char mario_frame, unsigned char mario_dir,
 #define MARIO_DELAY_TIME 100
 
 unsigned char run_move_dir = MOVE_NONE;
-unsigned char disp_mario_luigi = 0; // 0 - Mario, 1 - Luigi
 unsigned char mario_dir = MOVE_RIGHT;
 boolean mario_move = false; // if moving this iteration
 unsigned char mario_frame = 1; // 1-6: 1-Stand, 2-Run1, 3-Run2, 4-Run3, 5-Skid, 6-Jump
 unsigned char mario_run_timer = 0; // TODO: Provide description
 unsigned int delay_time = 100;
-bool display_mario_run()
+void display_mario_run()
 {
   unsigned int i, j;
   unsigned int move_dir = MOVE_NONE;
@@ -1496,7 +1705,7 @@ bool display_mario_run()
     move_dir = getMove();
     if (move_dir == MOVE_SELECT)
     {
-      disp_mario_luigi = (disp_mario_luigi + 1) % 2;
+      disp_mario_luigi = (disp_mario_luigi + 1) % 4;
     }
     else if (move_dir == MOVE_START)
     {
@@ -1536,11 +1745,10 @@ bool display_mario_run()
       run_move_dir = move_dir & 0xF;
     }
 
-    displayLEDBoardMarioRun(mario_frame, mario_dir, disp_mario_luigi);
+    displayLEDBoardMarioRun(mario_frame, mario_dir);
     delay(10);
   }
 
-  return (disp_mario_luigi == 1);
 }
 
 
@@ -1555,7 +1763,7 @@ bool display_mario_run()
 
 /* MARIO GAME */
 
-#define MARIO_FACE_COLOR DISP_COLOR_Q_ORANGE
+#define MARIO_FACE_COLOR DISP_COLOR_PEACH
 #define MARIO_HAT_COLOR DISP_COLOR_RED
 #define LUIGI_HAT_COLOR DISP_COLOR_GREEN
 #define MARIO_PANTS_COLOR DISP_COLOR_BLUE
@@ -1746,12 +1954,18 @@ const unsigned int PROGMEM marioDispBackItems[NUM_MARIO_COLUMNS] =
 
 
 
-void disp_mario_back(int current_display_col, bool mario_is_green)
+void disp_mario_back(int current_display_col, unsigned char mario_color)
 {
   unsigned char i,j;
   unsigned char mario_lives_color = DISP_COLOR_RED;
-  if (mario_is_green)
+  if (mario_color == PLAY_MARIO_RED)
+    mario_lives_color = DISP_COLOR_RED;
+  else if (mario_color == PLAY_MARIO_GREEN)
     mario_lives_color = DISP_COLOR_GREEN;
+  else if (mario_color == PLAY_MARIO_PINK)
+    mario_lives_color = DISP_COLOR_PINK;
+  else if (mario_color == PLAY_MARIO_ORANGE)
+    mario_lives_color = DISP_COLOR_ORANGE;
   
   for(i = 0; i < NUM_DISP_ROWS; i++)
   {
@@ -1980,15 +2194,29 @@ void display_mario_fore_items(int current_display_col)
 /* Displays mario in current position based on current_mario_row, current_mario_col, current_display_col,
  *                                             mario_face_right, mario_is_big, mario_is_fire, mario_is_luigi, mario_is_walking
  */
-void disp_mario(bool mario_is_green, int current_mario_row, int current_mario_col, int current_display_col)
+void disp_mario(unsigned char mario_color, int current_mario_row, int current_mario_col, int current_display_col)
 {
   unsigned char mario_col_now = current_mario_col - current_display_col;
   unsigned char hat_color = MARIO_HAT_COLOR;
   unsigned char pants_color = MARIO_PANTS_COLOR;
   unsigned char hair_color = MARIO_SHOE_COLOR;
+  unsigned char shoe_color = MARIO_SHOE_COLOR;
   bool mario_is_jumping = mario_jump_count > 0;
-  if (mario_is_green)
+  if (mario_color == PLAY_MARIO_GREEN)
     hat_color = LUIGI_HAT_COLOR;
+  else if (mario_color == PLAY_MARIO_PINK)
+  {
+    hat_color = DISP_COLOR_YELLOW;
+    pants_color = DISP_COLOR_PINK;
+    shoe_color = DISP_COLOR_LIGHT_PINK;
+  }
+  else if (mario_color == PLAY_MARIO_ORANGE)
+  {
+    hat_color = DISP_COLOR_BROWN;
+    pants_color = DISP_COLOR_ORANGE;
+    shoe_color = DISP_COLOR_YELLOW;
+  }
+    
   if (mario_is_fire)
   {
     pants_color = DISP_COLOR_RED;
@@ -2025,7 +2253,7 @@ void disp_mario(bool mario_is_green, int current_mario_row, int current_mario_co
         bigDispBoard[current_mario_row][mario_col_now] = pants_color; // bottom left pixel
         /* blink front shoe when walking */
         if ((mario_is_trying == true) && (mario_is_jumping == false) && ((mario_count % 8) < 4))
-          bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_SHOE_COLOR; // bottom right pixel
+          bigDispBoard[current_mario_row][mario_col_now + 1] = shoe_color; // bottom right pixel
       }
       else
       {
@@ -2035,7 +2263,7 @@ void disp_mario(bool mario_is_green, int current_mario_row, int current_mario_co
         bigDispBoard[current_mario_row][mario_col_now + 1] = pants_color; // bottom right pixel
         /* blink front shoe when walking */
         if ((mario_is_trying == true) && (mario_is_jumping == false) && ((mario_count % 8) < 4))
-          bigDispBoard[current_mario_row][mario_col_now] = MARIO_SHOE_COLOR; // bottom left pixel
+          bigDispBoard[current_mario_row][mario_col_now] = shoe_color; // bottom left pixel
       }
     }
     else /* mario is big */
@@ -2054,10 +2282,10 @@ void disp_mario(bool mario_is_green, int current_mario_row, int current_mario_co
           bigDispBoard[current_mario_row - 2][mario_col_now] = hair_color; // 3/4 left pixel
           bigDispBoard[current_mario_row - 2][mario_col_now + 1] = MARIO_FACE_COLOR; // 3/4 right pixel
         }
-        bigDispBoard[current_mario_row][mario_col_now] = MARIO_SHOE_COLOR; // bottom left pixel
+        bigDispBoard[current_mario_row][mario_col_now] = shoe_color; // bottom left pixel
         /* blink front shoe when walking */
         if ((mario_is_trying == false) || (mario_is_jumping == true) || ((mario_count % 8) < 4))
-          bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_SHOE_COLOR; // bottom right pixel
+          bigDispBoard[current_mario_row][mario_col_now + 1] = shoe_color; // bottom right pixel
       }
       else
       {
@@ -2066,10 +2294,10 @@ void disp_mario(bool mario_is_green, int current_mario_row, int current_mario_co
           bigDispBoard[current_mario_row - 2][mario_col_now + 1] = hair_color; // 3/4 left pixel
           bigDispBoard[current_mario_row - 2][mario_col_now] = MARIO_FACE_COLOR; // 3/4 right pixel
         }
-        bigDispBoard[current_mario_row][mario_col_now + 1] = MARIO_SHOE_COLOR; // bottom left pixel
+        bigDispBoard[current_mario_row][mario_col_now + 1] = shoe_color; // bottom left pixel
         /* blink front shoe when walking */
         if ((mario_is_trying == false) || (mario_is_jumping == true) || ((mario_count % 8) < 4))
-          bigDispBoard[current_mario_row][mario_col_now] = MARIO_SHOE_COLOR; // bottom right pixel
+          bigDispBoard[current_mario_row][mario_col_now] = shoe_color; // bottom right pixel
       }
     }
   }
@@ -2313,7 +2541,7 @@ void set_goodbye_char(int input_row, int input_col, char character, char char_di
   total_score++;
 }
 
-void display_goodbye_char(bool mario_is_green, int current_display_col)
+void display_goodbye_char(unsigned char mario_color, int current_display_col)
 {
   if (goodbye_col > 0.5)
   {
@@ -2363,10 +2591,24 @@ void display_goodbye_char(bool mario_is_green, int current_display_col)
       else if (goodbye_character == MARIO_GOODBYE_MARIO)
       {
         unsigned char hat_color = MARIO_HAT_COLOR;
-        if (mario_is_green)
+        unsigned char pants_color = MARIO_PANTS_COLOR;
+        unsigned char hair_color = MARIO_SHOE_COLOR;
+ 
+        if (mario_color == PLAY_MARIO_GREEN)
           hat_color = LUIGI_HAT_COLOR;
-        bigDispBoard[char_row_now][char_col_now] = MARIO_PANTS_COLOR;
-        bigDispBoard[char_row_now][char_col_now + 1] = MARIO_PANTS_COLOR;
+        else if (mario_color == PLAY_MARIO_PINK)
+        {
+          hat_color = DISP_COLOR_YELLOW;
+          pants_color = DISP_COLOR_PINK;
+        }
+        else if (mario_color == PLAY_MARIO_ORANGE)
+        {
+          hat_color = DISP_COLOR_BROWN;
+          pants_color = DISP_COLOR_ORANGE;
+        }
+        
+        bigDispBoard[char_row_now][char_col_now] = pants_color;
+        bigDispBoard[char_row_now][char_col_now + 1] = pants_color;
         bigDispBoard[char_row_now - 1][char_col_now] = hat_color;
         bigDispBoard[char_row_now - 1][char_col_now + 1] = MARIO_FACE_COLOR;
       }
@@ -3696,9 +3938,9 @@ void init_mario()
 #define MARIO_COUNT_END 2000
 unsigned int mario_end_row = 0;
 unsigned int mario_end_col = 0;
-bool mario_end_green = true;
+unsigned char mario_end_color = PLAY_MARIO_RED;
 
-unsigned int play_mario(bool mario_is_green)
+unsigned int play_mario(unsigned char mario_color)
 {
   bool mario_over = false;
   unsigned int move_dir = MOVE_NONE;
@@ -3740,10 +3982,10 @@ unsigned int play_mario(bool mario_is_green)
     if ((mario_count >= MARIO_COUNT_END) || (current_mario_row == (NUM_DISP_ROWS - 1)))
       mario_over = true;
 
-    disp_mario_back(current_display_col, mario_is_green);
+    disp_mario_back(current_display_col, mario_color);
     display_mario_back_items(current_display_col);
     display_mario_fore_items(current_display_col);
-    disp_mario(mario_is_green, current_mario_row, current_mario_col, current_display_col);
+    disp_mario(mario_color, current_mario_row, current_mario_col, current_display_col);
     if (display_goombas(current_mario_row, current_mario_col, current_display_col, current_mario_jump_speed)) /* Goomba got him */
       mario_over = true;
     if (display_koopa(current_mario_row, current_mario_col, current_display_col, &current_mario_jump_speed))
@@ -3765,7 +4007,7 @@ unsigned int play_mario(bool mario_is_green)
         set_goodbye_char(current_mario_row, current_mario_col, MARIO_GOODBYE_MARIO, MOVE_NONE);
         while (goodbye_col > 0.5)
         {
-          display_goodbye_char(mario_is_green, current_display_col);
+          display_goodbye_char(mario_color, current_display_col);
           displayLEDs(true, true, false);
           delay(5);
         }
@@ -3802,7 +4044,8 @@ unsigned int play_mario(bool mario_is_green)
   delay(500);
   mario_end_row = current_mario_row;
   mario_end_col = current_mario_col;
-  mario_end_green = mario_is_green;
+  mario_end_color = mario_color;
+
   return total_score;
 }
 
@@ -3849,11 +4092,11 @@ void display_mario_end_animation()
            display_mario_now = false;
       }
 
-      disp_mario_back(current_display_col, mario_end_green);
+      disp_mario_back(current_display_col, mario_end_color);
       display_mario_back_items(current_display_col);
       display_mario_fore_items(current_display_col);
       if (display_mario_now)
-        disp_mario(mario_end_green, current_mario_row, current_mario_col, current_display_col);
+        disp_mario(mario_end_color, current_mario_row, current_mario_col, current_display_col);
       displayLEDs(true, true, false);
 
       mario_count++;
@@ -4807,8 +5050,8 @@ void displayGameMenu()
 }
 
 
-#define PLAY_MARIO_RED   1
-#define PLAY_MARIO_GREEN 2
+
+
 
 unsigned char mario_play_now = 0;
 
@@ -4846,11 +5089,8 @@ void start_menu()
     play_tetris();
   else if (game_selection == 2)
   {
-    bool mario_is_green = display_mario_run();
-    if (mario_is_green)
-      mario_play_now = PLAY_MARIO_GREEN;
-    else
-      mario_play_now = PLAY_MARIO_RED;
+    display_mario_run();
+    mario_play_now = disp_mario_luigi + 1;
   }
   delay(300);
   
@@ -5206,11 +5446,11 @@ void loop() {
   {
     init_mario();
     unsigned int mario_score = 0;
-    if (mario_play_now == PLAY_MARIO_GREEN)
-      mario_score = play_mario(true);
-    else
-      mario_score = play_mario(false);
+
+    // play the game
+    mario_score = play_mario(mario_play_now);
     display_mario_end_animation();
+    
     /* display score */
     for(i = 0; i < NUM_DISP_ROWS; i++)
     for(j = 0; j < NUM_DISP_COLS; j++)
@@ -5253,6 +5493,10 @@ void loop() {
     display_castle();  
   else if (display_mode == DISP_CAL_BOARD)
     display_cal_board(); 
+  else if (display_mode == DISP_VORTEX)
+    display_vortex();
+  else if (display_mode == DISP_VORTEX_2)
+    display_vortex_2();
   else if (digitalRead(PICTURE_INPUT_1) == HIGH)
     display_picture_one();
   else if (digitalRead(PICTURE_INPUT_2) == HIGH)
