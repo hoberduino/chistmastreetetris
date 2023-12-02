@@ -26,7 +26,9 @@
 #define DISP_CAL_BOARD 6
 #define DISP_VORTEX    7
 #define DISP_VORTEX_2  8
-#define NUM_DISP_MODES 9
+#define DISP_VORTEX_3  9
+#define DISP_ROWS_MOVE 10
+#define NUM_DISP_MODES 11
 
 
 
@@ -91,13 +93,13 @@
 const CRGB numToColor[NUM_DISP_COLORS] = 
 {CRGB::Black, CRGB::Blue, CRGB::Orange, CRGB::Yellow, CRGB::Red, CRGB::Green, CRGB::Cyan, CRGB::PeachPuff,
  CRGB::Purple, 0xD7FF00, 0x00090C, CRGB::White, CRGB::Gray, 0x2F1010, 0x0000A0, 0x808080, 
- 0x000080, 0x800000, 0x404040, 0xff69b4, 0x00cccc, 0x408820, 0x124012, 0x008000, 
- 0x888800, 0xFF6500, 0x7F345A, 0xDA9100};
+ 0x000080, 0x800000, 0x404040, 0xff0080, 0x00cccc, 0x408820, 0x124012, 0x008000, 
+ 0x888800, 0xFF6500, 0x7F0040, 0xDA9100};
  const CRGB numToColorTree[NUM_DISP_COLORS] = 
 {CRGB::Black, CRGB::Blue, 0xa5ff00, CRGB::Yellow, CRGB::Green, CRGB::Red, 0xff00ff, 0xdaffb9,
- 0x008080, 0xFFD700, 0x230032, CRGB::White, CRGB::Gray, 0x102F10, 0x0000A0, 0x808080, 
- 0x000080, 0x008000, 0x404040, 0x69ffb4, 0xcc00cc, 0x884020, 0x401212, 0x800000, 
- 0x888800, 0x65FF00, 0x347F5A, 0x91DA00};
+ 0x88cc99, 0xFFD700, 0x230032, CRGB::White, CRGB::Gray, 0x102F10, 0x0000A0, 0x808080, 
+ 0x000080, 0x008000, 0x404040, 0x00ff80, 0xcc00cc, 0x884020, 0x401212, 0x800000, 
+ 0x888800, 0x65FF00, 0x007F40, 0x91DA00};
 
 /* Tetris stuff */
 #define NUM_ROWS      24 /*middle twenty are visible */
@@ -1309,11 +1311,6 @@ void display_vortex()
   
   int i, j;
 
-  for(i = 0; i < NUM_LEDS + NUM_TREE_LEDS; i++) 
-  {
-     leds[i] = CRGB::Black;
-  }
-
   // (twinkle, twinkle + 19) are red
   // (twinkle + 20, twinkle + 39) are green
 
@@ -1344,7 +1341,7 @@ void display_vortex()
   delay(5);
 }
 
-void display_vortex_2()
+void display_vortex_2(CRGB Color1, CRGB Color2)
 {
 //  unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
 //{8,27,29,27,17,
@@ -1362,11 +1359,6 @@ void display_vortex_2()
   
   int i, j;
 
-  for(i = 0; i < NUM_LEDS + NUM_TREE_LEDS; i++) 
-  {
-     leds[i] = CRGB::Black;
-  }
-
   // (twinkle, twinkle + 17) are red
   // (twinkle + 18, twinkle + 35) are green
 
@@ -1379,13 +1371,13 @@ void display_vortex_2()
       int lightOnCurrentRowBackMod = (int)(((float)((light_twinkle + j) % 18)) / 18.0f * ledsBeforeRows[i + 1]);
       if (lightOnCurrentRow < 18) // on screen
       {
-        leds[NUM_LEDS + firstInRow[i] + lightOnCurrentRow] = CRGB::Red;
-        leds[NUM_LEDS + firstInRow[i] + 18 + lightOnCurrentRowBackMod] = CRGB::Green;
+        leds[NUM_LEDS + firstInRow[i] + lightOnCurrentRow] = Color1;
+        leds[NUM_LEDS + firstInRow[i] + 18 + lightOnCurrentRowBackMod] = Color2;
       }
       else
       {
-        leds[NUM_LEDS + firstInRow[i] + (lightOnCurrentRow % 18)] = CRGB::Green;
-        leds[NUM_LEDS + firstInRow[i] + 18 + lightOnCurrentRowBackMod] = CRGB::Red;
+        leds[NUM_LEDS + firstInRow[i] + (lightOnCurrentRow % 18)] = Color2;
+        leds[NUM_LEDS + firstInRow[i] + 18 + lightOnCurrentRowBackMod] = Color1;
       }
     }
   }
@@ -1395,6 +1387,61 @@ void display_vortex_2()
 
   FastLED.show();
   delay(5);
+}
+
+
+void display_clear()
+{
+
+  for(int i = 0; i < NUM_LEDS + NUM_TREE_LEDS; i++) 
+  {
+     leds[i] = CRGB::Black;
+  }
+
+  FastLED.show();
+  delay(5);
+}
+
+void display_rows_move(CRGB Color1, CRGB Color2)
+{
+//  unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
+//{8,27,29,27,17,
+// 14,16,15,12,
+// 12,8,9,5,
+// 7,5,4,1,
+// 1,0,0};
+// NUM_LEDS
+
+  int firstInRow[NUM_DISP_ROWS_TREE] =
+{8,53,100,145,180,
+ 212,246,279,309,339,
+ 365,392,415,440,463,
+ 485,504,523,550,0};
+
+  int light_num_row;
+
+  if (light_twinkle < 18)
+    light_num_row = (light_twinkle % 18) + 1; // (1-18)
+  else
+    light_num_row = 18 - (light_twinkle % 18);  // (18-1)
+
+  if ((light_twinkle == 18) || (light_twinkle == 0))
+    display_clear();
+
+  for(int i = firstInRow[light_num_row - 1]; i < firstInRow[light_num_row]; i++)
+  {
+    leds[NUM_LEDS + i] = Color1;
+  }
+    
+  for(int i = firstInRow[18 - light_num_row + 1]; i > firstInRow[18 - light_num_row]; i--)
+  {
+    leds[NUM_LEDS + i] = Color2;
+  }
+  
+  light_twinkle = (light_twinkle + 1) % 36; // which row (0 - 35)
+
+  FastLED.show();
+  delay(200);
 }
 
 
@@ -5433,9 +5480,15 @@ void loop() {
 
   /* Move up and down between display options */
   if (moveDir == MOVE_UP)
+  {
     display_mode = (display_mode + NUM_DISP_MODES - 1) % NUM_DISP_MODES;
+    display_clear();
+  }
   else if (moveDir == MOVE_DOWN)
+  {
     display_mode = (display_mode + 1) % NUM_DISP_MODES;
+    display_clear();
+  }
 
   /* Update display for current selection */
   /* If tetris, init and kick out of loop */
@@ -5496,7 +5549,11 @@ void loop() {
   else if (display_mode == DISP_VORTEX)
     display_vortex();
   else if (display_mode == DISP_VORTEX_2)
-    display_vortex_2();
+    display_vortex_2(CRGB::Red, CRGB::Green);
+  else if (display_mode == DISP_ROWS_MOVE)
+    display_rows_move(CRGB::Red, CRGB::Green);
+  else if (display_mode == DISP_VORTEX_3)
+    display_vortex_2(0x008080, 0x00ff80); // 0x008080 purple
   else if (digitalRead(PICTURE_INPUT_1) == HIGH)
     display_picture_one();
   else if (digitalRead(PICTURE_INPUT_2) == HIGH)
