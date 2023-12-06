@@ -28,7 +28,9 @@
 #define DISP_VORTEX_2  8
 #define DISP_VORTEX_3  9
 #define DISP_ROWS_MOVE 10
-#define NUM_DISP_MODES 11
+#define DISP_SPIRAL_1  11
+#define DISP_SPIRAL_2  12
+#define NUM_DISP_MODES 13
 
 
 
@@ -1143,7 +1145,7 @@ unsigned int light_twinkle = 0;
 void display_green_red()
 {
   int i;
-  for(i = 0; i < NUM_LEDS + NUM_TREE_LEDS; i++)
+  for(i = NUM_LEDS; i < NUM_LEDS + NUM_TREE_LEDS; i++)
   {
     /* LEDS snake from 1 row to next */
     if (((i + light_twinkle) % 30) < 10)
@@ -1168,6 +1170,9 @@ void display_rainbow()
   if( random8() < CHANCE_OF_TWINKLE) {
     leds[ random16(NUM_LEDS + NUM_TREE_LEDS) ] += CRGB::White;
   }
+
+  for(int i = 0; i < NUM_LEDS; i++) 
+     leds[i] = CRGB::Black;
      
   FastLED.show();
   delay(20);
@@ -1186,6 +1191,9 @@ void display_lights()
      leds[pos] += CHSV( gHue + random8(64), 200, 255);
      gHue++;
   }
+
+  for(int i = 0; i < NUM_LEDS; i++) 
+     leds[i] = CRGB::Black;
   
   FastLED.show();
   delay(10);
@@ -1193,7 +1201,7 @@ void display_lights()
 
 void display_one_color()
 {
-  for(int i = 0; i < NUM_LEDS + NUM_TREE_LEDS; i++)
+  for(int i = NUM_LEDS; i < NUM_LEDS + NUM_TREE_LEDS; i++)
     leds[i] = CHSV( gHue, 200, 255);
     
   gHue++;
@@ -1207,6 +1215,9 @@ void display_sinelon()
   fadeToBlackBy( leds, NUM_LEDS + NUM_TREE_LEDS, 20);
   int pos = beatsin16( 13, 0, NUM_LEDS + NUM_TREE_LEDS - 1 );
   leds[pos] += CHSV( gHue, 255, 192);
+
+  for(int i = 0; i < NUM_LEDS; i++) 
+     leds[i] = CRGB::Black;
 
   FastLED.show();
   delay(50);
@@ -1223,6 +1234,9 @@ void display_juggle()
     leds[beatsin16( i+7, 0, NUM_LEDS + NUM_TREE_LEDS - 1 )] |= CHSV(dothue, 200, 255);
     dothue += 32;
   }
+
+  for(int i = 0; i < NUM_LEDS; i++) 
+     leds[i] = CRGB::Black;
 
   FastLED.show();
   delay(20);
@@ -1269,7 +1283,7 @@ void display_castle()
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
       bigDispBoard[i + unused_rows_top + 8][j + unused_cols_left] = pgm_read_byte_near(&castleDisp[i][j]);
 
-  displayLEDs(true, true, true);
+  displayLEDTree(true, true, true);
 
   delay(20);
 }
@@ -1286,7 +1300,7 @@ void display_cal_board()
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
       bigDispBoard[i+1][j+6] = DISP_COLOR_GREEN;
 
-  displayLEDs(true, true, false);
+  displayLEDTree(true, true, false);
 
   FastLED.show();
   delay(20);
@@ -1387,6 +1401,132 @@ void display_vortex_2(CRGB Color1, CRGB Color2)
 
   FastLED.show();
   delay(5);
+}
+
+
+
+//const unsigned char PROGMEM spiralDisp[NUM_DISP_ROWS_MENU][17] =
+//  {{ 0, 0, 0, 0, 0, 0, 0, 0,10, 0, 0, 0, 0, 0, 0, 0, 0},
+//   { 0, 0, 0, 0, 0, 0, 0, 0,10, 0, 0, 0, 0, 0, 0, 0, 0},
+//   { 0, 0, 0, 0, 0, 0,26,26,10,26,26, 0, 0, 0, 0, 0, 0},
+//   { 0, 0, 0, 0,26,26,26,26,10,26,26,26,26, 0, 0, 0, 0},
+//   { 0, 0, 0,26,26,26,26,26,10,26,26,26,26,26, 0, 0, 0},
+//   { 0, 0,26, 0,26,26,26,26,10,26,26,26,26, 0,26, 0, 0},
+//   { 0,26,26,26, 0,26,26,26,10,26,26,26, 0,26,26,26, 0},
+//   { 0,26,26,26,26, 0,26,26,10,26,26, 0,26,26,26,26, 0},
+//   {26,26,26,26,26, 0,26,26,10,26,26, 0,26,26,26,26,26},
+//   {26,26,26,26,26, 0,26,26,10,26,26, 0,26,26,26,26,26},
+//   {19,19,19,19,19,19,19,19, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+//   {26,26,26,26,26, 0,26,26,28,26,26, 0,26,26,26,26,26},
+//   {26,26,26,26,26, 0,26,26,28,26,26, 0,26,26,26,26,26},
+//   { 0,26,26,26,26, 0,26,26,28,26,26, 0,26,26,26,26, 0},
+//   { 0,26,26,26, 0,26,26,26,28,26,26,26, 0,26,26,26, 0},
+//   { 0, 0,26, 0,26,26,26,26,28,26,26,26,26, 0,26, 0, 0},
+//   { 0, 0, 0,26,26,26,26,26,28,26,26,26,26,26, 0, 0, 0},
+//   { 0, 0, 0, 0,26,26,26,26,28,26,26,26,26, 0, 0, 0, 0},
+//   { 0, 0, 0, 0, 0, 0,26,26,28,26,26, 0, 0, 0, 0, 0, 0},
+//   { 0, 0, 0, 0, 0, 0, 0, 0,28, 0, 0, 0, 0, 0, 0, 0, 0}};
+//
+//void display_picture_one()
+//{
+//  const unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_MENU) / 2;
+//  const unsigned int unused_cols_left = (NUM_DISP_COLS - 19) / 2;
+//  unsigned char i,j;
+//  for(i = 0; i < NUM_DISP_ROWS_MENU; i++)
+//    for(j = 0; j < 19; j++)
+//      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&picOneDisp[i][j]);
+//  displayLEDs(true, false, false);
+//  delay(3000);
+//}
+
+
+
+void display_spiral(unsigned int Color1, unsigned int Color2, unsigned int Color3, unsigned int Color4)
+{
+
+    float tangentsByTen_1[18] =
+      {-0.01, 0.17632,0.36397,0.57735,0.839099,1.19175,
+       1.73205,2.74747,5.67128,10000000.0};
+
+    float tangentsByTen_2[10] =
+      {-10000000.0,-5.67128,
+       -2.74747,-1.73205,-1.19175,-0.839099,-0.57735,
+       -0.36397,-0.17632, 0.01};
+
+    int sector = 0; // sector is from 0 - 35
+    float tan_theta = 0;  // tan theta = col / row
+    int x_coord = 0, y_coord = 0;
+
+  // board is 22 x 22, place center at row 11, col 11
+  for(int i = 0; i < NUM_DISP_ROWS; i++)
+  {
+    for(int j = 0; j < NUM_DISP_COLS; j++)
+    {
+      x_coord = j - 11;
+      y_coord = i - 11;
+      
+      // if point is within (light_twinkle, light_twinkle + 90) degress, then it is Color1
+      // i.e. within the next 9 10-degree sectors
+      // First, identify sector of current point
+      if (x_coord != 0)
+         tan_theta = ((float)y_coord)/((float)x_coord);
+      
+      if ((x_coord > 0) && (y_coord >= 0)) // 1st quadrant
+      {
+         for(int k = 0; k < 9; k++)
+         {
+            if ((tan_theta >= tangentsByTen_1[k]) && (tan_theta < tangentsByTen_1[k + 1]))
+               sector = k;
+         }
+      }
+      else if ((x_coord < 0) && (y_coord >= 0)) // 2nd quadrant
+      {
+         for(int k = 0; k < 9; k++)
+         {
+            if ((tan_theta >= tangentsByTen_2[k]) && (tan_theta < tangentsByTen_2[k + 1]))
+               sector = k + 9;
+         }
+      }
+      else if ((x_coord < 0) && (y_coord < 0)) // 3rd quadrant
+      {
+         for(int k = 0; k < 9; k++)
+         {
+            if ((tan_theta >= tangentsByTen_1[k]) && (tan_theta < tangentsByTen_1[k + 1]))
+               sector = k + 18;
+         }
+      }
+      else if ((x_coord > 0) && (y_coord < 0)) // 4th quadrant
+      {
+         for(int k = 0; k < 9; k++)
+         {
+            if ((tan_theta >= tangentsByTen_2[k]) && (tan_theta < tangentsByTen_2[k + 1]))
+               sector = k + 27;
+         }
+      }
+      else if ((x_coord == 0) && (y_coord > 0)) // postive y axis
+      {
+        sector = 9;
+      }
+      else if ((x_coord == 0) && (y_coord < 0)) // negative y axis
+      {
+        sector = 27;
+      }
+
+      if (((sector + 36 - light_twinkle) % 36) < 9)
+        bigDispBoard[i][j] = Color1;
+      else if (((sector + 36 - light_twinkle) % 36) < 18)
+        bigDispBoard[i][j] = Color2;
+      else if (((sector + 36 - light_twinkle) % 36) < 27)
+        bigDispBoard[i][j] = Color3;
+      else 
+        bigDispBoard[i][j] = Color4;
+    }
+  }
+  
+  light_twinkle = (light_twinkle + 1) % 36; // degrees by 10
+
+  displayLEDTree(true, false, false);
+  delay(50);
 }
 
 
@@ -4200,10 +4340,10 @@ void display_mario_end_animation()
       }
       else if ((firework_display_count % 3) == 2)
       {
-        bigDispBoard[current_mario_row][current_display_col] = DISP_COLOR_BLACK;
-        bigDispBoard[current_mario_row - 1][current_display_col] = DISP_COLOR_BLACK;
-        bigDispBoard[current_mario_row][current_display_col + 1] = DISP_COLOR_BLACK;
-        bigDispBoard[current_mario_row - 1][current_display_col + 1] = DISP_COLOR_BLACK;
+        bigDispBoard[current_mario_row][current_display_col] = DISP_COLOR_LIGHT_BLUE;
+        bigDispBoard[current_mario_row - 1][current_display_col] = DISP_COLOR_LIGHT_BLUE;
+        bigDispBoard[current_mario_row][current_display_col + 1] = DISP_COLOR_LIGHT_BLUE;
+        bigDispBoard[current_mario_row - 1][current_display_col + 1] = DISP_COLOR_LIGHT_BLUE;
       }
       
       displayLEDs(true, true, false);
@@ -5554,6 +5694,10 @@ void loop() {
     display_rows_move(CRGB::Red, CRGB::Green);
   else if (display_mode == DISP_VORTEX_3)
     display_vortex_2(0x008080, 0x00ff80); // 0x008080 purple
+  else if (display_mode == DISP_SPIRAL_1)
+    display_spiral(4,5,4,5);
+  else if (display_mode == DISP_SPIRAL_2)
+    display_spiral(19,8,1,4);
   else if (digitalRead(PICTURE_INPUT_1) == HIGH)
     display_picture_one();
   else if (digitalRead(PICTURE_INPUT_2) == HIGH)
