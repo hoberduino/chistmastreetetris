@@ -94,12 +94,12 @@
 
 const CRGB numToColor[NUM_DISP_COLORS] = 
 {CRGB::Black, CRGB::Blue, CRGB::Orange, CRGB::Yellow, CRGB::Red, CRGB::Green, CRGB::Cyan, CRGB::PeachPuff,
- CRGB::Purple, 0xD7FF00, 0x00090C, CRGB::White, CRGB::Gray, 0x2F1010, 0x0000A0, 0x808080, 
+ 0xcf00ff, 0xD7FF00, 0x00090C, CRGB::White, CRGB::Gray, 0x2F1010, 0x0000A0, 0x808080, 
  0x000080, 0x800000, 0x404040, 0xff0080, 0x00cccc, 0x408820, 0x124012, 0x008000, 
  0x888800, 0xFF6500, 0x7F0040, 0xDA9100};
  const CRGB numToColorTree[NUM_DISP_COLORS] = 
 {CRGB::Black, CRGB::Blue, 0xa5ff00, CRGB::Yellow, CRGB::Green, CRGB::Red, 0xff00ff, 0xdaffb9,
- 0x88cc99, 0xFFD700, 0x230032, CRGB::White, CRGB::Gray, 0x102F10, 0x0000A0, 0x808080, 
+ 0x00cfff, 0xFFD700, 0x230032, CRGB::White, CRGB::Gray, 0x102F10, 0x0000A0, 0x808080, 
  0x000080, 0x008000, 0x404040, 0x00ff80, 0xcc00cc, 0x884020, 0x401212, 0x800000, 
  0x888800, 0x65FF00, 0x007F40, 0x91DA00};
 
@@ -124,6 +124,8 @@ const CRGB numToColor[NUM_DISP_COLORS] =
 
 #define EMPTY_BOARD_ROW 0xE007 /* middle ten columns are visible */
 #define NUM_LEVELS 10
+
+#define NUM_PAINT_COLORS 12
 
 /* constants for NES controller inputs */
 const int A_BUTTON         = 0;
@@ -162,8 +164,8 @@ const int RIGHT_BUTTON     = 7;
 /* Outputs: */
 #define NES_CLOCK          26    // The clock pin for the NES controller
 #define NES_LATCH          30    // The latch pin for the NES controller
-#define PICTURE_INPUT_1    34
-#define PICTURE_INPUT_2    38
+//#define PICTURE_INPUT_1    34
+//#define PICTURE_INPUT_2    38
 #define LED_PIN            48
 #define LED_TREE_PIN       52
 //#define RESET_SWITCH_IN    8
@@ -181,16 +183,8 @@ const int RIGHT_BUTTON     = 7;
 /* Num display rows and cols for xmas tree */
 /* initial values, overwritten by values from EEPROM */
 unsigned char num_tree_rows = 18;//NUM_DISP_ROWS_TREE;
-//unsigned char num_tree_cols = 10;//NUM_DISP_COLS_TREE;
 unsigned char num_tree_cols = 18;//NUM_DISP_COLS_TREE;
 
-/* Number of "unused" LEDs before rows, starting at top*/
-//unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
-//{12,35,37,35,25,
-// 22,24,23,20,
-// 20,16,17,13,
-// 15,13,12,9,
-// 9,0,0};
 
  /* Number of "unused" LEDs before rows, starting at top*/
 unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
@@ -231,14 +225,6 @@ const unsigned char PROGMEM tetrisStartDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_
    {3,0,3,5,5,5,1,1,1,0},{0,0,0,0,0,0,0,0,0,0},
    {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
    {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
-
-//{{0,0,0,0,0,0,0,0,0,0},{6,6,6,0,0,0,0,0,0,0},{0,6,0,0,0,0,0,0,0,0},{0,6,4,4,0,0,0,0,0,0},
-  // {0,6,4,0,0,0,0,0,0,0},{0,6,4,4,0,0,0,0,0,0},{0,0,4,8,8,8,0,0,0,0},{0,0,4,4,8,0,0,0,0,0},
-  // {0,0,0,0,8,3,3,3,0,0},{0,0,0,0,8,3,0,3,0,0},{0,0,0,0,8,3,3,0,0,0},{0,0,0,0,0,3,3,0,0,0},
-  // {0,0,0,0,0,3,0,3,0,0},{0,0,0,0,0,5,5,5,0,0},{0,0,0,0,0,0,5,1,1,1},{0,0,0,0,0,0,5,1,0,0},
-  // {0,0,0,0,0,0,5,1,1,1},{0,0,0,0,0,5,5,5,0,1},{0,0,0,0,0,0,0,1,1,1},{0,0,0,0,0,0,0,0,0,0}};
-
-
 
 
 /* Used for Twinkling Stars Effect */
@@ -340,8 +326,8 @@ void setup() {
 
   // Set appropriate pins to inputs
   pinMode(NES_DATA, INPUT);
-  pinMode(PICTURE_INPUT_1, INPUT);
-  pinMode(PICTURE_INPUT_2, INPUT);
+//  pinMode(PICTURE_INPUT_1, INPUT);
+//  pinMode(PICTURE_INPUT_2, INPUT);
   
   // Set appropriate pins to outputs
   pinMode(NES_CLOCK, OUTPUT);
@@ -482,7 +468,6 @@ void displayLEDTree(bool showLed, bool dispBottomRow, bool dispCastle)
 
     for(j = num_tree_cols - 1; j >= 0; j--)
     {      
-//      leds[currentLED] = CRGB::Blue;
       if ((dispCastle == true) and (bigDispBoard[(num_tree_rows - i - 1) + unused_rows_top][j + unused_cols_left] > 0))
          leds[currentLED] = numToColorTree[bigDispBoard[(num_tree_rows - i - 1) + unused_rows_top][j + unused_cols_left]];
       else if ((showLed == true) and (dispCastle == false))
@@ -1589,37 +1574,6 @@ void display_rows_move(CRGB Color1, CRGB Color2)
 
 /* MARIO Functions */
 
-
-
-
-
-//#define DISP_COLOR_BLACK        0
-//#define DISP_COLOR_BLUE         1
-//#define DISP_COLOR_ORANGE       2
-//#define DISP_COLOR_YELLOW       3
-//#define DISP_COLOR_RED          4
-//#define DISP_COLOR_GREEN        5
-//#define DISP_COLOR_CYAN         6
-//#define DISP_COLOR_PEACH        7
-//#define DISP_COLOR_PURPLE       8
-//#define DISP_COLOR_LIGHT_BLUE  10 //0x002332, 0x001219
-//#define DISP_COLOR_WHITE       11
-//#define DISP_COLOR_GRAY        12
-//#define DISP_COLOR_BROWN       13
-//#define DISP_COLOR_PAC_BLUE    14
-//#define DISP_COLOR_HALF_WHITE  15
-//#define DISP_COLOR_HALF_BLUE   16
-//#define DISP_COLOR_HALF_RED    17
-//#define DISP_COLOR_PAC_DOT     18
-//#define DISP_COLOR_PINK        19
-//#define DISP_COLOR_AQUA        20
-//#define DISP_COLOR_BUSH_GREEN  21
-//#define DISP_COLOR_HILL_GREEN  22
-//#define DISP_COLOR_PIPE_GREEN  23
-//#define DISP_COLOR_Q_YELLOW    24
-//#define DISP_COLOR_Q_ORANGE    25
-//#define DISP_COLOR_LIGHT_PINK  26
-//#define DISP_COLOR_GOLD        27
 
   /* Mario Left Standing Display */
 const unsigned char PROGMEM marioDispOne[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN] =
@@ -5244,8 +5198,6 @@ unsigned char mario_play_now = 0;
 
 void start_menu()
 {
-  const unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_MENU) / 2;
-  const unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_MENU) / 2;
   bool game_selected = false; 
   unsigned int move_dir = MOVE_NONE;
 
@@ -5280,6 +5232,104 @@ void start_menu()
     mario_play_now = disp_mario_luigi + 1;
   }
   delay(300);
+  
+}
+
+
+
+const unsigned char PROGMEM paintColors[NUM_PAINT_COLORS] = {1, 2, 3, 4, 5, 6, 8, 10, 11, 19, 21, 0};
+
+void run_paint()
+{
+  bool paint_ended = false; 
+  unsigned int move_dir = MOVE_NONE;
+  unsigned char current_row = 11; // 1 - 20
+  unsigned char current_col = 11; // 1 - 20
+  unsigned char current_color = 0; // 0 - 7
+  unsigned char previous_space_color = 0; // 0 - 7
+
+  for(int i = 0; i < NUM_DISP_ROWS; i++)
+    for(int j = 0; j < NUM_DISP_COLS; j++)
+      bigDispBoard[i][j] = DISP_COLOR_BLACK;
+
+  while (paint_ended == false)
+  {
+    move_dir = getMove();
+
+    if (move_dir == MOVE_UP)
+    {
+      bigDispBoard[current_row][current_col] = previous_space_color;
+      current_row--;
+      if (current_row == 0)
+        current_row = 20;
+      previous_space_color = bigDispBoard[current_row][current_col];
+    }
+    else if (move_dir == MOVE_DOWN)
+    {
+      bigDispBoard[current_row][current_col] = previous_space_color;
+      current_row++;
+      if (current_row == 21)
+        current_row = 1;
+      previous_space_color = bigDispBoard[current_row][current_col];
+    }
+    else if (move_dir == MOVE_RIGHT)
+    {
+      bigDispBoard[current_row][current_col] = previous_space_color;
+      current_col++;
+      if (current_col == 21)
+        current_col = 1;
+      previous_space_color = bigDispBoard[current_row][current_col];
+    }
+    else if (move_dir == MOVE_LEFT)
+    {
+      bigDispBoard[current_row][current_col] = previous_space_color;
+      current_col--;
+      if (current_col == 0)
+        current_col = 20;
+      previous_space_color = bigDispBoard[current_row][current_col];
+    }
+    else if ((move_dir >> 4) == MOVE_ROTATE_RIGHT)
+    {
+      bigDispBoard[current_row][current_col] = pgm_read_byte_near(&paintColors[current_color]);
+      previous_space_color = bigDispBoard[current_row][current_col];
+    }
+    else if (( move_dir >> 4) == MOVE_ROTATE_LEFT)
+      current_color = (current_color + 1) % NUM_PAINT_COLORS;
+    else if (move_dir == MOVE_START)
+      paint_ended = true;
+
+    // draw cursor
+    light_twinkle = (light_twinkle + 1) % 4;
+    if (light_twinkle < 2)
+      bigDispBoard[current_row][current_col] = pgm_read_byte_near(&paintColors[current_color]);
+    else
+    {
+      bigDispBoard[current_row][current_col] = 0;
+      if (current_color == NUM_PAINT_COLORS - 1) // Black (Erase)
+        bigDispBoard[current_row][current_col] = 5;
+    }
+      
+
+    if (current_color == NUM_PAINT_COLORS - 1) // Black (Erase)
+    {
+      for(int j = 1; j < NUM_DISP_COLS; j++)
+      {
+        bigDispBoard[0][j] = 5;
+      }
+    }
+    else
+    {
+      for(int j = 1; j < NUM_DISP_COLS; j++)
+      {
+        bigDispBoard[0][j] = 0;
+      }
+    }
+
+    // draw
+    displayLEDs(true, false, false);
+
+    delay(80);
+  }
   
 }
 
@@ -5552,27 +5602,27 @@ const unsigned char PROGMEM picOneDisp[NUM_DISP_ROWS_MENU][19] =
    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-const unsigned char PROGMEM picTwoDisp[NUM_DISP_ROWS_MENU][17] =
-  {{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-   { 0, 0, 0, 0, 0, 0,26,26, 0,26,26, 0, 0, 0, 0, 0, 0},
-   { 0, 0, 0, 0,26,26,26,26, 0,26,26,26,26, 0, 0, 0, 0},
-   { 0, 0, 0,26,26,26,26,26, 0,26,26,26,26,26, 0, 0, 0},
-   { 0, 0,26, 0,26,26,26,26, 0,26,26,26,26, 0,26, 0, 0},
-   { 0,26,26,26, 0,26,26,26, 0,26,26,26, 0,26,26,26, 0},
-   { 0,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26, 0},
-   {26,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26,26},
-   {26,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26,26},
-   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-   {26,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26,26},
-   {26,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26,26},
-   { 0,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26, 0},
-   { 0,26,26,26, 0,26,26,26, 0,26,26,26, 0,26,26,26, 0},
-   { 0, 0,26, 0,26,26,26,26, 0,26,26,26,26, 0,26, 0, 0},
-   { 0, 0, 0,26,26,26,26,26, 0,26,26,26,26,26, 0, 0, 0},
-   { 0, 0, 0, 0,26,26,26,26, 0,26,26,26,26, 0, 0, 0, 0},
-   { 0, 0, 0, 0, 0, 0,26,26, 0,26,26, 0, 0, 0, 0, 0, 0},
-   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+//const unsigned char PROGMEM picTwoDisp[NUM_DISP_ROWS_MENU][17] =
+//  {{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+//   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+//   { 0, 0, 0, 0, 0, 0,26,26, 0,26,26, 0, 0, 0, 0, 0, 0},
+//   { 0, 0, 0, 0,26,26,26,26, 0,26,26,26,26, 0, 0, 0, 0},
+//   { 0, 0, 0,26,26,26,26,26, 0,26,26,26,26,26, 0, 0, 0},
+//   { 0, 0,26, 0,26,26,26,26, 0,26,26,26,26, 0,26, 0, 0},
+//   { 0,26,26,26, 0,26,26,26, 0,26,26,26, 0,26,26,26, 0},
+//   { 0,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26, 0},
+//   {26,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26,26},
+//   {26,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26,26},
+//   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+//   {26,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26,26},
+//   {26,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26,26},
+//   { 0,26,26,26,26, 0,26,26, 0,26,26, 0,26,26,26,26, 0},
+//   { 0,26,26,26, 0,26,26,26, 0,26,26,26, 0,26,26,26, 0},
+//   { 0, 0,26, 0,26,26,26,26, 0,26,26,26,26, 0,26, 0, 0},
+//   { 0, 0, 0,26,26,26,26,26, 0,26,26,26,26,26, 0, 0, 0},
+//   { 0, 0, 0, 0,26,26,26,26, 0,26,26,26,26, 0, 0, 0, 0},
+//   { 0, 0, 0, 0, 0, 0,26,26, 0,26,26, 0, 0, 0, 0, 0, 0},
+//   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
 void display_picture_one()
 {
@@ -5584,19 +5634,20 @@ void display_picture_one()
       bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&picOneDisp[i][j]);
   displayLEDs(true, false, false);
   delay(3000);
+  display_clear();
 }
 
-void display_picture_two()
-{
-  const unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_MENU) / 2;
-  const unsigned int unused_cols_left = (NUM_DISP_COLS - 17) / 2;
-  unsigned char i,j;
-  for(i = 0; i < NUM_DISP_ROWS_MENU; i++)
-    for(j = 0; j < 17; j++)
-      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&picTwoDisp[i][j]);
-  displayLEDs(true, false, false);
-  delay(3000);
-}
+//void display_picture_two()
+//{
+//  const unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_MENU) / 2;
+//  const unsigned int unused_cols_left = (NUM_DISP_COLS - 17) / 2;
+//  unsigned char i,j;
+//  for(i = 0; i < NUM_DISP_ROWS_MENU; i++)
+//    for(j = 0; j < 17; j++)
+//      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&picTwoDisp[i][j]);
+//  displayLEDs(true, false, false);
+//  delay(3000);
+//}
 
 
 
@@ -5604,7 +5655,7 @@ void display_picture_two()
 
 
 unsigned char display_mode = DISP_LIGHT;
-unsigned char calibration_mode = 0;
+//unsigned char calibration_mode = 0;
 void loop() {
   unsigned int moveDir = MOVE_NONE;
   unsigned char i, j;
@@ -5629,6 +5680,12 @@ void loop() {
     display_mode = (display_mode + 1) % NUM_DISP_MODES;
     display_clear();
   }
+  else if (( moveDir >> 4) == MOVE_ROTATE_LEFT)
+  {
+    display_clear();
+    run_paint();
+  }
+
 
   /* Update display for current selection */
   /* If tetris, init and kick out of loop */
@@ -5662,7 +5719,8 @@ void loop() {
     
   else if (moveDir == MOVE_SELECT) /* Calibrate if SELECT, A, B pressed in order */
   {
-    calibration_mode = 1;
+    display_clear();
+//    calibration_mode = 1;
     display_picture_one();
   }
 //  else if ((moveDir >> 4 == MOVE_ROTATE_RIGHT) && (calibration_mode == 1))
@@ -5693,15 +5751,15 @@ void loop() {
   else if (display_mode == DISP_ROWS_MOVE)
     display_rows_move(CRGB::Red, CRGB::Green);
   else if (display_mode == DISP_VORTEX_3)
-    display_vortex_2(0x008080, 0x00ff80); // 0x008080 purple
+    display_vortex_2(0x008080, 0x00ff80); 
   else if (display_mode == DISP_SPIRAL_1)
     display_spiral(4,5,4,5);
   else if (display_mode == DISP_SPIRAL_2)
     display_spiral(19,8,1,4);
-  else if (digitalRead(PICTURE_INPUT_1) == HIGH)
-    display_picture_one();
-  else if (digitalRead(PICTURE_INPUT_2) == HIGH)
-    display_picture_two();
+//  else if (digitalRead(PICTURE_INPUT_1) == HIGH)
+//    display_picture_one();
+//  else if (digitalRead(PICTURE_INPUT_2) == HIGH)
+//    display_picture_two();
     
   delay(50);
 
