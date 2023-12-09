@@ -62,6 +62,9 @@
 #define NUM_ROWS_MARIO_RUN 18
 #define NUM_COLS_MARIO_RUN 17 
 
+#define NUM_GIMKIT_ROWS 256
+#define NUM_GIMKIT_COLS 256
+
 
 #define DISP_COLOR_BLACK        0
 #define DISP_COLOR_BLUE         1
@@ -93,12 +96,12 @@
 #define NUM_DISP_COLORS        28
 
 const CRGB numToColor[NUM_DISP_COLORS] = 
-{CRGB::Black, CRGB::Blue, CRGB::Orange, CRGB::Yellow, CRGB::Red, CRGB::Green, CRGB::Cyan, CRGB::PeachPuff,
+{CRGB::Black, CRGB::Blue, 0xff4500, 0xffd700, CRGB::Red, CRGB::Green, CRGB::Cyan, CRGB::PeachPuff,
  0xcf00ff, 0xD7FF00, 0x00090C, CRGB::White, CRGB::Gray, 0x2F1010, 0x0000A0, 0x808080, 
  0x000080, 0x800000, 0x404040, 0xff0080, 0x00cccc, 0x408820, 0x124012, 0x008000, 
  0x888800, 0xFF6500, 0x7F0040, 0xDA9100};
  const CRGB numToColorTree[NUM_DISP_COLORS] = 
-{CRGB::Black, CRGB::Blue, 0xa5ff00, CRGB::Yellow, CRGB::Green, CRGB::Red, 0xff00ff, 0xdaffb9,
+{CRGB::Black, CRGB::Blue, 0x45ff00, 0xd7ff00, CRGB::Green, CRGB::Red, 0xff00ff, 0xdaffb9,
  0x00cfff, 0xFFD700, 0x230032, CRGB::White, CRGB::Gray, 0x102F10, 0x0000A0, 0x808080, 
  0x000080, 0x008000, 0x404040, 0x00ff80, 0xcc00cc, 0x884020, 0x401212, 0x800000, 
  0x888800, 0x65FF00, 0x007F40, 0x91DA00};
@@ -1292,7 +1295,7 @@ void display_cal_board()
 }
 
 
-void display_vortex()
+void display_vortex(unsigned char Color1, unsigned char Color2)
 {
 //  unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
 //{8,27,29,27,17,
@@ -1322,13 +1325,13 @@ void display_vortex()
       int lightOnCurrentRowBackMod = (int)(((float)((light_twinkle + j) % 20)) / 20.0f * ledsBeforeRows[i + 1]);
       if (lightOnCurrentRow < 20) // on screen
       {
-        leds[NUM_LEDS + firstInRow[i] + lightOnCurrentRow] = CRGB::Red;
-        leds[NUM_LEDS + firstInRow[i] + 20 + lightOnCurrentRowBackMod] = CRGB::Green;
+        leds[NUM_LEDS + firstInRow[i] + lightOnCurrentRow] = numToColorTree[Color1];
+        leds[NUM_LEDS + firstInRow[i] + 20 + lightOnCurrentRowBackMod] = numToColorTree[Color2];
       }
       else
       {
-        leds[NUM_LEDS + firstInRow[i] + (lightOnCurrentRow % 20)] = CRGB::Green;
-        leds[NUM_LEDS + firstInRow[i] + 20 + lightOnCurrentRowBackMod] = CRGB::Red;
+        leds[NUM_LEDS + firstInRow[i] + (lightOnCurrentRow % 20)] = numToColorTree[Color2];
+        leds[NUM_LEDS + firstInRow[i] + 20 + lightOnCurrentRowBackMod] = numToColorTree[Color1];
       }
     }
   }
@@ -1340,7 +1343,7 @@ void display_vortex()
   delay(5);
 }
 
-void display_vortex_2(CRGB Color1, CRGB Color2)
+void display_vortex_2(unsigned char Color1, unsigned char Color2)
 {
 //  unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
 //{8,27,29,27,17,
@@ -1370,13 +1373,13 @@ void display_vortex_2(CRGB Color1, CRGB Color2)
       int lightOnCurrentRowBackMod = (int)(((float)((light_twinkle + j) % 18)) / 18.0f * ledsBeforeRows[i + 1]);
       if (lightOnCurrentRow < 18) // on screen
       {
-        leds[NUM_LEDS + firstInRow[i] + lightOnCurrentRow] = Color1;
-        leds[NUM_LEDS + firstInRow[i] + 18 + lightOnCurrentRowBackMod] = Color2;
+        leds[NUM_LEDS + firstInRow[i] + lightOnCurrentRow] = numToColorTree[Color1];
+        leds[NUM_LEDS + firstInRow[i] + 18 + lightOnCurrentRowBackMod] = numToColorTree[Color2];
       }
       else
       {
-        leds[NUM_LEDS + firstInRow[i] + (lightOnCurrentRow % 18)] = Color2;
-        leds[NUM_LEDS + firstInRow[i] + 18 + lightOnCurrentRowBackMod] = Color1;
+        leds[NUM_LEDS + firstInRow[i] + (lightOnCurrentRow % 18)] = numToColorTree[Color2];
+        leds[NUM_LEDS + firstInRow[i] + 18 + lightOnCurrentRowBackMod] = numToColorTree[Color1];
       }
     }
   }
@@ -1390,43 +1393,9 @@ void display_vortex_2(CRGB Color1, CRGB Color2)
 
 
 
-//const unsigned char PROGMEM spiralDisp[NUM_DISP_ROWS_MENU][17] =
-//  {{ 0, 0, 0, 0, 0, 0, 0, 0,10, 0, 0, 0, 0, 0, 0, 0, 0},
-//   { 0, 0, 0, 0, 0, 0, 0, 0,10, 0, 0, 0, 0, 0, 0, 0, 0},
-//   { 0, 0, 0, 0, 0, 0,26,26,10,26,26, 0, 0, 0, 0, 0, 0},
-//   { 0, 0, 0, 0,26,26,26,26,10,26,26,26,26, 0, 0, 0, 0},
-//   { 0, 0, 0,26,26,26,26,26,10,26,26,26,26,26, 0, 0, 0},
-//   { 0, 0,26, 0,26,26,26,26,10,26,26,26,26, 0,26, 0, 0},
-//   { 0,26,26,26, 0,26,26,26,10,26,26,26, 0,26,26,26, 0},
-//   { 0,26,26,26,26, 0,26,26,10,26,26, 0,26,26,26,26, 0},
-//   {26,26,26,26,26, 0,26,26,10,26,26, 0,26,26,26,26,26},
-//   {26,26,26,26,26, 0,26,26,10,26,26, 0,26,26,26,26,26},
-//   {19,19,19,19,19,19,19,19, 0, 1, 1, 1, 1, 1, 1, 1, 1},
-//   {26,26,26,26,26, 0,26,26,28,26,26, 0,26,26,26,26,26},
-//   {26,26,26,26,26, 0,26,26,28,26,26, 0,26,26,26,26,26},
-//   { 0,26,26,26,26, 0,26,26,28,26,26, 0,26,26,26,26, 0},
-//   { 0,26,26,26, 0,26,26,26,28,26,26,26, 0,26,26,26, 0},
-//   { 0, 0,26, 0,26,26,26,26,28,26,26,26,26, 0,26, 0, 0},
-//   { 0, 0, 0,26,26,26,26,26,28,26,26,26,26,26, 0, 0, 0},
-//   { 0, 0, 0, 0,26,26,26,26,28,26,26,26,26, 0, 0, 0, 0},
-//   { 0, 0, 0, 0, 0, 0,26,26,28,26,26, 0, 0, 0, 0, 0, 0},
-//   { 0, 0, 0, 0, 0, 0, 0, 0,28, 0, 0, 0, 0, 0, 0, 0, 0}};
-//
-//void display_picture_one()
-//{
-//  const unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_MENU) / 2;
-//  const unsigned int unused_cols_left = (NUM_DISP_COLS - 19) / 2;
-//  unsigned char i,j;
-//  for(i = 0; i < NUM_DISP_ROWS_MENU; i++)
-//    for(j = 0; j < 19; j++)
-//      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&picOneDisp[i][j]);
-//  displayLEDs(true, false, false);
-//  delay(3000);
-//}
 
 
-
-void display_spiral(unsigned int Color1, unsigned int Color2, unsigned int Color3, unsigned int Color4)
+void display_spiral(unsigned char Color1, unsigned char Color2, unsigned char Color3, unsigned char Color4)
 {
 
     float tangentsByTen_1[18] =
@@ -1527,7 +1496,7 @@ void display_clear()
   delay(5);
 }
 
-void display_rows_move(CRGB Color1, CRGB Color2)
+void display_rows_move(unsigned char Color1, unsigned char Color2)
 {
 //  unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
 //{8,27,29,27,17,
@@ -1555,12 +1524,12 @@ void display_rows_move(CRGB Color1, CRGB Color2)
 
   for(int i = firstInRow[light_num_row - 1]; i < firstInRow[light_num_row]; i++)
   {
-    leds[NUM_LEDS + i] = Color1;
+    leds[NUM_LEDS + i] = numToColorTree[Color1];
   }
     
   for(int i = firstInRow[18 - light_num_row + 1]; i > firstInRow[18 - light_num_row]; i--)
   {
-    leds[NUM_LEDS + i] = Color2;
+    leds[NUM_LEDS + i] = numToColorTree[Color2];
   }
   
   light_twinkle = (light_twinkle + 1) % 36; // which row (0 - 35)
@@ -1570,6 +1539,44 @@ void display_rows_move(CRGB Color1, CRGB Color2)
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Game stuff */
+#define NORMAL_JUMP_TIME 8
+
+bool game_is_mario = false;
+bool hero_was_in_air = false;
+bool hero_let_go_of_a = false; /* user let go of a button */
+unsigned int hero_jump_count = 0; /* time when mario most recently started jumping */
+unsigned char hero_jump_time_accel = NORMAL_JUMP_TIME;
 
 
 /* MARIO Functions */
@@ -1912,18 +1919,17 @@ void display_mario_run()
 #define MARIO_FIRE_HAT_COLOR DISP_COLOR_WHITE
 #define MARIO_FIRE_PANTS_COLOR DISP_COLOR_RED
 
-#define MARIO_ACCELERATION 0.2
+#define HERO_ACCELERATION 0.2
 #define NUM_MARIO_COLUMNS 448
 #define MARIO_INVUL_COUNT 60
 
-bool mario_face_right = true;
+bool hero_face_right = true;
 bool mario_is_big = false;
 bool mario_is_fire = false;
-bool mario_is_trying = false;
+bool hero_is_trying = false;
 bool mario_is_star = false;
-bool mario_is_duck = false;
-unsigned int mario_count = 0; /* count of loop cycles for current game */
-unsigned int mario_jump_count = 0; /* time when mario most recently started jumping */
+unsigned int game_count = 0; /* count of loop cycles for current game */
+
 unsigned int mario_multi_brick_count = 0; /* count used for multi-brick */
 unsigned int mario_bump_brick_count = 0; /* count used for bump brick */
 unsigned int mario_invulnerable_count = 0; /* count used for when mario invulnerable for a bit */
@@ -2333,7 +2339,7 @@ void display_mario_fore_items(int current_display_col)
 
 
 /* Displays mario in current position based on current_mario_row, current_mario_col, current_display_col,
- *                                             mario_face_right, mario_is_big, mario_is_fire, mario_is_luigi, mario_is_walking
+ *                                             hero_face_right, mario_is_big, mario_is_fire, mario_is_luigi, mario_is_walking
  */
 void disp_mario(unsigned char mario_color, int current_mario_row, int current_mario_col, int current_display_col)
 {
@@ -2342,7 +2348,7 @@ void disp_mario(unsigned char mario_color, int current_mario_row, int current_ma
   unsigned char pants_color = MARIO_PANTS_COLOR;
   unsigned char hair_color = MARIO_SHOE_COLOR;
   unsigned char shoe_color = MARIO_SHOE_COLOR;
-  bool mario_is_jumping = mario_jump_count > 0;
+  bool mario_is_jumping = hero_jump_count > 0;
   if (mario_color == PLAY_MARIO_GREEN)
     hat_color = LUIGI_HAT_COLOR;
   else if (mario_color == PLAY_MARIO_PINK)
@@ -2365,12 +2371,12 @@ void disp_mario(unsigned char mario_color, int current_mario_row, int current_ma
   }
   if (mario_is_star)
   {
-    if ((mario_count % 6) < 2)
+    if ((game_count % 6) < 2)
     {
        pants_color = DISP_COLOR_RED;
        hat_color = DISP_COLOR_WHITE;
     }
-    else if ((mario_count % 6) < 4)
+    else if ((game_count % 6) < 4)
     {
        pants_color = DISP_COLOR_WHITE;
        hat_color = DISP_COLOR_GREEN;
@@ -2384,16 +2390,16 @@ void disp_mario(unsigned char mario_color, int current_mario_row, int current_ma
 
   if (current_mario_row > 0)
   {
-    if ((mario_is_big == false) || (mario_is_duck == true))
+    if (mario_is_big == false)
     {
-      if (mario_face_right == true)
+      if (hero_face_right == true)
       {
         bigDispBoard[current_mario_row - 1][mario_col_now] = hat_color; // top left pixel
         bigDispBoard[current_mario_row - 1][mario_col_now + 1] = MARIO_FACE_COLOR; // top right pixel
         bigDispBoard[current_mario_row][mario_col_now + 1] = pants_color; // bottom right pixel
         bigDispBoard[current_mario_row][mario_col_now] = pants_color; // bottom left pixel
         /* blink front shoe when walking */
-        if ((mario_is_trying == true) && (mario_is_jumping == false) && ((mario_count % 8) < 4))
+        if ((hero_is_trying == true) && (mario_is_jumping == false) && ((game_count % 8) < 4))
           bigDispBoard[current_mario_row][mario_col_now + 1] = shoe_color; // bottom right pixel
       }
       else
@@ -2403,7 +2409,7 @@ void disp_mario(unsigned char mario_color, int current_mario_row, int current_ma
         bigDispBoard[current_mario_row][mario_col_now] = pants_color; // bottom left pixel
         bigDispBoard[current_mario_row][mario_col_now + 1] = pants_color; // bottom right pixel
         /* blink front shoe when walking */
-        if ((mario_is_trying == true) && (mario_is_jumping == false) && ((mario_count % 8) < 4))
+        if ((hero_is_trying == true) && (mario_is_jumping == false) && ((game_count % 8) < 4))
           bigDispBoard[current_mario_row][mario_col_now] = shoe_color; // bottom left pixel
       }
     }
@@ -2416,7 +2422,7 @@ void disp_mario(unsigned char mario_color, int current_mario_row, int current_ma
       }
       bigDispBoard[current_mario_row - 1][mario_col_now] = pants_color; // 2/4 left pixel
       bigDispBoard[current_mario_row - 1][mario_col_now + 1] = pants_color; // 2/4 right pixel
-      if (mario_face_right == true)
+      if (hero_face_right == true)
       {
         if (current_mario_row > 1)
         {
@@ -2425,7 +2431,7 @@ void disp_mario(unsigned char mario_color, int current_mario_row, int current_ma
         }
         bigDispBoard[current_mario_row][mario_col_now] = shoe_color; // bottom left pixel
         /* blink front shoe when walking */
-        if ((mario_is_trying == false) || (mario_is_jumping == true) || ((mario_count % 8) < 4))
+        if ((hero_is_trying == false) || (mario_is_jumping == true) || ((game_count % 8) < 4))
           bigDispBoard[current_mario_row][mario_col_now + 1] = shoe_color; // bottom right pixel
       }
       else
@@ -2437,7 +2443,7 @@ void disp_mario(unsigned char mario_color, int current_mario_row, int current_ma
         }
         bigDispBoard[current_mario_row][mario_col_now + 1] = shoe_color; // bottom left pixel
         /* blink front shoe when walking */
-        if ((mario_is_trying == false) || (mario_is_jumping == true) || ((mario_count % 8) < 4))
+        if ((hero_is_trying == false) || (mario_is_jumping == true) || ((game_count % 8) < 4))
           bigDispBoard[current_mario_row][mario_col_now] = shoe_color; // bottom right pixel
       }
     }
@@ -2554,7 +2560,7 @@ bool on_solid_ground(int input_row, int input_col)
  * Also, mario_is_big and looks at end of level, current_display_col
  * Does not check for collisions with creatures
  */
-bool can_go_dir(bool is_right, bool is_big, int input_row, int input_col, int current_display_col)
+bool can_go_dir_mariobros(bool is_right, bool is_big, int input_row, int input_col, int current_display_col)
 {
   bool can_go_dir = true;
   unsigned char high_row = 13;
@@ -2662,6 +2668,21 @@ bool can_go_dir(bool is_right, bool is_big, int input_row, int input_col, int cu
   return can_go_dir;
 }
 
+
+bool hero_can_go_dir(bool is_right, bool is_big, int input_row, int input_col, int current_display_col)
+{
+  bool return_value = false;
+  
+  if (game_is_mario == true)
+  {
+     return_value = can_go_dir_mariobros(is_right, is_big, input_row, input_col, current_display_col);
+  }
+
+  return return_value;
+}
+
+
+
 #define MARIO_GOODBYE_GOOMBA 1
 #define MARIO_GOODBYE_KOOPA 2
 #define MARIO_GOODBYE_MARIO 3
@@ -2697,7 +2718,7 @@ void display_goodbye_char(unsigned char mario_color, int current_display_col)
     }
     
     /* update position */
-    goodbye_vert_speed = goodbye_vert_speed - MARIO_ACCELERATION;
+    goodbye_vert_speed = goodbye_vert_speed - HERO_ACCELERATION;
     if (goodbye_vert_speed < -3.0)
       goodbye_vert_speed = -3.0;
 
@@ -2889,7 +2910,7 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
     {
       int goomba_col_now = (int)goomba_col[i] - current_display_col;
       /* Horizontal */
-      if ((can_go_dir(goomba_face_right[i], false, (int)goomba_row[i], (int)goomba_col[i], current_display_col) == false) && (goomba_col_now != 0))
+      if ((can_go_dir_mariobros(goomba_face_right[i], false, (int)goomba_row[i], (int)goomba_col[i], current_display_col) == false) && (goomba_col_now != 0))
         goomba_face_right[i] = !goomba_face_right[i];
       if (goomba_face_right[i] == true)
         goomba_col[i] = goomba_col[i] + 1.0 / 5; /* goomba col */
@@ -2909,7 +2930,7 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
       {
         bigDispBoard[goomba_row_now - 1][goomba_col_now] = DISP_COLOR_RED;
         bigDispBoard[goomba_row_now - 1][goomba_col_now + 1] = DISP_COLOR_RED;
-        if ((mario_count % 20) < 10)
+        if ((game_count % 20) < 10)
           bigDispBoard[goomba_row_now][goomba_col_now] = DISP_COLOR_WHITE;
         else
           bigDispBoard[goomba_row_now][goomba_col_now + 1] = DISP_COLOR_WHITE;
@@ -2931,7 +2952,7 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
           goomba_col[i] = 0.0; /* remove the goomba */
           delay(100);
         }
-        else if ((mario_count - mario_invulnerable_count) > MARIO_INVUL_COUNT)
+        else if ((game_count - mario_invulnerable_count) > MARIO_INVUL_COUNT)
         {
           if (mario_is_fire)
             mario_is_fire = false;
@@ -2942,7 +2963,7 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
 
           if (return_value == false)
           {
-            mario_invulnerable_count = mario_count;
+            mario_invulnerable_count = game_count;
             delay(100);
           }
         }
@@ -2975,7 +2996,7 @@ bool display_goombas(int current_mario_row, int current_mario_col, int current_d
         fireball_col[1] = 0;
         goomba_col[i] = 0.0; /* remove the goomba */
       }
-      else if (((goomba_row_now == 12) || (goomba_row_now == 11)) && ((mario_count - brick_bump_break_count) < 10) &&
+      else if (((goomba_row_now == 12) || (goomba_row_now == 11)) && ((game_count - brick_bump_break_count) < 10) &&
                (((brick_bump_break_col - current_display_col) == goomba_col_now) || ((brick_bump_break_col - current_display_col - 1) == goomba_col_now) || ((brick_bump_break_col - current_display_col + 1) == goomba_col_now)))
       {
         char char_direction = MOVE_RIGHT;
@@ -3052,7 +3073,7 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
           koopa_col = 0.0; /* remove koopa */
           delay(100);
         }
-        else if ((mario_count - mario_invulnerable_count) > MARIO_INVUL_COUNT)
+        else if ((game_count - mario_invulnerable_count) > MARIO_INVUL_COUNT)
         {
           if (mario_is_fire)
             mario_is_fire = false;
@@ -3063,7 +3084,7 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
 
           if (return_value == false)
           {
-            mario_invulnerable_count = mario_count;
+            mario_invulnerable_count = game_count;
             delay(100);
           }
         }
@@ -3074,7 +3095,7 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
         koopa_moving = false; /* koopa stops moving */
         koopa_kicked_right = false;
         koopa_kicked_left = false;
-        koopa_count = mario_count;
+        koopa_count = game_count;
         (*current_mario_jump_speed) = 2.0;
       }
     } /* koopa moving */
@@ -3083,14 +3104,14 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
       if (((current_mario_row == 18) || (current_mario_row == 19) || (current_mario_row == 20)) && ((mario_col_now == koopa_col_now) || (mario_col_now == (koopa_col_now - 1)) || (mario_col_now == (koopa_col_now - 2))))
       {
         koopa_kicked_right = true;
-        mario_invulnerable_count = mario_count;
+        mario_invulnerable_count = game_count;
       }
       else if (((current_mario_row == 18) || (current_mario_row == 19) || (current_mario_row == 20)) && (mario_col_now == (koopa_col_now + 1) || ((mario_col_now + 1) == (koopa_col_now + 2))))
       {
         koopa_kicked_left = true;
-        mario_invulnerable_count = mario_count;
+        mario_invulnerable_count = game_count;
       }
-      else if ((koopa_count > 0) && ((mario_count - koopa_count) > 100))
+      else if ((koopa_count > 0) && ((game_count - koopa_count) > 100))
       {
         koopa_moving = true;
         koopa_count = 0;
@@ -3098,7 +3119,7 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
     }
     else
     { /* koopa has been kicked */
-      if ((koopa_kicked_right) && (can_go_dir(true, false, 20, (int)koopa_col, current_display_col) == false))
+      if ((koopa_kicked_right) && (can_go_dir_mariobros(true, false, 20, (int)koopa_col, current_display_col) == false))
       {
         koopa_kicked_right = false;
         koopa_kicked_left = true;
@@ -3118,7 +3139,7 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
         koopa_moving = false; /* koopa stops moving */
         koopa_kicked_right = false;
         koopa_kicked_left = false;
-        koopa_count = mario_count;
+        koopa_count = game_count;
         (*current_mario_jump_speed) = 2.0;
       }
       else if (((current_mario_row == 20) || (current_mario_row == 19)) && 
@@ -3130,7 +3151,7 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
           koopa_col = 0.0; /* remove koopa */
           delay(100);
         }
-        else if ((mario_count - mario_invulnerable_count) > MARIO_INVUL_COUNT)
+        else if ((game_count - mario_invulnerable_count) > MARIO_INVUL_COUNT)
         {
           if (mario_is_fire)
             mario_is_fire = false;
@@ -3141,7 +3162,7 @@ bool display_koopa(int current_mario_row, int current_mario_col, int current_dis
 
           if (return_value == false)
           {
-            mario_invulnerable_count = mario_count;
+            mario_invulnerable_count = game_count;
             delay(100);
           }
         }
@@ -3200,7 +3221,7 @@ void set_coin_animation(unsigned char input_row, unsigned int input_col)
 {
   coin_row = input_row;
   coin_col = input_col;
-  coin_count = mario_count;
+  coin_count = game_count;
   total_score++;
 }
 
@@ -3209,7 +3230,7 @@ void display_coin_animation(int current_display_col)
   unsigned int coin_disp_col = coin_col - current_display_col;
   
   /* Update coin position */
-  if ((coin_row > 0) && ((mario_count - coin_count) < 12))
+  if ((coin_row > 0) && ((game_count - coin_count) < 12))
   {
     coin_row--;
   }
@@ -3223,7 +3244,7 @@ void display_coin_animation(int current_display_col)
   
   if ((coin_disp_col >= 0) && (coin_disp_col < 21) && (coin_row > 0))
   {
-    if (((mario_count - coin_count) % 8) < 4)
+    if (((game_count - coin_count) % 8) < 4)
     {
       bigDispBoard[coin_row][coin_disp_col] = DISP_COLOR_WHITE;
       bigDispBoard[coin_row - 1][coin_disp_col] = DISP_COLOR_WHITE;
@@ -3245,7 +3266,7 @@ void set_mush_fire(unsigned char input_row, unsigned int input_col, bool mush_is
 {
   mush_row = input_row;
   mush_col = input_col;
-  mush_count = mario_count;
+  mush_count = game_count;
   mush_is_red = !mush_is_green;
   mush_go_right = true;
   if ((mario_is_big) && (mush_is_green == false))
@@ -3253,7 +3274,7 @@ void set_mush_fire(unsigned char input_row, unsigned int input_col, bool mush_is
   else
     mush_is_flower = false;
   brick_bump_break_col = input_col;
-  brick_bump_break_count = mario_count;
+  brick_bump_break_count = game_count;
 }
 
 void display_mush(int current_display_col, int current_mario_row, int current_mario_col)
@@ -3262,24 +3283,24 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
   {
     /* Update mush position */
     if (((((mush_row == 14) || (mush_row == 13)) && ((mush_col == low_mush_fire[0]) || (mush_col == low_mush_fire[1]) || (mush_col == MARIO_1UP_COL)))
-              || (((mush_row == 5) || (mush_row == 6)) && (mush_col == high_mush_fire))) && ((mario_count - mush_count) < 34)) /* going up */
+              || (((mush_row == 5) || (mush_row == 6)) && (mush_col == high_mush_fire))) && ((game_count - mush_count) < 34)) /* going up */
     {
       brick_bump_break_col = 0;
-      if (((mario_count - mush_count) % 3) == 0)
+      if (((game_count - mush_count) % 3) == 0)
         mush_row--;
     }
     else 
     {
-      if (((mario_count - mush_count) % 3) == 0) /* time to move */
+      if (((game_count - mush_count) % 3) == 0) /* time to move */
       {
-        if (can_go_dir(mush_go_right, false, mush_row, mush_col, current_display_col) == false) /* can't go this way, go other way */
+        if (can_go_dir_mariobros(mush_go_right, false, mush_row, mush_col, current_display_col) == false) /* can't go this way, go other way */
           mush_go_right = !mush_go_right;
 
         /* Check for bumps */
-        if ((mush_row == 12) && ((mario_count - brick_bump_break_count) < 10) && (mush_go_right == true) &&
+        if ((mush_row == 12) && ((game_count - brick_bump_break_count) < 10) && (mush_go_right == true) &&
                ((brick_bump_break_col == mush_col) || (brick_bump_break_col == (mush_col + 1) || (brick_bump_break_col == (mush_col + 2)))))
           mush_go_right = false;
-        else if ((mush_row == 12) && ((mario_count - brick_bump_break_count) < 10) && (mush_go_right == false) &&
+        else if ((mush_row == 12) && ((game_count - brick_bump_break_count) < 10) && (mush_go_right == false) &&
                ((brick_bump_break_col == (mush_col - 1)) || (brick_bump_break_col == (mush_col - 2))))
           mush_go_right = true;
       
@@ -3289,7 +3310,7 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
           mush_col--;
       }
 
-      if ((((mario_count - mush_count) % 2) == 0) && (on_solid_ground(mush_row, mush_col) == false)) /* dropping */ 
+      if ((((game_count - mush_count) % 2) == 0) && (on_solid_ground(mush_row, mush_col) == false)) /* dropping */ 
         mush_row++;
     }
 
@@ -3332,8 +3353,8 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
   { /* mush is flower */
     /* Update flower position */
     if (((((mush_row == 14) || (mush_row == 13)) && ((mush_col == low_mush_fire[0]) || (mush_col == low_mush_fire[1])))
-              || (((mush_row == 5) || (mush_row == 6)) && (mush_col == high_mush_fire))) && ((mario_count - mush_count) < 34)) /* going up */
-      if (((mario_count - mush_count) % 16) == 0)
+              || (((mush_row == 5) || (mush_row == 6)) && (mush_col == high_mush_fire))) && ((game_count - mush_count) < 34)) /* going up */
+      if (((game_count - mush_count) % 16) == 0)
         mush_row--;
 
     /* For Display flower */
@@ -3357,12 +3378,12 @@ void display_mush(int current_display_col, int current_mario_row, int current_ma
     {
       unsigned char right_flower_color = DISP_COLOR_WHITE;
       unsigned char left_flower_color = DISP_COLOR_YELLOW;
-      if (((mario_count - mush_count) % 6) < 2)
+      if (((game_count - mush_count) % 6) < 2)
       {
         right_flower_color = DISP_COLOR_YELLOW;
         left_flower_color = DISP_COLOR_RED;
       }
-      else if (((mario_count - mush_count) % 6) < 4)
+      else if (((game_count - mush_count) % 6) < 4)
       {
         right_flower_color = DISP_COLOR_RED;
         left_flower_color = DISP_COLOR_WHITE;
@@ -3394,7 +3415,7 @@ void set_breaking_brick(unsigned char input_row, unsigned int input_col, bool bu
     location = 1;
 
   brick_bump_break_col = input_col;
-  brick_bump_break_count = mario_count;
+  brick_bump_break_count = game_count;
   Serial.println(brick_bump_break_count);
 
   if (bump_brick == false)
@@ -3420,7 +3441,7 @@ void set_breaking_brick(unsigned char input_row, unsigned int input_col, bool bu
     bumping_brick = true;
     bump_row = input_row;
     bump_col = input_col;
-    mario_bump_brick_count = mario_count;
+    mario_bump_brick_count = game_count;
   }
 }
 
@@ -3443,7 +3464,7 @@ void disp_breaking_brick(int current_display_col)
       {
         if (breaking_brick_row[i][j] < 22.0) /* active bricks in top row */
         {
-          breaking_brick_vert_speed[i][j] = breaking_brick_vert_speed[i][j] - MARIO_ACCELERATION;
+          breaking_brick_vert_speed[i][j] = breaking_brick_vert_speed[i][j] - HERO_ACCELERATION;
           if (breaking_brick_vert_speed[i][j] < -3.0)
             breaking_brick_vert_speed[i][j] = -3.0;
 
@@ -3475,7 +3496,7 @@ void disp_breaking_brick(int current_display_col)
   }
 
   /* not a bump */
-  if ((mario_count - mario_bump_brick_count) < 8)
+  if ((game_count - mario_bump_brick_count) < 8)
   { /* just a bump */
     unsigned int bump_disp_col = bump_col - current_display_col;
     if (bump_disp_col < 21)
@@ -3518,25 +3539,25 @@ void display_mario_fireballs(int current_display_col, int current_mario_row, int
   if (fireball_col[1] > 0)
     location = 2;
 
-  if ((mario_is_fire) && (fireball_pressed) && (location < 2) && ((mario_count - fireball_count) > 8)) /* open slot for fireball */
+  if ((mario_is_fire) && (fireball_pressed) && (location < 2) && ((game_count - fireball_count) > 8)) /* open slot for fireball */
   {
     fireball_row[location] = current_mario_row;
     fireball_col[location] = current_mario_col;
-    fireball_count = mario_count;
-    if (mario_face_right == true)
+    fireball_count = game_count;
+    if (hero_face_right == true)
       fireball_dir[location] = 1;
     else
       fireball_dir[location] = -1;
   }
 
   /* update fireball locations */
-  //if ((mario_count % 2) == 0)
+  //if ((game_count % 2) == 0)
     for (unsigned int i = 0; i < 2; i++)
     {
       if (fireball_col[i] > 0) /* fireball is active */
       {
         bool fire_is_right = (fireball_dir[location] > 0);
-        if (can_go_dir(fire_is_right, false, fireball_row[i], fireball_col[i], current_display_col))
+        if (can_go_dir_mariobros(fire_is_right, false, fireball_row[i], fireball_col[i], current_display_col))
           fireball_col[i] = fireball_col[i] + fireball_dir[i];
         else
           fireball_col[i] = 0;
@@ -3557,7 +3578,7 @@ void display_mario_fireballs(int current_display_col, int current_mario_row, int
         else
         {
           unsigned char fireball_disp_color = DISP_COLOR_RED;
-          if ((mario_count % 4) < 2)
+          if ((game_count % 4) < 2)
             fireball_disp_color = DISP_COLOR_WHITE;
           /* display fireball */
           bigDispBoard[fireball_row[i]][fireball_disp_col] = fireball_disp_color;
@@ -3587,7 +3608,7 @@ void display_mario_star(int current_mario_row, int current_mario_col, int curren
     if(mar_star_row < 22.0) /* star not in pit */
     {
       /* Update star vertical speed */
-      mar_star_vert_speed = mar_star_vert_speed - MARIO_ACCELERATION;
+      mar_star_vert_speed = mar_star_vert_speed - HERO_ACCELERATION;
       if (mar_star_vert_speed < -2.0)
         mar_star_vert_speed = -2.0;
 
@@ -3598,7 +3619,7 @@ void display_mario_star(int current_mario_row, int current_mario_col, int curren
       mar_star_row = mar_star_row - mar_star_vert_speed / 6;
 
       /* Update star col position */
-      if (can_go_dir(mar_star_dir_is_right, false, mar_star_row, mar_star_col, current_display_col) == false)
+      if (can_go_dir_mariobros(mar_star_dir_is_right, false, mar_star_row, mar_star_col, current_display_col) == false)
         mar_star_dir_is_right = !mar_star_dir_is_right;
       if (mar_star_dir_is_right)
         mar_star_col = mar_star_col + 2.0 / 6;
@@ -3615,12 +3636,12 @@ void display_mario_star(int current_mario_row, int current_mario_col, int curren
       {
         unsigned char star_color_1 = DISP_COLOR_RED;
         unsigned char star_color_2 = DISP_COLOR_WHITE;
-        if ((mario_count % 3) == 1)
+        if ((game_count % 3) == 1)
         {
           star_color_1 = DISP_COLOR_WHITE;
           star_color_2 = DISP_COLOR_YELLOW;
         }
-        else if ((mario_count % 3) == 2)
+        else if ((game_count % 3) == 2)
         {
           star_color_1 = DISP_COLOR_YELLOW;
           star_color_2 = DISP_COLOR_RED;
@@ -3637,7 +3658,7 @@ void display_mario_star(int current_mario_row, int current_mario_col, int curren
         ((current_mario_col == (int)mar_star_col) || ((current_mario_col + 1) == (int)mar_star_col) || ((current_mario_col - 1) == (int)mar_star_col)) )
       {
         mar_star_col = 0.0; /* star is gone */
-        mar_star_count = mario_count; /* eaten */
+        mar_star_count = game_count; /* eaten */
         mario_is_star = true;
         total_score++;
         delay(600);
@@ -3647,56 +3668,55 @@ void display_mario_star(int current_mario_row, int current_mario_col, int curren
       
   } /* star is active */
 
-  if ((mar_star_count > 0) && (mario_count - mar_star_count < 200))
+  if ((mar_star_count > 0) && (game_count - mar_star_count < 200))
     mario_is_star = true;
   else
     mario_is_star = false;
 
 }
 
-/* Updates current_mario_speed (used by update_mario_vert_speed, update_mario_location, 
- *         mario_face_right (used by disp_mario), mario_is_walking (used by disp_mario)
- * Uses mario_run_count internally
- * Reads button presses to determine and apply effects of accelearation (updates current_mario_speed)  
+/* Updates current_hero_speed (used by update_hero_vert_speed, update_hero_location, 
+ *         hero_face_right (used by disp_mario), hero_is_walking (used by disp_mario)
+ * Uses hero_run_count internally
+ * Reads button presses to determine and apply effects of accelearation (updates current_hero_speed)  
  */
-void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press, int current_mario_row, int current_mario_col, int current_display_col, float * current_mario_speed)
+void update_hero_dir_speed(unsigned char move_dir, unsigned char button_press, int current_hero_row, int current_hero_col, int current_display_col, float * current_hero_speed)
 {
-  float mario_accel = MARIO_ACCELERATION * 2; /* how quickly mario accelerates */
-  //mario_is_duck = (move_dir & MOVE_DOWN) > 0;
-  bool button_right = ((move_dir & MOVE_RIGHT) > 0);// && (mario_is_duck == false);
-  bool button_left = ((move_dir & MOVE_LEFT) > 0);//  && (mario_is_duck == false);
-  bool mario_is_running = ((button_press & MOVE_ROTATE_LEFT) > 0)  && (mario_is_duck == false); /* B Button pressed */
-  mario_is_trying = button_right || button_left;
+  float hero_accel = HERO_ACCELERATION * 2; /* how quickly hero accelerates */
+  bool button_right = ((move_dir & MOVE_RIGHT) > 0);
+  bool button_left = ((move_dir & MOVE_LEFT) > 0);
+  bool hero_is_running = (button_press & MOVE_ROTATE_LEFT) > 0; /* B Button pressed */
+  hero_is_trying = button_right || button_left;
 
-  /* Accelerate Mario from 2->3 at half the time Mario goes from 1->2 */
-  if (mario_is_running) // B Button, Run
-    mario_accel = mario_accel * 2;
+  /* Accelerate Hero from 2->3 at half the time Hero goes from 1->2 */
+  if (hero_is_running) // B Button, Run
+    hero_accel = hero_accel * 2;
 
   /* Update Speed */
-  if ((button_right || (*current_mario_speed > 0))  && (can_go_dir(true, mario_is_big, current_mario_row, current_mario_col, current_display_col) == false)) /* if can't go right, stop */
-    *current_mario_speed = 0;
-  else if ((button_left || (*current_mario_speed < 0))  && (can_go_dir(false, mario_is_big, current_mario_row, current_mario_col, current_display_col) == false)) /* if can't go left, stop */
-    *current_mario_speed = 0;
-  else if ((current_mario_speed < 0) /* quickly decelerate to opposite direction */
+  if ((button_right || (*current_hero_speed > 0))  && (hero_can_go_dir(true, mario_is_big, current_hero_row, current_hero_col, current_display_col) == false)) /* if can't go right, stop */
+    *current_hero_speed = 0;
+  else if ((button_left || (*current_hero_speed < 0))  && (hero_can_go_dir(false, mario_is_big, current_hero_row, current_hero_col, current_display_col) == false)) /* if can't go left, stop */
+    *current_hero_speed = 0;
+  else if ((current_hero_speed < 0) /* quickly decelerate to opposite direction */
       && (button_right))
-    *current_mario_speed = apply_acceleration(*current_mario_speed, mario_accel * 2, mario_is_running);
-  else if ((current_mario_speed > 0) /* quickly decelerate to opposite direction */
+    *current_hero_speed = apply_acceleration(*current_hero_speed, hero_accel * 2, hero_is_running);
+  else if ((current_hero_speed > 0) /* quickly decelerate to opposite direction */
       && (button_left))
-   *current_mario_speed = apply_acceleration(*current_mario_speed, -mario_accel * 2, mario_is_running);
+   *current_hero_speed = apply_acceleration(*current_hero_speed, -hero_accel * 2, hero_is_running);
   else if (button_right)
-    *current_mario_speed = apply_acceleration(*current_mario_speed, mario_accel * 2, mario_is_running);
+    *current_hero_speed = apply_acceleration(*current_hero_speed, hero_accel * 2, hero_is_running);
   else if (button_left)
-    *current_mario_speed = apply_acceleration(*current_mario_speed, -mario_accel * 2, mario_is_running);
-  else if (mario_jump_count == 0)
-    *current_mario_speed = *current_mario_speed / 2;
+    *current_hero_speed = apply_acceleration(*current_hero_speed, -hero_accel * 2, hero_is_running);
+  else if (hero_jump_count == 0)
+    *current_hero_speed = *current_hero_speed / 2;
 
-  if (abs(*current_mario_speed) < 0.2)
-    *current_mario_speed = 0.0;
+  if (abs(*current_hero_speed) < 0.2)
+    *current_hero_speed = 0.0;
   /* Update face direction */
-  if (*current_mario_speed > 0)
-    mario_face_right = true;
-  else if (*current_mario_speed < 0)
-    mario_face_right = false;
+  if (*current_hero_speed > 0)
+    hero_face_right = true;
+  else if (*current_hero_speed < 0)
+    hero_face_right = false;
 
 }
 
@@ -3706,7 +3726,6 @@ void update_mario_dir_speed(unsigned char move_dir, unsigned char button_press, 
 /* Determine if Mario can go up based on current_mario_row, applicable foreground items (current_mario_col)
  * and mario_is_big
  * Applicable items are bricks and ? blocks
- * TODO: Add broken bricks, creatures landed on to be handled elsewhere
  */
 bool mario_can_go_up(int current_mario_row, int current_mario_col)
 {
@@ -3773,8 +3792,8 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
     {
       can_go_up = false;
       if (mario_multi_brick_count == 0)
-        mario_multi_brick_count = mario_count;
-      if ((mario_count - mario_multi_brick_count) < 60)
+        mario_multi_brick_count = game_count;
+      if ((game_count - mario_multi_brick_count) < 60)
       {
         set_coin_animation(14, MARIO_REPEAT_BRICK_COL);
         set_breaking_brick(14, MARIO_REPEAT_BRICK_COL, true);
@@ -3863,130 +3882,190 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
   
 }
 
-/* Updates current_mario_jump_speed (used by update_mario_location),
- *         mario_is_jumping (used by update_mario_dir_speed)
- * Uses mario_jump_count internally 
- * Reads button presses to determine and apply affects of vert accelearation (updates current_mario_jump_speed)  
+/* Determine if hero can go up based on current_mario_row, applicable foreground items (current_mario_col)
+ * and mario_is_big
+ * Applicable items are bricks and ? blocks
  * TODO: Add broken bricks, creatures landed on to be handled elsewhere
  */
-#define NORMAL_JUMP_TIME 8
-bool mario_was_in_air = false;
-bool mario_let_go_of_a = false; /* user let go of a button */
-unsigned char mario_jump_time_accel = NORMAL_JUMP_TIME;
-void update_mario_vert_speed(unsigned char button_press, int current_mario_row, int current_mario_col, float *current_mario_jump_speed, float current_mario_speed)
+bool hero_can_go_up(int current_hero_row, int current_hero_col)
+{
+  bool return_value = false;
+  
+  if (game_is_mario == true)
+     return_value = mario_can_go_up(current_hero_row, current_hero_col);
+
+  return return_value;
+}
+
+/* Updates current_hero_jump_speed (used by update_hero_location),
+ *         hero_is_jumping (used by update_hero_dir_speed)
+ * Uses hero_jump_count internally 
+ * Reads button presses to determine and apply affects of vert accelearation (updates current_hero_jump_speed)  
+ * 
+ */
+
+void update_hero_vert_speed(unsigned char button_press, int current_hero_row, int current_hero_col, float *current_hero_jump_speed, float current_hero_speed)
 {
   
-  float mario_accel = MARIO_ACCELERATION * 4.0;
-  bool mario_in_air = on_solid_ground(current_mario_row, current_mario_col) == false;
-  bool mario_can_up = false;
-  if (*current_mario_jump_speed > 0)
-    mario_can_up = mario_can_go_up(current_mario_row, current_mario_col);
+  float hero_accel = HERO_ACCELERATION * 4.0;
+  bool hero_in_air = on_solid_ground(current_hero_row, current_hero_col) == false;
+  bool hero_can_up = false;
+  if (*current_hero_jump_speed > 0)
+    hero_can_up = hero_can_go_up(current_hero_row, current_hero_col);
 
   /* Determine Jump Height */
-  /* Mario jumps higher based on horizontal speed, how long press A button */
-  if (abs(current_mario_speed) > 2.0)
-    mario_jump_time_accel = 10;
+  /* Hero jumps higher based on horizontal speed, how long press A button */
+  if (abs(current_hero_speed) > 2.0)
+    hero_jump_time_accel = 10;
 
   /* If land on ground, stop jump (look for pits)
    * If hit head, stop going up
    * If land on something, stop jump
    */
   /* Jumping has initiated and now back on ground or hit head */
-  if ((mario_was_in_air == true) && (mario_in_air == false)) 
+  if ((hero_was_in_air == true) && (hero_in_air == false)) 
   {
     /* stop the jump */
-    *current_mario_jump_speed = 0;
-    mario_jump_count = 0;
-    mario_jump_time_accel = NORMAL_JUMP_TIME;
+    *current_hero_jump_speed = 0;
+    hero_jump_count = 0;
+    hero_jump_time_accel = NORMAL_JUMP_TIME;
   }
-  if ((mario_can_up == false) && (*current_mario_jump_speed > 0))
+  if ((hero_can_up == false) && (*current_hero_jump_speed > 0))
   {
     /* stop the jump */
-    *current_mario_jump_speed = -1;
+    *current_hero_jump_speed = -1;
   }
-  else if (((button_press & MOVE_ROTATE_RIGHT) > 0) && (mario_jump_count == 0) && (mario_let_go_of_a) && (mario_in_air == false)) /* A Button, Jump */
+  else if (((button_press & MOVE_ROTATE_RIGHT) > 0) && (hero_jump_count == 0) && (hero_let_go_of_a) && (hero_in_air == false)) /* A Button, Jump */
   {
-    mario_jump_count = mario_count; /* Here Mario Jump Count is used to determine how long button is pressed */
+    hero_jump_count = game_count; /* Here Mario Jump Count is used to determine how long button is pressed */
     /* current_mario_jump_speed > 0 means moving up, < 0 is down */
-    *current_mario_jump_speed = 3; /* Top Upward Jump Speed */
-    mario_let_go_of_a = false;
+    *current_hero_jump_speed = 3; /* Top Upward Jump Speed */
+    hero_let_go_of_a = false;
 
   } /* on ground */
 
   if ((button_press & MOVE_ROTATE_RIGHT) == 0)
-    mario_let_go_of_a = true;
+    hero_let_go_of_a = true;
 
   /* After initial jump, start downward effects of gravity */
-  if ((mario_in_air) && (((mario_count - mario_jump_count) >= mario_jump_time_accel) || (mario_jump_count == 0)))
-    *current_mario_jump_speed = apply_acceleration(*current_mario_jump_speed, -mario_accel, true);
+  if ((hero_in_air) && (((game_count - hero_jump_count) >= hero_jump_time_accel) || (hero_jump_count == 0)))
+    *current_hero_jump_speed = apply_acceleration(*current_hero_jump_speed, -hero_accel, true);
 
-  mario_was_in_air = mario_in_air;
+  hero_was_in_air = hero_in_air;
 
 }
 
-/* Updates Mario horizontal location based on current_mario_row, current_mario_col and 
- * current_mario_speed, current_mario_jump_speed
- * Applies current_mario_speed to position 
+/* Updates hero horizontal location based on current_hero_speed, current_hero_col and 
+ * current_display_col
+ * Applies current_hero_speed to position 
  * (how many cycles it takes to update position based on current speed)
+ * 
+ *  current_hero_col
+ *  Decrement without checking, assume fall will stop due to ground or die in hole
+ *  Different top row max based on game
+ *  
+ *  (0 - 438 for Mario) 0 is first col, bottom left of hero  
+ *  (0 - 255 for Gimkit) 0 is first col, bottom left of hero 
+ *  
+ *  game_is_mario - Mario or Gimkit
+ * 
  */
-void update_mario_hor_location(float current_mario_speed, int *current_mario_col, int *current_display_col)
+void update_hero_hor_location(float current_hero_speed, int *current_hero_col, int *current_display_col)
 {
   /* update rate based on current Mario speed */
   unsigned char update_rate = 0;
-  int mario_speed = (int)current_mario_speed;
+  int hero_speed = (int)current_hero_speed;
+
+  unsigned int max_hor_cols = NUM_MARIO_COLUMNS - 12; // mario
+
+  if (game_is_mario == false) // gimkit
+     max_hor_cols = NUM_GIMKIT_COLS - 1;
 
   /* UPDATE HORIZONTAL POSITION */
   /* Only update if abs(speed) > 0 */
-  if (mario_speed != 0)
+  if (hero_speed != 0)
   {
-    //update_rate = 6 / abs((int)mario_speed);
-
-    //if ((mario_count % update_rate) == 0)
-    if (((abs((int)mario_speed) == 1) && ((mario_count % 2) == 0)) || 
-        ((abs((int)mario_speed) == 2) && ((mario_count % 3) < 2)) || 
-        ((abs((int)mario_speed) == 3) && ((mario_count % 4) < 3)))
+    if (((abs((int)hero_speed) == 1) && ((game_count % 2) == 0)) || 
+        ((abs((int)hero_speed) == 2) && ((game_count % 3) < 2)) || 
+        ((abs((int)hero_speed) == 3) && ((game_count % 4) < 3)))
     {
       /* Mario stays on left half of screen
        * If move right past midpoint -> move display right (current_display_col++)
        * If move left, can only move to left side of screen
        */
-      if ((mario_speed > 0) && (*current_mario_col < (NUM_MARIO_COLUMNS - 12)))
-        (*current_mario_col)++; /* (0 - 438), bottom left of mario */
-      else if ((mario_speed < 0) && (*current_mario_col > *current_display_col))
-        (*current_mario_col)--; /* (0 - 438), bottom left of mario */
-      if ((*current_mario_col - *current_display_col) > 11)
-        (*current_display_col)++;
+      if ((hero_speed > 0) && (*current_hero_col < max_hor_cols))
+        (*current_hero_col)++; /* (0 - 438), bottom left of mario */
+
+      if (game_is_mario == true)
+      {
+        if ((hero_speed < 0) && (*current_hero_col > *current_display_col))
+          (*current_hero_col)--; /* (0 - 438), bottom left of mario */
+        if ((*current_hero_col - *current_display_col) > 11) 
+          (*current_display_col)++;
+      }
+      else // gimkit
+      {
+        if ((hero_speed < 0) && (*current_hero_col > 0))
+          (*current_hero_col)--; /* (0 - 255), bottom left of hero */
+        if (((*current_hero_col - *current_display_col) > 14) && (*current_display_col < (NUM_GIMKIT_COLS - NUM_DISP_ROWS - 1))) 
+          (*current_display_col)++;
+        else if (((*current_hero_col - *current_display_col) < 8) && (*current_display_col > 0)) 
+          (*current_display_col)--;
+      }
     }
   }
   
 }
 
 
-/* Updates Mario vertical location based on current_mario_row, current_mario_col and 
- * current_mario_speed, current_mario_jump_speed
- * Applies current_mario_jump_speed to position
+/* Updates hero vertical location based on current_hero_row, current_hero_jump_speed
+ * Applies current_hero_jump_speed to position
  * (how many cycles it takes to update position based on current speed)
- */
-void update_mario_vert_location(float current_mario_jump_speed, int *current_mario_row)
+ *  
+ *  current_hero_row
+ *  Decrement without checking, assume fall will stop due to ground or die in hole
+ *  Different top row max based on game
+ *  
+ *  (0 - 21 for Mario) 0 is top row, bottom left of hero  
+ *  (0 - 250 for Gimkit) 0 is top row, bottom left of hero 
+ *  
+ *  current_display_row is top row of current display
+ *  
+ *  game_is_mario - Mario or Gimkit
+ *  
+  */
+void update_hero_vert_location(float current_hero_jump_speed, int *current_hero_row, int *current_display_row)
 {
-  /* update rate based on current Mario speed */
+  /* update rate based on current hero speed */
   unsigned char update_rate = 0;
-  int mario_speed = (int)current_mario_jump_speed;
+  int hero_speed = (int)current_hero_jump_speed;
+
+  unsigned int max_vert_rows = NUM_DISP_ROWS - 1; // mario
+
+  if (game_is_mario == false) // gimkit
+     max_vert_rows = NUM_GIMKIT_ROWS - 1;
   
   /* UPDATE VERTICAL POSITION */
-  if (mario_speed != 0)
+  if (hero_speed != 0)
   {
-    //update_rate = 3 / abs(mario_speed);
-    //if ((mario_count % update_rate) == 0)
-    if (((abs(mario_speed) == 1) && ((mario_count % 3) < 2)) || 
-        ((abs(mario_speed) == 2) && ((mario_count % 5) < 4)) || 
-        (abs(mario_speed) == 3))
+    if (((abs(hero_speed) == 1) && ((game_count % 3) < 2)) || 
+        ((abs(hero_speed) == 2) && ((game_count % 5) < 4)) || 
+        (abs(hero_speed) == 3))
     {
-      /* current_mario_jump_speed > 0 means moving up, < 0 is down */
-      if ((mario_speed > 0) && (*current_mario_row > 0))
-        (*current_mario_row)--; /* (0 - 21) 0 is top row, bottom left of mario */
-      else if ((mario_speed < 0) && (*current_mario_row < (NUM_DISP_ROWS - 1)))
-        (*current_mario_row)++; /* (0 - 438), bottom left of mario */
+      /* current_hero_jump_speed > 0 means moving up, < 0 is down */
+      if ((hero_speed > 0) && (*current_hero_row > 0))
+        (*current_hero_row)--; /* (0 - 21 for Mario) 0 is top row, bottom left of hero */
+      else if ((hero_speed < 0) && (*current_hero_row < max_vert_rows))
+        (*current_hero_row)++; /* (0 - 21 for Mario), bottom left of hero */
+
+      // update display row
+      if (game_is_mario == false) // only update display row for Gimkit
+      {
+        if ((*current_hero_row - *current_display_row) < 8) 
+          (*current_display_row)--;
+        else if (((*current_hero_row - *current_display_row) > 14) && (current_display_row < (NUM_GIMKIT_ROWS - 21)))
+          (*current_display_row)++;
+      }
     }
   }
 
@@ -3994,12 +4073,12 @@ void update_mario_vert_location(float current_mario_jump_speed, int *current_mar
 
 void init_mario()
 {
-  mario_face_right = true;
+  hero_face_right = true;
   mario_is_big = false;
   mario_is_fire = false;
-  mario_is_trying = false;
+  hero_is_trying = false;
   mario_is_star = false;
-  mario_jump_count = 0;
+  hero_jump_count = 0;
   coin_row = 0;
   coin_col = 0;
   coin_count = 0;
@@ -4007,8 +4086,9 @@ void init_mario()
   mush_col = 0;
   mush_is_red = true;
   mush_go_right = true;
+  game_is_mario = true;
   mush_count = 0;
-  mario_count = 0;
+  game_count = 0;
   
   mario_1up_hit = false;
   mario_star_hit = false;
@@ -4028,7 +4108,6 @@ void init_mario()
   koopa_kicked_right = false;
   koopa_kicked_left = false;
   mario_invulnerable_count = 0;
-  mario_is_duck = false;
   goodbye_col = 0.0;
 
   /* Init breaking brick arrays */
@@ -4090,6 +4169,7 @@ unsigned int play_mario(unsigned char mario_color)
   int current_mario_row = NUM_DISP_ROWS - 2; /* bottom left of mario */
   int current_mario_col = 6; /* (0 - 438), bottom left of mario */
   int current_display_col = 0; /* leftmost column of display as level column */
+  int current_display_row = 0;
 
   total_score = 0;
   mario_lives = 2;
@@ -4114,13 +4194,13 @@ unsigned int play_mario(unsigned char mario_color)
       delay(300);
     }
 
-    update_mario_dir_speed(move_dir & 0xF, (move_dir >> 4) & 0xF, current_mario_row, current_mario_col, current_display_col, &current_mario_speed);
-    update_mario_hor_location(current_mario_speed, &current_mario_col, &current_display_col);
-    update_mario_vert_speed((move_dir >> 4) & 0xF, current_mario_row, current_mario_col, &current_mario_jump_speed, current_mario_speed);
-    update_mario_vert_location(current_mario_jump_speed, &current_mario_row);
-    mario_count++;
+    update_hero_dir_speed(move_dir & 0xF, (move_dir >> 4) & 0xF, current_mario_row, current_mario_col, current_display_col, &current_mario_speed);
+    update_hero_hor_location(current_mario_speed, &current_mario_col, &current_display_col);
+    update_hero_vert_speed((move_dir >> 4) & 0xF, current_mario_row, current_mario_col, &current_mario_jump_speed, current_mario_speed);
+    update_hero_vert_location(current_mario_jump_speed, &current_mario_row, &current_display_row);
+    game_count++;
    /* Game Over based on timer or fall in hole */
-    if ((mario_count >= MARIO_COUNT_END) || (current_mario_row == (NUM_DISP_ROWS - 1)))
+    if ((game_count >= MARIO_COUNT_END) || (current_mario_row == (NUM_DISP_ROWS - 1)))
       mario_over = true;
 
     disp_mario_back(current_display_col, mario_color);
@@ -4176,7 +4256,7 @@ unsigned int play_mario(unsigned char mario_color)
     if (current_mario_col >= MARIO_FLAG_POLE_COL)
     {
       mario_over = true;
-      total_score = total_score + (MARIO_COUNT_END - mario_count) / 10 + (20 - current_mario_row);
+      total_score = total_score + (MARIO_COUNT_END - game_count) / 10 + (20 - current_mario_row);
     }
 
     delay(5);
@@ -4202,15 +4282,15 @@ void display_mario_end_animation()
   {
     current_mario_col = MARIO_FLAG_POLE_COL;
     bool mario_animation_over = false;
-    mario_count = 0;
+    game_count = 0;
     bool display_mario_now = true;
-    mario_face_right = true;
+    hero_face_right = true;
     unsigned char firework_display_count = 0;
 
     while (mario_animation_over == false)
     {
       /* only move on count */
-      if ((mario_count % 2) == 0)
+      if ((game_count % 2) == 0)
       {
         /* First, descend the flag pole */
         if ((current_mario_col == MARIO_FLAG_POLE_COL) && (current_mario_row < 18))
@@ -4219,13 +4299,13 @@ void display_mario_end_animation()
         {
           current_mario_col++;
           current_display_col++;
-          mario_face_right = false;
+          hero_face_right = false;
         }
         else if ((current_mario_col == (MARIO_FLAG_POLE_COL + 1)) && (current_mario_row < 20)) /* then jump down */
           current_mario_row++;
         else if (current_mario_col < 426) /* then walk over */
         {
-          mario_face_right = true;
+          hero_face_right = true;
           current_mario_col++;
           current_display_col++;
         }
@@ -4240,7 +4320,7 @@ void display_mario_end_animation()
         disp_mario(mario_end_color, current_mario_row, current_mario_col, current_display_col);
       displayLEDs(true, true, false);
 
-      mario_count++;
+      game_count++;
       delay(5);
 
       /* then fireworks */
@@ -4307,6 +4387,65 @@ void display_mario_end_animation()
     }
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* GIMKIT */
+
+#define NUM_GIMKIT_ROWS 256
+#define NUM_GIMKIT_COLS 256
+
+#define NUM_GIMKIT_PLATFORMS 16
+
+
+/* Gimkit Platform Row */
+/* 0 is topmost row, 255 is bottom */
+const unsigned char PROGMEM gkPlatform_Row[NUM_GIMKIT_PLATFORMS] =
+/* 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 */
+{255,245,243,240,236,234,234,230,225,220,220,215,215,215,215,208}; // 1
+
+/* Gimkit Platform Col */
+/* 0 is leftmost col, 255 is rightmost */
+const unsigned char PROGMEM gkPlatform_Col[NUM_GIMKIT_PLATFORMS] =
+/* 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 */
+{  0, 12, 19, 26, 32, 36, 40, 52, 58, 68, 74, 78, 88, 94,100,106}; // 1
+
+/* Gimkit Platform Length */
+/* Platform Length */
+const unsigned char PROGMEM gkPlatform_Length[NUM_GIMKIT_PLATFORMS] =
+/* 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 */
+{  0,  4,  4,  3,  2,  2,  8,  2,  6,  2,  1,  6,  2,  2,  1, 10}; // 1
 
 
 
@@ -5652,7 +5791,7 @@ void display_picture_one()
 
 
 /* Main Function */
-
+unsigned char color1_in = 3, color2_in = 4;
 
 unsigned char display_mode = DISP_LIGHT;
 //unsigned char calibration_mode = 0;
@@ -5674,11 +5813,23 @@ void loop() {
   {
     display_mode = (display_mode + NUM_DISP_MODES - 1) % NUM_DISP_MODES;
     display_clear();
+    color1_in = 3;
+    color2_in = 4;
   }
   else if (moveDir == MOVE_DOWN)
   {
     display_mode = (display_mode + 1) % NUM_DISP_MODES;
     display_clear();
+    color1_in = 3;
+    color2_in = 4;
+  }
+  else if (moveDir == MOVE_LEFT)
+  {
+    color1_in = (color1_in + 1) % NUM_PAINT_COLORS;
+  }
+  else if (moveDir == MOVE_RIGHT)
+  {
+    color2_in = (color2_in + 1) % NUM_PAINT_COLORS;
   }
   else if (( moveDir >> 4) == MOVE_ROTATE_LEFT)
   {
@@ -5745,17 +5896,17 @@ void loop() {
   else if (display_mode == DISP_CAL_BOARD)
     display_cal_board(); 
   else if (display_mode == DISP_VORTEX)
-    display_vortex();
+    display_vortex(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
   else if (display_mode == DISP_VORTEX_2)
-    display_vortex_2(CRGB::Red, CRGB::Green);
+    display_vortex_2(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
   else if (display_mode == DISP_ROWS_MOVE)
-    display_rows_move(CRGB::Red, CRGB::Green);
+    display_rows_move(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
   else if (display_mode == DISP_VORTEX_3)
     display_vortex_2(0x008080, 0x00ff80); 
   else if (display_mode == DISP_SPIRAL_1)
-    display_spiral(4,5,4,5);
+    display_spiral(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]), pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
   else if (display_mode == DISP_SPIRAL_2)
-    display_spiral(19,8,1,4);
+    display_spiral(19, 8, 1, 4);
 //  else if (digitalRead(PICTURE_INPUT_1) == HIGH)
 //    display_picture_one();
 //  else if (digitalRead(PICTURE_INPUT_2) == HIGH)
