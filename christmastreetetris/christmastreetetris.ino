@@ -254,6 +254,26 @@ const unsigned char PROGMEM tetrisStartDisp[NUM_DISP_ROWS_TETRIS][NUM_DISP_COLS_
 #define CHANCE_OF_TWINKLE 50
 
 
+#define PAINT_COLOR_BLACK       11
+#define PAINT_COLOR_BLUE         0
+#define PAINT_COLOR_ORANGE       1
+#define PAINT_COLOR_YELLOW       2
+#define PAINT_COLOR_RED          3
+#define PAINT_COLOR_GREEN        4
+#define PAINT_COLOR_CYAN         5
+#define PAINT_COLOR_PURPLE       6
+#define PAINT_COLOR_GOLD         7
+#define PAINT_COLOR_WHITE        8
+#define PAINT_COLOR_PINK         9
+#define PAINT_COLOR_AQUA        10
+
+const unsigned char PROGMEM paintColors[NUM_PAINT_COLORS] = 
+ {DISP_COLOR_BLUE, DISP_COLOR_ORANGE, DISP_COLOR_YELLOW,
+  DISP_COLOR_RED, DISP_COLOR_GREEN, DISP_COLOR_CYAN,
+  DISP_COLOR_PURPLE, DISP_COLOR_GOLD, DISP_COLOR_WHITE,
+  DISP_COLOR_PINK, DISP_COLOR_AQUA, DISP_COLOR_BLACK};
+
+
 /* Tetris Game Board */
 unsigned long gameBoard[NUM_ROWS] =
 {EMPTY_BOARD_ROW, EMPTY_BOARD_ROW, EMPTY_BOARD_ROW, EMPTY_BOARD_ROW, 
@@ -1130,16 +1150,16 @@ void play_tetris()
 
 
 unsigned int light_twinkle = 0;
-void display_green_red()
+void display_green_red(unsigned char color1_in, unsigned char color2_in)
 {
   int i;
   for(i = NUM_LEDS; i < NUM_LEDS + NUM_TREE_LEDS; i++)
   {
     /* LEDS snake from 1 row to next */
     if (((i + light_twinkle) % 30) < 10)
-      leds[i] = CRGB::Red;
+      leds[i] = numToColorTree[color1_in];
     else if (((i + light_twinkle) % 30) < 20)
-      leds[i] = CRGB::Green;
+      leds[i] = numToColorTree[color2_in];
     else
       leds[i] = CRGB::Black;
   }
@@ -1171,7 +1191,7 @@ void display_rainbow()
 void display_lights()
 {
   // random colored speckles that blink in and fade smoothly
-  fadeToBlackBy( leds, NUM_LEDS + NUM_TREE_LEDS, 1);
+  fadeToBlackBy( leds, NUM_LEDS + NUM_TREE_LEDS, 10);
   int pos;
   for(int i = 0; i < 10; i++)
   {
@@ -1184,7 +1204,7 @@ void display_lights()
      leds[i] = CRGB::Black;
   
   FastLED.show();
-  delay(10);
+  delay(50);
 }
 
 void display_one_color()
@@ -1227,7 +1247,7 @@ void display_juggle()
      leds[i] = CRGB::Black;
 
   FastLED.show();
-  delay(20);
+  delay(100);
 }
 
 /* Castle Display */
@@ -1569,6 +1589,11 @@ void display_rows_move(unsigned char Color1, unsigned char Color2)
 
 
 
+
+
+
+
+
 /* Game stuff */
 #define NORMAL_JUMP_TIME 8
 
@@ -1765,6 +1790,53 @@ const unsigned char PROGMEM daisyDispOne[NUM_ROWS_MARIO_RUN][NUM_COLS_MARIO_RUN]
 
 
 unsigned char disp_mario_luigi = 0; // 0 - Mario, 1 - Luigi, 2 - Peach, 3 - Daisy
+unsigned char num_hero_jumps = 0;
+
+
+
+
+
+
+
+/* GIMKIT */
+
+#define NUM_GIMKIT_ROWS 256
+#define NUM_GIMKIT_COLS 256
+
+#define NUM_GIMKIT_PLATFORMS 16
+
+#define GIMKIT_HERO_WIDTH 2
+#define GIMKIT_HERO_HEIGHT 3
+
+unsigned char gimkit_current_platform = 0;
+
+
+/* Gimkit Platform Row */
+/* 0 is topmost row, 255 is bottom */
+const unsigned char PROGMEM gkPlatform_Row[NUM_GIMKIT_PLATFORMS] =
+/* 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 */
+{255,245,243,240,236,234,234,230,225,220,220,215,215,215,215,208}; // 1
+
+/* Gimkit Platform Col */
+/* 0 is leftmost col, 255 is rightmost */
+const unsigned char PROGMEM gkPlatform_Col[NUM_GIMKIT_PLATFORMS] =
+/* 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 */
+{  0, 12, 19, 26, 32, 36, 40, 52, 58, 68, 74, 78, 88, 94,100,106}; // 1
+
+/* Gimkit Platform Length */
+/* Platform Length */
+const unsigned char PROGMEM gkPlatform_Length[NUM_GIMKIT_PLATFORMS] =
+/* 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 */
+{255,  4,  4,  3,  2,  2,  8,  2,  6,  2,  1,  6,  2,  2,  1, 10}; // 1
+
+
+
+
+
+
+
+
+
 
 /* Only called in 22x22 mode at the moment */
 /* Frames numbered 1-6 */
@@ -2470,8 +2542,7 @@ float apply_acceleration(float current_speed, float accel, bool go_to_three)
 
 
 /* Determine if (Mario or creature) is on solid ground based on input_row and applicable foreground items (input_col) */
-/* TODO: Add broken bricks, creatures landed on to be handled elsewhere */
-bool on_solid_ground(int input_row, int input_col)
+bool on_solid_ground_mariobros(int input_row, int input_col)
 {
 
   bool on_solid_ground = false;
@@ -2554,6 +2625,59 @@ bool on_solid_ground(int input_row, int input_col)
                           
    return on_solid_ground;
 }
+
+/* Determine if Gimkit on solid ground based on current_hero_row, current_hero_col, applicable foreground items.
+ * Applicable items are platforms
+ * 
+ * Assume platforms are listed from lowest to highest
+ * Platforms are identified by row, col of leftmost point => length
+ */
+bool gimkit_on_solid_ground(int current_hero_row, int current_hero_col)
+{
+  /* Can't go up when hit platforms*/
+  bool on_solid_ground = false;
+
+  /* Check for platforms */
+  for(int i = 0; i < NUM_GIMKIT_PLATFORMS; i++)
+  {
+    if (current_hero_row == pgm_read_byte_near(&gkPlatform_Row[i]) - 2) // gimkit hero two rows less (two above) platform
+    {
+       if (((current_hero_col + GIMKIT_HERO_WIDTH - 1) >= pgm_read_byte_near(&gkPlatform_Col[i])) &&
+           (current_hero_col <= (pgm_read_byte_near(&gkPlatform_Col[i]) + pgm_read_byte_near(&gkPlatform_Length[i]) - 1)))
+       {
+          on_solid_ground = true;
+          gimkit_current_platform = i;
+          num_hero_jumps = 0;
+       }
+          
+    }
+//    else if (current_hero_row < (pgm_read_byte_near(&gkPlatform_Row[i]) - 2)) // gimkit hero above platform
+//      break;
+  }
+
+  if (on_solid_ground == true)
+    num_hero_jumps = 0;
+
+  return on_solid_ground;
+  
+}
+
+
+/* Determine if hero on solid ground based on current_hero_row, current_hero_col, applicable foreground items,
+ * Applicable items are bricks and ? blocks
+ */
+bool on_solid_ground(int current_hero_row, int current_hero_col)
+{
+  bool return_value = false;
+  
+  if (game_is_mario == true)
+     return_value = on_solid_ground_mariobros(current_hero_row, current_hero_col);
+  else
+     return_value = gimkit_on_solid_ground(current_hero_row, current_hero_col);
+
+  return return_value;
+}
+
 
 /* Returns bool telling if Mario can go left or right based on input_col and applicable foreground objects (input_row)
  * This includes bricks, ? blocks, pipes, steps
@@ -2669,14 +2793,55 @@ bool can_go_dir_mariobros(bool is_right, bool is_big, int input_row, int input_c
 }
 
 
+/* Determine if Gimkit can go up based on current_hero_row, current_hero_col, direction, applicable foreground items.
+ * Applicable items are platforms
+ * 
+ * Assume platforms are listed from lowest to highest
+ * Platforms are identified by row, col of leftmost point => length
+ */
+bool gimkit_can_go_dir(bool is_right, int current_hero_row, int current_hero_col)
+{
+  /* can you go? */
+  bool can_go_dir = true;
+
+  // NUM_GIMKIT_ROWS
+
+  if ((current_hero_col == 0) && (is_right == false)) // left side of playing area
+     can_go_dir = false;
+  else if ((current_hero_col == (NUM_GIMKIT_ROWS - GIMKIT_HERO_WIDTH)) && (is_right == true)) // right side of playing area
+     can_go_dir = false;
+  else
+  {
+     /* Check for platforms */
+     for(int i = 0; i < NUM_GIMKIT_PLATFORMS; i++)
+     {
+        // if head at or above platform and feet at or below platform (platform is of height 2)
+        if (((current_hero_row - GIMKIT_HERO_HEIGHT + 1) <= pgm_read_byte_near(&gkPlatform_Row[i])) &&
+            (current_hero_row >= (pgm_read_byte_near(&gkPlatform_Row[i]) - 1)))
+        {
+           if (((current_hero_col + GIMKIT_HERO_WIDTH) == pgm_read_byte_near(&gkPlatform_Col[i])) && (is_right == true)) // one to the left and facing right
+              can_go_dir = false;
+           else if ((current_hero_col == (pgm_read_byte_near(&gkPlatform_Col[i]) + pgm_read_byte_near(&gkPlatform_Length[i]))) && (is_right == true)) // one to the right and facing left
+              can_go_dir = false;
+        }
+//        else if (current_hero_row < pgm_read_byte_near(&gkPlatform_Row[i])) // gimkit hero above platform
+//           break;
+      }
+  }
+
+  return can_go_dir;
+  
+}
+
+
 bool hero_can_go_dir(bool is_right, bool is_big, int input_row, int input_col, int current_display_col)
 {
   bool return_value = false;
   
   if (game_is_mario == true)
-  {
      return_value = can_go_dir_mariobros(is_right, is_big, input_row, input_col, current_display_col);
-  }
+  else
+     return_value = gimkit_can_go_dir(is_right, input_row, input_col);
 
   return return_value;
 }
@@ -3882,10 +4047,42 @@ bool mario_can_go_up(int current_mario_row, int current_mario_col)
   
 }
 
-/* Determine if hero can go up based on current_mario_row, applicable foreground items (current_mario_col)
- * and mario_is_big
+
+/* Determine if Gimkit can go up based on current_hero_row, current_hero_col, applicable foreground items.
+ * Applicable items are platforms
+ * 
+ * Assume platforms are listed from lowest to highest
+ * Platforms are identified by row, col of leftmost point => length
+ */
+bool gimkit_can_go_up(int current_hero_row, int current_hero_col)
+{
+  /* Can't go up when hit platforms*/
+  bool can_go_up = true;
+
+  /* Check for platforms */
+  for(int i = 0; i < NUM_GIMKIT_PLATFORMS; i++)
+  {
+    unsigned char gimkit_head_row = current_hero_row - GIMKIT_HERO_HEIGHT + 1; // gimkit feet row is current_hero_row
+    unsigned char gimkit_hero_far_col = current_hero_col + GIMKIT_HERO_WIDTH - 1; // gimkit near col is current_hero_col
+    unsigned char platform_row = pgm_read_byte_near(&gkPlatform_Row[i]);
+    unsigned char platform_col = pgm_read_byte_near(&gkPlatform_Col[i]);
+    unsigned char platform_length = pgm_read_byte_near(&gkPlatform_Length[i]);
+    unsigned char platform_far_col = platform_col + platform_length - 1;
+    if (gimkit_head_row == platform_row + 1) // gimkit hero one row greater (one below) platform
+    {
+       if ((gimkit_hero_far_col >= platform_col) && (current_hero_col <= platform_far_col))
+          can_go_up = false;
+    }
+//    else if (gimkit_head_row < platform_row) // gimkit hero at or above platform
+//      break;
+  }
+
+  return can_go_up;
+  
+}
+
+/* Determine if hero can go up based on current_hero_row, current_hero_col, applicable foreground items,
  * Applicable items are bricks and ? blocks
- * TODO: Add broken bricks, creatures landed on to be handled elsewhere
  */
 bool hero_can_go_up(int current_hero_row, int current_hero_col)
 {
@@ -3893,6 +4090,8 @@ bool hero_can_go_up(int current_hero_row, int current_hero_col)
   
   if (game_is_mario == true)
      return_value = mario_can_go_up(current_hero_row, current_hero_col);
+  else
+     return_value = gimkit_can_go_up(current_hero_row, current_hero_col);
 
   return return_value;
 }
@@ -3935,13 +4134,15 @@ void update_hero_vert_speed(unsigned char button_press, int current_hero_row, in
     /* stop the jump */
     *current_hero_jump_speed = -1;
   }
-  else if (((button_press & MOVE_ROTATE_RIGHT) > 0) && (hero_jump_count == 0) && (hero_let_go_of_a) && (hero_in_air == false)) /* A Button, Jump */
+  else if ((((button_press & MOVE_ROTATE_RIGHT) > 0) && (hero_let_go_of_a)) && 
+           (((hero_jump_count == 0) && (hero_in_air == false)) ||
+           ((game_is_mario == false) && (num_hero_jumps == 1))))/* A Button, Jump */
   {
     hero_jump_count = game_count; /* Here Mario Jump Count is used to determine how long button is pressed */
     /* current_mario_jump_speed > 0 means moving up, < 0 is down */
     *current_hero_jump_speed = 3; /* Top Upward Jump Speed */
     hero_let_go_of_a = false;
-
+    num_hero_jumps++;
   } /* on ground */
 
   if ((button_press & MOVE_ROTATE_RIGHT) == 0)
@@ -3979,7 +4180,7 @@ void update_hero_hor_location(float current_hero_speed, int *current_hero_col, i
   unsigned int max_hor_cols = NUM_MARIO_COLUMNS - 12; // mario
 
   if (game_is_mario == false) // gimkit
-     max_hor_cols = NUM_GIMKIT_COLS - 1;
+     max_hor_cols = NUM_GIMKIT_COLS - GIMKIT_HERO_WIDTH;
 
   /* UPDATE HORIZONTAL POSITION */
   /* Only update if abs(speed) > 0 */
@@ -4043,7 +4244,7 @@ void update_hero_vert_location(float current_hero_jump_speed, int *current_hero_
   unsigned int max_vert_rows = NUM_DISP_ROWS - 1; // mario
 
   if (game_is_mario == false) // gimkit
-     max_vert_rows = NUM_GIMKIT_ROWS - 1;
+     max_vert_rows = NUM_GIMKIT_ROWS - 2;
   
   /* UPDATE VERTICAL POSITION */
   if (hero_speed != 0)
@@ -4063,7 +4264,7 @@ void update_hero_vert_location(float current_hero_jump_speed, int *current_hero_
       {
         if ((*current_hero_row - *current_display_row) < 8) 
           (*current_display_row)--;
-        else if (((*current_hero_row - *current_display_row) > 14) && (current_display_row < (NUM_GIMKIT_ROWS - 21)))
+        else if (((*current_hero_row - *current_display_row) > 14)  && (*current_display_row < (NUM_GIMKIT_ROWS - NUM_DISP_ROWS)))
           (*current_display_row)++;
       }
     }
@@ -4226,12 +4427,43 @@ unsigned int play_mario(unsigned char mario_color)
       if (current_mario_row < 21)
       {
         set_goodbye_char(current_mario_row, current_mario_col, MARIO_GOODBYE_MARIO, MOVE_NONE);
+        
+        // save current display
+        unsigned char save_bg_0[NUM_DISP_ROWS] = {0};
+        unsigned char save_bg_1[NUM_DISP_ROWS] = {0};
+        for (int i = 0; i < NUM_DISP_ROWS; i++)
+        {
+          save_bg_0[i] = bigDispBoard[i][current_mario_col - current_display_col];
+          save_bg_1[i] = bigDispBoard[i][current_mario_col - current_display_col + 1];
+        }
+        save_bg_0[current_mario_row] = DISP_COLOR_LIGHT_BLUE;
+        save_bg_1[current_mario_row] = DISP_COLOR_LIGHT_BLUE;
+        save_bg_0[current_mario_row - 1] = DISP_COLOR_LIGHT_BLUE;
+        save_bg_1[current_mario_row - 1] = DISP_COLOR_LIGHT_BLUE;
+        
         while (goodbye_col > 0.5)
         {
+          // write saved display
+          for (int i = 0; i < NUM_DISP_ROWS; i++)
+          {
+            bigDispBoard[i][current_mario_col - current_display_col] = save_bg_0[i];
+            bigDispBoard[i][current_mario_col - current_display_col + 1] = save_bg_1[i];
+          }
+          
           display_goodbye_char(mario_color, current_display_col);
+          
+          
           displayLEDs(true, true, false);
           delay(5);
         }
+        // write saved display
+        for (int i = 18; i < NUM_DISP_ROWS; i++)
+        {
+          bigDispBoard[i][current_mario_col - current_display_col] = save_bg_0[i];
+          bigDispBoard[i][current_mario_col - current_display_col + 1] = save_bg_1[i];
+        }
+        displayLEDs(true, true, false);
+        
       }
       if (mario_lives > 0)
       {
@@ -4413,41 +4645,282 @@ void display_mario_end_animation()
 
 
 
-
-
-
-
-
-
-
-
 /* GIMKIT */
 
-#define NUM_GIMKIT_ROWS 256
-#define NUM_GIMKIT_COLS 256
-
-#define NUM_GIMKIT_PLATFORMS 16
+unsigned char gimkitColors[3] = {DISP_COLOR_AQUA, DISP_COLOR_PURPLE, DISP_COLOR_PINK};
+#define CLOUD_SPACING 26
 
 
-/* Gimkit Platform Row */
-/* 0 is topmost row, 255 is bottom */
-const unsigned char PROGMEM gkPlatform_Row[NUM_GIMKIT_PLATFORMS] =
-/* 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 */
-{255,245,243,240,236,234,234,230,225,220,220,215,215,215,215,208}; // 1
+/* Game Menu Display */
+const unsigned char PROGMEM gimkitMenuDisp[NUM_DISP_ROWS_MENU - 9][NUM_DISP_COLS_MENU] =
+  {{5,5,5,5,0,4,0,5,0,0,0,5},
+   {5,0,0,0,0,4,0,5,5,0,5,5},
+   {5,0,5,5,0,4,0,5,0,5,0,5},
+   {5,0,0,5,0,4,0,5,0,0,0,5},
+   {5,5,5,5,0,4,0,5,0,0,0,5},
+   {0,0,0,0,0,0,0,0,0,0,0,0},
+   {5,0,0,5,0,4,0,5,5,5,5,5},
+   {5,0,5,0,0,4,0,0,0,5,0,0},
+   {5,5,0,0,0,4,0,0,0,5,0,0},
+   {5,0,5,0,0,4,0,0,0,5,0,0},
+   {5,0,0,5,0,4,0,0,0,5,0,0}};
 
-/* Gimkit Platform Col */
-/* 0 is leftmost col, 255 is rightmost */
-const unsigned char PROGMEM gkPlatform_Col[NUM_GIMKIT_PLATFORMS] =
-/* 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 */
-{  0, 12, 19, 26, 32, 36, 40, 52, 58, 68, 74, 78, 88, 94,100,106}; // 1
+void displayGimkitMenu()
+{
+  const unsigned int unused_rows_top = (NUM_DISP_ROWS - NUM_DISP_ROWS_MENU) / 2;
+  const unsigned int unused_cols_left = (NUM_DISP_COLS - NUM_DISP_COLS_MENU) / 2;
+  unsigned int move_dir_gim = MOVE_NONE;
+  unsigned char current_level = 0;
+  unsigned char current_color[3] = {PAINT_COLOR_AQUA, PAINT_COLOR_PURPLE, PAINT_COLOR_PINK};
+  
+  for(int i = 0; i < NUM_DISP_ROWS; i++)
+    for(int j = 0; j < NUM_DISP_COLS; j++)
+      bigDispBoard[i][j] = DISP_COLOR_BLACK;
+    
+  for(int i = 0; i < NUM_DISP_ROWS_MENU - 9; i++)
+    for(int j = 0; j < NUM_DISP_COLS_MENU; j++)
+      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&gimkitMenuDisp[i][j]);
 
-/* Gimkit Platform Length */
-/* Platform Length */
-const unsigned char PROGMEM gkPlatform_Length[NUM_GIMKIT_PLATFORMS] =
-/* 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 */
-{  0,  4,  4,  3,  2,  2,  8,  2,  6,  2,  1,  6,  2,  2,  1, 10}; // 1
+  while (move_dir_gim != MOVE_START)
+  {
+
+    /* look for movements */
+    move_dir_gim = getMove();
+
+    /* End game */
+    if (move_dir_gim == MOVE_DOWN)
+      current_level = (current_level + 1) % 3;
+    else if (move_dir_gim == MOVE_UP)
+      current_level = (current_level + 3 - 1) % 3;
+    else if (move_dir_gim == MOVE_LEFT)
+      current_color[current_level] = (current_color[current_level] + NUM_PAINT_COLORS - 1 ) % NUM_PAINT_COLORS;
+    else if (move_dir_gim == MOVE_RIGHT)
+      current_color[current_level] = (current_color[current_level] + 1) % NUM_PAINT_COLORS;
+
+    for(int i = 0; i < 3; i++)
+      gimkitColors[i] = pgm_read_byte_near(&paintColors[current_color[i]]);
 
 
+    /* Display Hero */
+    bigDispBoard[16][10] = pgm_read_byte_near(&paintColors[current_color[0]]); // top left pixel
+    bigDispBoard[16][11] = pgm_read_byte_near(&paintColors[current_color[0]]); // top left pixel
+    bigDispBoard[17][10] = pgm_read_byte_near(&paintColors[current_color[1]]); // top left pixel
+    bigDispBoard[17][11] = pgm_read_byte_near(&paintColors[current_color[1]]); // top left pixel
+    bigDispBoard[18][10] = pgm_read_byte_near(&paintColors[current_color[2]]); // top left pixel
+    bigDispBoard[18][11] = pgm_read_byte_near(&paintColors[current_color[2]]); // top left pixel
+  
+    displayLEDs(true, false, false);
+
+    delay(80);
+  }
+
+}
+
+
+void display_gimkit_back(unsigned char current_display_row, unsigned char current_display_col)
+{
+  for(int i = 0; i < NUM_DISP_ROWS; i++)
+  {
+    for(int j = 0; j < NUM_DISP_COLS; j++)
+    {
+      // unsigned int back_item_word = pgm_read_word_near(&marioDispBackItems[current_display_col+j]);
+    
+      bigDispBoard[i][j] = DISP_COLOR_LIGHT_BLUE;
+ 
+    }
+  }
+
+  // display big clouds
+  // 5x1 bottom, 3x1 top
+  // moves at half speed of foreground
+  // starts at 3,3 or 9,16 or 14,7 on screen initially, moves opposite of user ( based on current display row, display col)
+  // initial current_display_col = 0; initial current_display_row = NUM_GIMKIT_ROWS - NUM_DISP_ROWS;
+  const unsigned char num_big_clouds = 3;
+  unsigned char big_cloud_row[num_big_clouds] = {14, 3, 9};
+  unsigned char big_cloud_col[num_big_clouds] = {7, 3, 16};
+  unsigned char cloud_row = 0;
+  unsigned char cloud_col = 0;
+
+  for(int cloud = 0; cloud < num_big_clouds; cloud++)
+  {
+    cloud_row = (big_cloud_row[cloud] + CLOUD_SPACING - (current_display_row - (NUM_GIMKIT_ROWS - NUM_DISP_ROWS)) / 2) % CLOUD_SPACING; // 0 - (CLOUD_SPACING - 1)
+    cloud_col = (big_cloud_col[cloud] + CLOUD_SPACING - current_display_col / 2) % CLOUD_SPACING;  // 0 - (CLOUD_SPACING - 1)
+    for(int i = 0; i < 5; i++)
+    {
+      if ((cloud_row < NUM_DISP_ROWS) && (((cloud_col + i) % CLOUD_SPACING) < NUM_DISP_COLS))
+         bigDispBoard[cloud_row][(cloud_col + i) % CLOUD_SPACING] = DISP_COLOR_HALF_WHITE;
+      if ((i > 0) && (i < 4) && (((cloud_row + CLOUD_SPACING - 1) % CLOUD_SPACING) < NUM_DISP_ROWS) && (((cloud_col + i) % CLOUD_SPACING) < NUM_DISP_COLS))
+         bigDispBoard[((cloud_row + CLOUD_SPACING - 1) % CLOUD_SPACING)][(cloud_col + i) % CLOUD_SPACING] = DISP_COLOR_HALF_WHITE;
+    }
+  }
+
+  // display little clouds
+  // 3x1 bottom, 1x1 top
+  // moves at quarter speed of foreground
+  // starts at 10,4 or 2,11 or 16,15 or 6,17 or 1,2 on screen initially, moves opposite of user ( based on current display row, display col)
+  // initial current_display_col = 0; initial current_display_row = NUM_GIMKIT_ROWS - NUM_DISP_ROWS;
+
+  const unsigned char num_little_clouds = 5;
+  unsigned char little_cloud_row[num_little_clouds] = {10, 2, 16, 6, 1};
+  unsigned char little_cloud_col[num_little_clouds] = {4, 11, 15, 17, 2};
+
+  for(int cloud = 0; cloud < num_little_clouds; cloud++)
+  {
+    cloud_row = (little_cloud_row[cloud] + CLOUD_SPACING - (current_display_row - (NUM_GIMKIT_ROWS - NUM_DISP_ROWS)) / 4) % CLOUD_SPACING; // 0 - (CLOUD_SPACING - 1)
+    cloud_col = (little_cloud_col[cloud] + CLOUD_SPACING - current_display_col / 4) % CLOUD_SPACING;  // 0 - (CLOUD_SPACING - 1)
+    for(int i = 0; i < 3; i++)
+    {
+      if ((cloud_row < NUM_DISP_ROWS) && (((cloud_col + i) % CLOUD_SPACING) < NUM_DISP_COLS))
+        bigDispBoard[cloud_row][(cloud_col + i) % CLOUD_SPACING] = DISP_COLOR_HALF_WHITE;
+    }
+    if ((((cloud_row + CLOUD_SPACING - 1) % CLOUD_SPACING) < NUM_DISP_ROWS) && (((cloud_col + 1) % CLOUD_SPACING) < NUM_DISP_COLS))
+      bigDispBoard[((cloud_row + CLOUD_SPACING - 1) % CLOUD_SPACING)][(cloud_col + 1) % CLOUD_SPACING] = DISP_COLOR_HALF_WHITE;
+  }
+  
+}
+
+
+
+
+
+
+
+void disp_gimkit_platforms(unsigned char current_display_row, unsigned char current_display_col)
+{
+  /* Display Platforms */
+  for(int i = 0; i < NUM_GIMKIT_PLATFORMS; i++)
+  {
+    unsigned char platRow = pgm_read_byte_near(&gkPlatform_Row[i]);
+    // if platform row is within displayable rows
+    if ((platRow >= current_display_row) && // platform is at or below top of screen
+        (platRow <= current_display_row + NUM_DISP_ROWS)) // platform is at or above bottom of screen
+    {
+       unsigned char platCol = pgm_read_byte_near(&gkPlatform_Col[i]);
+       unsigned char platLength = pgm_read_byte_near(&gkPlatform_Length[i]);
+       unsigned char dispRow = platRow - current_display_row;
+       for(int j = platCol; j < platCol + platLength; j++) // for each column in current platform
+       {
+          // if platform column within displayable columns
+          if ((j >= current_display_col) && (j < current_display_col + NUM_DISP_COLS))
+          {
+             unsigned char dispCol = j - current_display_col;
+             if (platRow != (current_display_row + NUM_DISP_ROWS)) // row not below displayable area
+             {
+                if (i <= gimkit_current_platform) // been there
+                   bigDispBoard[dispRow][dispCol] = DISP_COLOR_HILL_GREEN;
+                else
+                   bigDispBoard[dispRow][dispCol] = DISP_COLOR_BROWN;
+             }
+             if ((platRow - 1) >= current_display_row) // row not above displayable area
+             {
+                if (i <= gimkit_current_platform) // been there
+                   bigDispBoard[dispRow - 1][dispCol] = DISP_COLOR_GREEN;
+                else
+                   bigDispBoard[dispRow - 1][dispCol] = DISP_COLOR_RED;
+             }
+          }
+       }
+    }
+    else if (platRow < current_display_row)// platform is above playable rows
+      break;   
+  }
+}
+
+
+
+/* Displays gimkit in current position based on current_hero_row, current_hero_col, current_display_row, current_display_col
+ */
+void disp_gimkit_hero(unsigned char current_hero_row, unsigned char current_hero_col, unsigned char current_display_row, unsigned char current_display_col)
+{
+  unsigned char hero_row_now = current_hero_row - current_display_row;
+  unsigned char hero_col_now = current_hero_col - current_display_col;
+
+  bool hero_is_jumping = hero_jump_count > 0;
+
+  bigDispBoard[hero_row_now - 2][hero_col_now] = gimkitColors[0]; // top left pixel
+  bigDispBoard[hero_row_now - 2][hero_col_now + 1] = gimkitColors[0];
+
+  bigDispBoard[hero_row_now - 1][hero_col_now] = gimkitColors[1];
+  bigDispBoard[hero_row_now - 1][hero_col_now + 1] = gimkitColors[1];
+
+  if (hero_is_jumping == true)
+  {
+    if (current_hero_col > 0)
+      bigDispBoard[hero_row_now][hero_col_now - 1] = gimkitColors[2]; // bottom left pixel
+    if (current_hero_col < (NUM_GIMKIT_ROWS - GIMKIT_HERO_WIDTH))
+      bigDispBoard[hero_row_now][hero_col_now + 2] = gimkitColors[2]; // bottom left pixel
+  }
+  else
+  {
+    bigDispBoard[hero_row_now][hero_col_now] = gimkitColors[2]; // bottom left pixel
+    bigDispBoard[hero_row_now][hero_col_now + 1] = gimkitColors[2]; // bottom right pixel
+  }
+
+}
+
+
+#define GIMKIT_COUNT_END 5000
+
+unsigned int play_gimkit()
+{
+  bool gimkit_over = false;
+  unsigned int move_dir = MOVE_NONE;
+
+  /* Re-init globabls */
+  int current_hero_row = NUM_GIMKIT_ROWS - 3; /* bottom left of hero */
+  int current_hero_col = 6; /* (0 - 255), bottom left of hero */
+  int current_display_col = 0; /* leftmost column of display as level column */
+  int current_display_row = NUM_GIMKIT_ROWS - NUM_DISP_ROWS;
+
+  hero_face_right = true;
+  hero_is_trying = false;
+  hero_jump_count = 0;
+  game_is_mario = false;
+  game_count = 0;
+  total_score = 0;
+  gimkit_current_platform = 0;
+  num_hero_jumps = 0;
+
+  float current_hero_speed = 0; /* (-3,3) */
+  float current_hero_jump_speed = 0; /* (-3,3) */
+
+  delay(300);
+
+  displayGimkitMenu();
+
+  delay(300);
+
+  while (gimkit_over == false)
+  {
+    /* look for movements */
+    move_dir = getMove();
+
+    /* End game */
+    if (move_dir == MOVE_SELECT)
+      gimkit_over = true;
+
+    update_hero_dir_speed(move_dir & 0xF, (move_dir >> 4) & 0xF, current_hero_row, current_hero_col, current_display_col, &current_hero_speed);
+    update_hero_hor_location(current_hero_speed, &current_hero_col, &current_display_col);
+    update_hero_vert_speed((move_dir >> 4) & 0xF, current_hero_row, current_hero_col, &current_hero_jump_speed, current_hero_speed);
+    update_hero_vert_location(current_hero_jump_speed, &current_hero_row, &current_display_row);
+    game_count++;
+   /* Game Over based on timer or fall in hole */
+    if ((game_count >= GIMKIT_COUNT_END) || (gimkit_current_platform == (NUM_GIMKIT_PLATFORMS - 1)))
+      gimkit_over = true;
+
+    display_gimkit_back(current_display_row, current_display_col);
+    disp_gimkit_platforms(current_display_row, current_display_col);
+    disp_gimkit_hero(current_hero_row, current_hero_col, current_display_row, current_display_col);
+    
+    displayLEDs(true, true, false);
+
+    delay(5);
+  }
+  
+  delay(500);
+
+  return gimkit_current_platform;
+}
 
 
 
@@ -5354,6 +5827,12 @@ void start_menu()
       game_selected = true;
     else if (( move_dir >> 4) == MOVE_ROTATE_LEFT)
       game_selected = true;
+    else if (move_dir == MOVE_SELECT) // exit menu
+    {
+      game_selection = 5;
+      game_selected = true;
+    }
+      
 
     /* Re-display background */
     displayGameMenu();
@@ -5376,7 +5855,7 @@ void start_menu()
 
 
 
-const unsigned char PROGMEM paintColors[NUM_PAINT_COLORS] = {1, 2, 3, 4, 5, 6, 8, 10, 11, 19, 21, 0};
+
 
 void run_paint()
 {
@@ -5835,7 +6314,15 @@ void loop() {
   {
     display_clear();
     run_paint();
+    moveDir = MOVE_NONE;
   }
+  else if (( moveDir >> 4) == MOVE_ROTATE_RIGHT)
+  {
+    display_clear();
+    play_gimkit();
+    moveDir = MOVE_NONE;
+  }
+  
 
 
   /* Update display for current selection */
@@ -5882,7 +6369,7 @@ void loop() {
 //    calibration_mode = 0;
 //  }
   else if (display_mode == DISP_GR)
-    display_green_red();
+    display_green_red(color1_in, color2_in);
   else if (display_mode == DISP_LIGHT)
     display_lights();
   else if (display_mode == DISP_ONE_COLOR)
