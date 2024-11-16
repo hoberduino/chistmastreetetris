@@ -11,7 +11,7 @@
  */
 
 /* Xmas Tree Spiral LEDs */
-#define NUM_TREE_LEDS    550
+#define NUM_TREE_LEDS    650
 
 /* 22x22 Snaked Display */
 #define NUM_LEDS    484
@@ -25,7 +25,7 @@
 #define DISP_ONE_COLOR 5
 #define DISP_CAL_BOARD 6
 #define DISP_VORTEX    7
-#define DISP_VORTEX_2  8
+#define UNUSED_MODE    8
 #define DISP_VORTEX_3  9
 #define DISP_ROWS_MOVE 10
 #define DISP_SPIRAL_1  11
@@ -44,10 +44,9 @@
 #define NUM_DISP_ROWS 22 
 #define NUM_DISP_COLS 22
 
-
 /* Initial defaults overwritten by EEPROM values from Calibration */
 /* Max number of display rows, cols for xmas tree */
-#define NUM_DISP_ROWS_TREE 20 /*middle twenty are visible */
+#define NUM_DISP_ROWS_TREE 22 /*middle twenty are visible */
 // NUM_DISP_ROWS 20 for full tetris
 #define NUM_DISP_COLS_TREE 20 /* middle ten are visible for tetris */
 
@@ -185,17 +184,17 @@ const int RIGHT_BUTTON     = 7;
 
 /* Num display rows and cols for xmas tree */
 /* initial values, overwritten by values from EEPROM */
-unsigned char num_tree_rows = 18;//NUM_DISP_ROWS_TREE;
-unsigned char num_tree_cols = 18;//NUM_DISP_COLS_TREE;
+//unsigned char num_tree_rows = 20;//NUM_DISP_ROWS_TREE;
+//unsigned char num_tree_cols = 18;//NUM_DISP_COLS_TREE;
 
-
- /* Number of "unused" LEDs before rows, starting at top*/
-unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
-{8,27,29,27,17,
- 14,16,15,12,
- 12,8,9,5,
- 7,5,4,1,
- 1,0,0};
+/* 0th entry is num lights before start of first row */
+ unsigned char ledsInRows[NUM_DISP_ROWS_TREE + 1] =
+{0,
+ 49,45,45,43,38, // GOOD
+ 36,35,34,31,31, // GOOD
+ 27,29,27,27,27, // GOOD
+ 27,25,22,19,17, // GOOD
+ 10,6};
 
 
 /* Big LED Display Board (22x22) */
@@ -467,39 +466,42 @@ void displayBigBoardTwoTwo(bool showLed)
 
 /* Convert from bigDispBoard to LEDs on Tree */
 /* Start at bottom, right and wind around tree */
-void displayLEDTree(bool showLed, bool dispBottomRow, bool dispCastle)
+void displayLEDTree(bool showLed, bool dispCastle)
 {
-  int i, j;
   unsigned int currentLED = NUM_LEDS; // start after display board of LEDs
-  
-  unsigned int unused_rows_top = (NUM_DISP_ROWS - num_tree_rows) / 2;
-  unsigned int unused_cols_left = (NUM_DISP_COLS - num_tree_cols) / 2;
-
-  if (dispBottomRow == true)
-    unused_rows_top++;
+  unsigned char num_disp_cols = NUM_DISP_COLS_TREE;
+  unsigned char first_disp_col = 0;
   
   /* bottom row to top, right to left */
-  for(i = 0; i < num_tree_rows; i++)
+  for(int i = 0; i < NUM_DISP_ROWS_TREE; i++)
   {
-    /* ledsBeforeRows starts at bottom row of tree, right to left */
-    for(j = 0; j < ledsBeforeRows[i]; j++)
+    unsigned int num_leds_current_row = ledsInRows[i + 1];
+    if (num_leds_current_row < NUM_DISP_COLS_TREE)
+    {
+       num_disp_cols = num_leds_current_row;
+       first_disp_col = (NUM_DISP_COLS_TREE - num_disp_cols) / 2;
+    }
+
+    /* starts at bottom row of tree, right to left, rightmost display col */
+    for(int j = num_disp_cols - 1; j >= first_disp_col; j--)
+    {      
+      if (((dispCastle == true) and (bigDispBoard[(NUM_DISP_ROWS_TREE - i - 1)][j] > 0)) ||
+         ((showLed == true) and (dispCastle == false)))
+         leds[currentLED] = numToColorTree[bigDispBoard[(NUM_DISP_ROWS_TREE - i - 1)][j]];
+      currentLED++;
+    }
+
+    /* clear remaining leds in row */
+    for(int j = num_disp_cols; j < num_leds_current_row; j++)
     {      
       if ((showLed == true) and (dispCastle == false))
         leds[currentLED] = CRGB::Black;
       currentLED++;
     }
 
-    for(j = num_tree_cols - 1; j >= 0; j--)
-    {      
-      if ((dispCastle == true) and (bigDispBoard[(num_tree_rows - i - 1) + unused_rows_top][j + unused_cols_left] > 0))
-         leds[currentLED] = numToColorTree[bigDispBoard[(num_tree_rows - i - 1) + unused_rows_top][j + unused_cols_left]];
-      else if ((showLed == true) and (dispCastle == false))
-         leds[currentLED] = numToColorTree[bigDispBoard[(num_tree_rows - i - 1) + unused_rows_top][j + unused_cols_left]];
-      currentLED++;
-    }
   }
 
-  for(i = currentLED; i < (NUM_LEDS + NUM_TREE_LEDS); i++)
+  for(int i = currentLED; i < (NUM_LEDS + NUM_TREE_LEDS); i++)
     if ((showLed == true) and (dispCastle == false))
     {
       leds[currentLED] = CRGB::Black;
@@ -511,10 +513,10 @@ void displayLEDTree(bool showLed, bool dispBottomRow, bool dispCastle)
 }
 
 /* Switch between displaying LED Board and LED Tree */
-void displayLEDs(bool showLed, bool dispBottomRow, bool dispCastle)
+void displayLEDs(bool showLed, bool dispCastle)
 {
     displayBigBoardTwoTwo(showLed);
-    displayLEDTree(showLed, dispBottomRow, dispCastle);
+    displayLEDTree(showLed, dispCastle);
 //    displayLEDBoardTwentyTen(showLed);
 }
 
@@ -551,7 +553,7 @@ void displayScore(unsigned int totalScore, bool show_leds)
   }
      
   if (show_leds)
-    displayLEDs(true, false, false);
+    displayLEDs(true, false);
 }
 
 
@@ -766,7 +768,7 @@ void displayFullRow(int rowNum)
         bigDispBoard[rowNum - 2 + unused_rows_top][j + unused_cols_left] = DISP_COLOR_GREEN;
     }
   }
-  displayLEDs(true, true, false);
+  displayLEDs(true, false);
 }
 
 void displayTetrisStart()
@@ -780,7 +782,7 @@ void displayTetrisStart()
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
       bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&tetrisStartDisp[i][j]);
 
-  displayLEDs(true, false, false);
+  displayLEDs(true, false);
 }
 
 const unsigned int PROGMEM shapeToColor[NUM_SHAPES] = 
@@ -831,7 +833,7 @@ void displayGameBoard(bool slow)
     }
     if (((slow == true) && (somethingThisRow == true)) && (i <= firstRow))
     {
-      displayLEDs(true, true, false);
+      displayLEDs(true, false);
       delay(100);
       somethingThisRow = false;
     }
@@ -851,7 +853,7 @@ void displayGameBoard(bool slow)
     }
   }
 
-  displayLEDs(true, true, false);
+  displayLEDs(true, false);
 }
 
 
@@ -1291,7 +1293,7 @@ void display_castle()
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
       bigDispBoard[i + unused_rows_top + 8][j + unused_cols_left] = pgm_read_byte_near(&castleDisp[i][j]);
 
-  displayLEDTree(true, true, true);
+  displayLEDTree(true, true);
 
   delay(20);
 }
@@ -1308,54 +1310,46 @@ void display_cal_board()
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
       bigDispBoard[i+1][j+6] = DISP_COLOR_GREEN;
 
-  displayLEDTree(true, true, false);
+  displayLEDTree(true, false);
 
   FastLED.show();
   delay(20);
 }
 
 
+void display_every_other()
+{
+
+  int numLightsBeforeRow = 0;
+
+  for(int i = 0; i < NUM_DISP_ROWS_TREE; i++) // num rows
+  {
+    numLightsBeforeRow += ledsInRows[i]; // previous row
+    for(int j = 0; j < ledsInRows[i + 1]; j++) // num lights current row
+    {
+      leds[NUM_LEDS + numLightsBeforeRow + j] = numToColorTree[i % 2 + 4];
+    }
+  }
+
+  FastLED.show();
+  delay(5);
+}
+
 void display_vortex(unsigned char Color1, unsigned char Color2)
 {
-//  unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
-//{8,27,29,27,17,
-// 14,16,15,12,
-// 12,8,9,5,
-// 7,5,4,1,
-// 1,0,0};
-// NUM_LEDS
 
-  int firstInRow[NUM_DISP_ROWS_TREE] =
-{8,55,104,151,188,
- 222,258,293,325,357,
- 385,414,439,466,491,
- 515,536,1,0,0};
-  
-  int i, j;
+  unsigned int led_num = NUM_LEDS;
 
   // (twinkle, twinkle + 19) are red
   // (twinkle + 20, twinkle + 39) are green
 
-  // Imagine 40*16=640 tree lights
-  for(i = 0; i < 16; i++) // num rows
+  for(int i = 0; i < NUM_TREE_LEDS; i++) // num rows
   {
-    for(j = 0; j < 20; j++) // num lights
-    {
-      int lightOnCurrentRow = ((light_twinkle + j) % 40);
-      int lightOnCurrentRowBackMod = (int)(((float)((light_twinkle + j) % 20)) / 20.0f * ledsBeforeRows[i + 1]);
-      if (lightOnCurrentRow < 20) // on screen
-      {
-        leds[NUM_LEDS + firstInRow[i] + lightOnCurrentRow] = numToColorTree[Color1];
-        leds[NUM_LEDS + firstInRow[i] + 20 + lightOnCurrentRowBackMod] = numToColorTree[Color2];
-      }
-      else
-      {
-        leds[NUM_LEDS + firstInRow[i] + (lightOnCurrentRow % 20)] = numToColorTree[Color2];
-        leds[NUM_LEDS + firstInRow[i] + 20 + lightOnCurrentRowBackMod] = numToColorTree[Color1];
-      }
-    }
+    if ((((i + light_twinkle) % 40) / 20) == 0)
+      leds[NUM_LEDS + i] = numToColorTree[Color1];
+    else
+      leds[NUM_LEDS + i] = numToColorTree[Color2];
   }
-  
   
   light_twinkle = (light_twinkle + 1) % 40; // which column
 
@@ -1363,53 +1357,7 @@ void display_vortex(unsigned char Color1, unsigned char Color2)
   delay(5);
 }
 
-void display_vortex_2(unsigned char Color1, unsigned char Color2)
-{
-//  unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
-//{8,27,29,27,17,
-// 14,16,15,12,
-// 12,8,9,5,
-// 7,5,4,1,
-// 1,0,0};
-// NUM_LEDS
 
-  int firstInRow[NUM_DISP_ROWS_TREE] =
-{8,53,100,145,180,
- 212,246,279,309,339,
- 365,392,415,440,463,
- 485,504,523,0,0};
-  
-  int i, j;
-
-  // (twinkle, twinkle + 17) are red
-  // (twinkle + 18, twinkle + 35) are green
-
-  // Imagine 38*17=606 tree lights
-  for(i = 0; i < 18; i++) // num rows
-  {
-    for(j = 0; j < 18; j++) // num lights
-    {
-      int lightOnCurrentRow = ((light_twinkle + j) % 36);
-      int lightOnCurrentRowBackMod = (int)(((float)((light_twinkle + j) % 18)) / 18.0f * ledsBeforeRows[i + 1]);
-      if (lightOnCurrentRow < 18) // on screen
-      {
-        leds[NUM_LEDS + firstInRow[i] + lightOnCurrentRow] = numToColorTree[Color1];
-        leds[NUM_LEDS + firstInRow[i] + 18 + lightOnCurrentRowBackMod] = numToColorTree[Color2];
-      }
-      else
-      {
-        leds[NUM_LEDS + firstInRow[i] + (lightOnCurrentRow % 18)] = numToColorTree[Color2];
-        leds[NUM_LEDS + firstInRow[i] + 18 + lightOnCurrentRowBackMod] = numToColorTree[Color1];
-      }
-    }
-  }
-  
-  
-  light_twinkle = (light_twinkle + 1) % 36; // which column
-
-  FastLED.show();
-  delay(5);
-}
 
 
 
@@ -1499,7 +1447,7 @@ void display_spiral(unsigned char Color1, unsigned char Color2, unsigned char Co
   
   light_twinkle = (light_twinkle + 1) % 36; // degrees by 10
 
-  displayLEDTree(true, false, false);
+  displayLEDTree(true, false);
   delay(50);
 }
 
@@ -1518,44 +1466,25 @@ void display_clear()
 
 void display_rows_move(unsigned char Color1, unsigned char Color2)
 {
-//  unsigned char ledsBeforeRows[NUM_DISP_ROWS_TREE] =
-//{8,27,29,27,17,
-// 14,16,15,12,
-// 12,8,9,5,
-// 7,5,4,1,
-// 1,0,0};
-// NUM_LEDS
-
-  int firstInRow[NUM_DISP_ROWS_TREE] =
-{8,53,100,145,180,
- 212,246,279,309,339,
- 365,392,415,440,463,
- 485,504,523,550,0};
-
-  int light_num_row;
-
-  if (light_twinkle < 18)
-    light_num_row = (light_twinkle % 18) + 1; // (1-18)
-  else
-    light_num_row = 18 - (light_twinkle % 18);  // (18-1)
-
-  if ((light_twinkle == 18) || (light_twinkle == 0))
-    display_clear();
-
-  for(int i = firstInRow[light_num_row - 1]; i < firstInRow[light_num_row]; i++)
+  unsigned int current_led = NUM_LEDS;
+  for(int i = 0; i < NUM_DISP_ROWS_TREE; i++)
   {
-    leds[NUM_LEDS + i] = numToColorTree[Color1];
+    unsigned char cur_row_color = Color1;
+    if ((((i + (light_twinkle / 2)) % 4) / 2) == 0)
+      cur_row_color = Color2;
+
+    for(int j = 0; j < ledsInRows[i]; j++)
+    {
+       leds[current_led] = numToColorTree[cur_row_color];
+       current_led++;
+    }
+
   }
-    
-  for(int i = firstInRow[18 - light_num_row + 1]; i > firstInRow[18 - light_num_row]; i--)
-  {
-    leds[NUM_LEDS + i] = numToColorTree[Color2];
-  }
-  
-  light_twinkle = (light_twinkle + 1) % 36; // which row (0 - 35)
+
+  light_twinkle = (light_twinkle + 1) % 8; 
 
   FastLED.show();
-  delay(200);
+  delay(40);
 }
 
 
@@ -1895,7 +1824,7 @@ void displayLEDBoardMarioRun(unsigned char mario_frame, unsigned char mario_dir)
     }
   }
 
-  displayLEDs(true, false, false);
+  displayLEDs(true, false);
 }
 
 #define MARIO_DELAY_TIME 100
@@ -4418,7 +4347,7 @@ unsigned int play_mario(unsigned char mario_color)
     display_mario_fireballs(current_display_col, current_mario_row, current_mario_col, (move_dir >> 4) & 0xF);
     display_mario_star(current_mario_row, current_mario_col, current_display_col);
     display_goodbye_char(false, current_display_col);
-    displayLEDs(true, true, false);
+    displayLEDs(true, false);
 
     /* Check for restart */
     if (mario_over == true)
@@ -4453,7 +4382,7 @@ unsigned int play_mario(unsigned char mario_color)
           display_goodbye_char(mario_color, current_display_col);
           
           
-          displayLEDs(true, true, false);
+          displayLEDs(true, false);
           delay(5);
         }
         // write saved display
@@ -4462,7 +4391,7 @@ unsigned int play_mario(unsigned char mario_color)
           bigDispBoard[i][current_mario_col - current_display_col] = save_bg_0[i];
           bigDispBoard[i][current_mario_col - current_display_col + 1] = save_bg_1[i];
         }
-        displayLEDs(true, true, false);
+        displayLEDs(true, false);
         
       }
       if (mario_lives > 0)
@@ -4550,7 +4479,7 @@ void display_mario_end_animation()
       display_mario_fore_items(current_display_col);
       if (display_mario_now)
         disp_mario(mario_end_color, current_mario_row, current_mario_col, current_display_col);
-      displayLEDs(true, true, false);
+      displayLEDs(true, false);
 
       game_count++;
       delay(5);
@@ -4612,7 +4541,7 @@ void display_mario_end_animation()
         bigDispBoard[current_mario_row - 1][current_display_col + 1] = DISP_COLOR_LIGHT_BLUE;
       }
       
-      displayLEDs(true, true, false);
+      displayLEDs(true, false);
 
       firework_display_count++;
       delay(200);
@@ -4709,7 +4638,7 @@ void displayGimkitMenu()
     bigDispBoard[18][10] = pgm_read_byte_near(&paintColors[current_color[2]]); // top left pixel
     bigDispBoard[18][11] = pgm_read_byte_near(&paintColors[current_color[2]]); // top left pixel
   
-    displayLEDs(true, false, false);
+    displayLEDs(true, false);
 
     delay(80);
   }
@@ -4912,7 +4841,7 @@ unsigned int play_gimkit()
     disp_gimkit_platforms(current_display_row, current_display_col);
     disp_gimkit_hero(current_hero_row, current_hero_col, current_display_row, current_display_col);
     
-    displayLEDs(true, true, false);
+    displayLEDs(true, false);
 
     delay(5);
   }
@@ -5093,7 +5022,7 @@ void displayPacStart()
     for(j = 0; j < NUM_DISP_COLS_TETRIS; j++)
       bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&pacStartDisp[i][j]);
 
-  displayLEDs(true, false, false);
+  displayLEDs(true, false);
 }
 
 const unsigned char PROGMEM pac_back[NUM_DISP_ROWS][NUM_DISP_COLS] =
@@ -5705,7 +5634,7 @@ void play_pac_man()
     display_pac_lives();
     display_pac_man();
     display_ghosts();
-    displayLEDs(true, false, false);
+    displayLEDs(true, false);
 
     /* Look to see if all dots eaten and start new level if needed */
     j = 0; /* used to add up remaining dots on all rows */
@@ -5798,7 +5727,7 @@ void displayGameMenu()
   bigDispBoard[unused_rows_top + 2 + 6 * game_selection][unused_cols_left] = DISP_COLOR_YELLOW;
   bigDispBoard[unused_rows_top + 2 + 6 * game_selection][unused_cols_left + 1] = DISP_COLOR_YELLOW;
 
-  displayLEDs(true, false, false);
+  displayLEDs(true, false);
 
 }
 
@@ -5944,7 +5873,7 @@ void run_paint()
     }
 
     // draw
-    displayLEDs(true, false, false);
+    displayLEDs(true, false);
 
     delay(80);
   }
@@ -6250,7 +6179,7 @@ void display_picture_one()
   for(i = 0; i < NUM_DISP_ROWS_MENU; i++)
     for(j = 0; j < 19; j++)
       bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&picOneDisp[i][j]);
-  displayLEDs(true, false, false);
+  displayLEDs(true, false);
   delay(3000);
   display_clear();
 }
@@ -6263,7 +6192,7 @@ void display_picture_one()
 //  for(i = 0; i < NUM_DISP_ROWS_MENU; i++)
 //    for(j = 0; j < 17; j++)
 //      bigDispBoard[i + unused_rows_top][j + unused_cols_left] = pgm_read_byte_near(&picTwoDisp[i][j]);
-//  displayLEDs(true, false, false);
+//  displayLEDs(true, false);
 //  delay(3000);
 //}
 
@@ -6384,12 +6313,11 @@ void loop() {
     display_cal_board(); 
   else if (display_mode == DISP_VORTEX)
     display_vortex(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
-  else if (display_mode == DISP_VORTEX_2)
-    display_vortex_2(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
   else if (display_mode == DISP_ROWS_MOVE)
     display_rows_move(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
   else if (display_mode == DISP_VORTEX_3)
-    display_vortex_2(0x008080, 0x00ff80); 
+    //display_vortex_2(0x008080, 0x00ff80); 
+    display_every_other();
   else if (display_mode == DISP_SPIRAL_1)
     display_spiral(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]), pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
   else if (display_mode == DISP_SPIRAL_2)
