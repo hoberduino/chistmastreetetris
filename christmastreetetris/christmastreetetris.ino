@@ -25,7 +25,7 @@
 #define DISP_ONE_COLOR 5
 #define DISP_CAL_BOARD 6
 #define DISP_VORTEX    7
-#define UNUSED_MODE    8
+#define DISP_COLS_MOVE 8
 #define DISP_VORTEX_3  9
 #define DISP_ROWS_MOVE 10
 #define DISP_SPIRAL_1  11
@@ -1467,7 +1467,7 @@ void display_clear()
 void display_rows_move(unsigned char Color1, unsigned char Color2)
 {
   unsigned int current_led = NUM_LEDS;
-  for(int i = 0; i < NUM_DISP_ROWS_TREE; i++)
+  for(int i = 0; i <= NUM_DISP_ROWS_TREE; i++)
   {
     unsigned char cur_row_color = Color1;
     if ((((i + (light_twinkle / 2)) % 4) / 2) == 0)
@@ -1482,6 +1482,70 @@ void display_rows_move(unsigned char Color1, unsigned char Color2)
   }
 
   light_twinkle = (light_twinkle + 1) % 8; 
+
+  FastLED.show();
+  delay(40);
+}
+
+void display_cols_move(unsigned char Color1, unsigned char Color2)
+{
+  unsigned int current_led = NUM_LEDS;
+  for(int i = 0; i <= NUM_DISP_ROWS_TREE; i++)
+  {
+    unsigned int twinkle_spot = (unsigned int)(((float)(light_twinkle) / 40.0) * ledsInRows[i]);
+    unsigned int half_past_twinkle = (twinkle_spot + ledsInRows[i] / 2) % ledsInRows[i];
+    for(int j = 0; j < ledsInRows[i]; j++)
+    {
+      if ((((j >= twinkle_spot) && (j < half_past_twinkle)) && (half_past_twinkle > twinkle_spot)) ||
+          (((j >= twinkle_spot) || (j < half_past_twinkle)) && (half_past_twinkle < twinkle_spot))) 
+        leds[current_led] = numToColorTree[Color1];
+      else
+        leds[current_led] = numToColorTree[Color2];
+      current_led++;
+    }
+  }
+
+  light_twinkle = (light_twinkle + 1) % 40; 
+
+  FastLED.show();
+  delay(40);
+}
+
+void display_cols_move_2(unsigned char Color1, unsigned char Color2)
+{
+  unsigned int current_led = NUM_LEDS;
+  for(int i = 0; i <= NUM_DISP_ROWS_TREE; i++)
+  {
+    unsigned int twinkle_spot = (unsigned int)(((float)(light_twinkle) / 40.0) * ledsInRows[i]);
+    unsigned int twinkle_spot_two = (twinkle_spot + ledsInRows[i] / 6) % ledsInRows[i];
+    unsigned int twinkle_spot_three = (twinkle_spot + ledsInRows[i] / 3) % ledsInRows[i];
+    unsigned int twinkle_spot_four = (twinkle_spot + ledsInRows[i] / 2) % ledsInRows[i];
+    unsigned int twinkle_spot_five = (twinkle_spot + 2 * ledsInRows[i] / 3) % ledsInRows[i];
+    unsigned int twinkle_spot_six = (twinkle_spot + 5 * ledsInRows[i] / 6) % ledsInRows[i];
+    for(int j = 0; j < ledsInRows[i]; j++)
+    {
+      if ((((j >= twinkle_spot) && (j < twinkle_spot_two)) && (twinkle_spot_two > twinkle_spot)) ||
+          (((j >= twinkle_spot) || (j < twinkle_spot_two)) && (twinkle_spot_two < twinkle_spot))) 
+        leds[current_led] = numToColorTree[Color1];
+      else if ((((j >= twinkle_spot_two) && (j < twinkle_spot_three)) && (twinkle_spot_three > twinkle_spot_two)) ||
+          (((j >= twinkle_spot_two) || (j < twinkle_spot_three)) && (twinkle_spot_three < twinkle_spot_two))) 
+        leds[current_led] = numToColorTree[Color2];
+      else if ((((j >= twinkle_spot_three) && (j < twinkle_spot_four)) && (twinkle_spot_four > twinkle_spot_three)) ||
+          (((j >= twinkle_spot_three) || (j < twinkle_spot_four)) && (twinkle_spot_four < twinkle_spot_three))) 
+        leds[current_led] = numToColorTree[Color1];
+      else if ((((j >= twinkle_spot_four) && (j < twinkle_spot_five)) && (twinkle_spot_five > twinkle_spot_four)) ||
+          (((j >= twinkle_spot_four) || (j < twinkle_spot_five)) && (twinkle_spot_five < twinkle_spot_four))) 
+        leds[current_led] = numToColorTree[Color2];
+      else if ((((j >= twinkle_spot_five) && (j < twinkle_spot_six)) && (twinkle_spot_six > twinkle_spot_five)) ||
+          (((j >= twinkle_spot_five) || (j < twinkle_spot_six)) && (twinkle_spot_six < twinkle_spot_five))) 
+        leds[current_led] = numToColorTree[Color1];
+      else
+        leds[current_led] = numToColorTree[Color2];
+      current_led++;
+    }
+  }
+
+  light_twinkle = (light_twinkle + 1) % 40; 
 
   FastLED.show();
   delay(40);
@@ -6315,9 +6379,12 @@ void loop() {
     display_vortex(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
   else if (display_mode == DISP_ROWS_MOVE)
     display_rows_move(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
+  else if (display_mode == DISP_COLS_MOVE)
+    display_cols_move(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
   else if (display_mode == DISP_VORTEX_3)
     //display_vortex_2(0x008080, 0x00ff80); 
-    display_every_other();
+    display_cols_move_2(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
+    //display_every_other();
   else if (display_mode == DISP_SPIRAL_1)
     display_spiral(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]), pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
   else if (display_mode == DISP_SPIRAL_2)
