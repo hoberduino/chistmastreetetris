@@ -30,7 +30,9 @@
 #define DISP_ROWS_MOVE 10
 #define DISP_SPIRAL_1  11
 #define DISP_SPIRAL_2  12
-#define NUM_DISP_MODES 13
+#define DISP_JU_ANN    13
+#define DISP_SNAKE     14
+#define NUM_DISP_MODES 15
 
 
 
@@ -1338,8 +1340,6 @@ void display_every_other()
 void display_vortex(unsigned char Color1, unsigned char Color2)
 {
 
-  unsigned int led_num = NUM_LEDS;
-
   // (twinkle, twinkle + 19) are red
   // (twinkle + 20, twinkle + 39) are green
 
@@ -1358,98 +1358,180 @@ void display_vortex(unsigned char Color1, unsigned char Color2)
 }
 
 
-
-
-
-
-
-void display_spiral(unsigned char Color1, unsigned char Color2, unsigned char Color3, unsigned char Color4)
+void display_spiral(unsigned char Color1, unsigned char Color2)
 {
+  // center at row 11, col 0
 
-    float tangentsByTen_1[18] =
-      {-0.01, 0.17632,0.36397,0.57735,0.839099,1.19175,
-       1.73205,2.74747,5.67128,10000000.0};
+  unsigned int cur_row_start = NUM_LEDS;
+  unsigned int cur_plus_half = 0;
+  unsigned int cur_minus_half = NUM_LEDS;
+  unsigned char current_color = Color1;
 
-    float tangentsByTen_2[10] =
-      {-10000000.0,-5.67128,
-       -2.74747,-1.73205,-1.19175,-0.839099,-0.57735,
-       -0.36397,-0.17632, 0.01};
-
-    int sector = 0; // sector is from 0 - 35
-    float tan_theta = 0;  // tan theta = col / row
-    int x_coord = 0, y_coord = 0;
-
-  // board is 22 x 22, place center at row 11, col 11
-  for(int i = 0; i < NUM_DISP_ROWS; i++)
+  for(int i = 0; i < NUM_DISP_ROWS_TREE; i++)
   {
-    for(int j = 0; j < NUM_DISP_COLS; j++)
-    {
-      x_coord = j - 11;
-      y_coord = i - 11;
+    cur_row_start += ledsInRows[i];
+    cur_plus_half = cur_row_start + ledsInRows[i + 1] / 2;
+    if (i > 0)
+      cur_minus_half = cur_row_start - ledsInRows[i - 1] / 2;
       
-      // if point is within (light_twinkle, light_twinkle + 90) degress, then it is Color1
-      // i.e. within the next 9 10-degree sectors
-      // First, identify sector of current point
-      if (x_coord != 0)
-         tan_theta = ((float)y_coord)/((float)x_coord);
-      
-      if ((x_coord > 0) && (y_coord >= 0)) // 1st quadrant
-      {
-         for(int k = 0; k < 9; k++)
-         {
-            if ((tan_theta >= tangentsByTen_1[k]) && (tan_theta < tangentsByTen_1[k + 1]))
-               sector = k;
-         }
-      }
-      else if ((x_coord < 0) && (y_coord >= 0)) // 2nd quadrant
-      {
-         for(int k = 0; k < 9; k++)
-         {
-            if ((tan_theta >= tangentsByTen_2[k]) && (tan_theta < tangentsByTen_2[k + 1]))
-               sector = k + 9;
-         }
-      }
-      else if ((x_coord < 0) && (y_coord < 0)) // 3rd quadrant
-      {
-         for(int k = 0; k < 9; k++)
-         {
-            if ((tan_theta >= tangentsByTen_1[k]) && (tan_theta < tangentsByTen_1[k + 1]))
-               sector = k + 18;
-         }
-      }
-      else if ((x_coord > 0) && (y_coord < 0)) // 4th quadrant
-      {
-         for(int k = 0; k < 9; k++)
-         {
-            if ((tan_theta >= tangentsByTen_2[k]) && (tan_theta < tangentsByTen_2[k + 1]))
-               sector = k + 27;
-         }
-      }
-      else if ((x_coord == 0) && (y_coord > 0)) // postive y axis
-      {
-        sector = 9;
-      }
-      else if ((x_coord == 0) && (y_coord < 0)) // negative y axis
-      {
-        sector = 27;
-      }
+    unsigned int dist_from_center_row = abs(11 - i);
+    unsigned int dist_from_center_col = light_twinkle % 30 - dist_from_center_row;
+    if ((light_twinkle / 30) == 1) // Color1
+      current_color = Color2;
 
-      if (((sector + 36 - light_twinkle) % 36) < 9)
-        bigDispBoard[i][j] = Color1;
-      else if (((sector + 36 - light_twinkle) % 36) < 18)
-        bigDispBoard[i][j] = Color2;
-      else if (((sector + 36 - light_twinkle) % 36) < 27)
-        bigDispBoard[i][j] = Color3;
-      else 
-        bigDispBoard[i][j] = Color4;
+    if ((light_twinkle % 30) > dist_from_center_row) // this row is go
+    {
+      if ((cur_row_start + dist_from_center_col) < cur_plus_half)
+        leds[cur_row_start + dist_from_center_col] = numToColorTree[current_color];
+      if ((cur_row_start - dist_from_center_col) > cur_minus_half)
+        leds[cur_row_start - dist_from_center_col] = numToColorTree[current_color];
     }
   }
-  
-  light_twinkle = (light_twinkle + 1) % 36; // degrees by 10
 
-  displayLEDTree(true, false);
-  delay(50);
+  light_twinkle = (light_twinkle + 1) % 60; // distance from center
+
+  FastLED.show();
+  delay(20);
+
 }
+
+
+void display_spiral_2(unsigned char Color1, unsigned char Color2)
+{
+  // center at row 11, col 0
+
+  unsigned int cur_row_start = NUM_LEDS;
+  unsigned int cur_plus_half = 0;
+  unsigned int cur_minus_half = NUM_LEDS;
+
+  for(int i = 0; i < NUM_DISP_ROWS_TREE; i++)
+  {
+    cur_row_start += ledsInRows[i];
+    cur_plus_half = cur_row_start + ledsInRows[i + 1] / 2;
+    if (i > 0)
+      cur_minus_half = cur_row_start - ledsInRows[i - 1] / 2;
+      
+    unsigned int dist_from_center_row = abs(11 - i);
+    unsigned int dist_from_center_col = light_twinkle - dist_from_center_row; // twinkle dist
+
+    if (light_twinkle > dist_from_center_row) // this row is go
+    {
+      if ((cur_row_start + dist_from_center_col) < cur_plus_half)
+        leds[cur_row_start + dist_from_center_col] = numToColorTree[Color1];
+      if ((cur_row_start - dist_from_center_col) > cur_minus_half)
+        leds[cur_row_start - dist_from_center_col] = numToColorTree[Color1];
+    }
+
+    // second one
+    unsigned int second_twinkle = (light_twinkle + 15) % 30;
+    dist_from_center_col = second_twinkle - dist_from_center_row; // twinkle dist
+
+    if (second_twinkle > dist_from_center_row) // this row is go
+    {
+      if ((cur_row_start + dist_from_center_col) < cur_plus_half)
+        leds[cur_row_start + dist_from_center_col] = numToColorTree[Color2];
+      if ((cur_row_start - dist_from_center_col) > cur_minus_half)
+        leds[cur_row_start - dist_from_center_col] = numToColorTree[Color2];
+    }
+  }
+
+  light_twinkle = (light_twinkle + 1) % 30; // distance from center
+
+  FastLED.show();
+  delay(40);
+
+}
+
+
+
+
+// void display_spiral(unsigned char Color1, unsigned char Color2, unsigned char Color3, unsigned char Color4)
+// {
+
+//     float tangentsByTen_1[18] =
+//       {-0.01, 0.17632,0.36397,0.57735,0.839099,1.19175,
+//        1.73205,2.74747,5.67128,10000000.0};
+
+//     float tangentsByTen_2[10] =
+//       {-10000000.0,-5.67128,
+//        -2.74747,-1.73205,-1.19175,-0.839099,-0.57735,
+//        -0.36397,-0.17632, 0.01};
+
+//     int sector = 0; // sector is from 0 - 35
+//     float tan_theta = 0;  // tan theta = col / row
+//     int x_coord = 0, y_coord = 0;
+
+//   // board is 22 x 22, place center at row 11, col 11
+//   for(int i = 0; i < NUM_DISP_ROWS; i++)
+//   {
+//     for(int j = 0; j < NUM_DISP_COLS; j++)
+//     {
+//       x_coord = j - 11;
+//       y_coord = i - 11;
+      
+//       // if point is within (light_twinkle, light_twinkle + 90) degress, then it is Color1
+//       // i.e. within the next 9 10-degree sectors
+//       // First, identify sector of current point
+//       if (x_coord != 0)
+//          tan_theta = ((float)y_coord)/((float)x_coord);
+      
+//       if ((x_coord > 0) && (y_coord >= 0)) // 1st quadrant
+//       {
+//          for(int k = 0; k < 9; k++)
+//          {
+//             if ((tan_theta >= tangentsByTen_1[k]) && (tan_theta < tangentsByTen_1[k + 1]))
+//                sector = k;
+//          }
+//       }
+//       else if ((x_coord < 0) && (y_coord >= 0)) // 2nd quadrant
+//       {
+//          for(int k = 0; k < 9; k++)
+//          {
+//             if ((tan_theta >= tangentsByTen_2[k]) && (tan_theta < tangentsByTen_2[k + 1]))
+//                sector = k + 9;
+//          }
+//       }
+//       else if ((x_coord < 0) && (y_coord < 0)) // 3rd quadrant
+//       {
+//          for(int k = 0; k < 9; k++)
+//          {
+//             if ((tan_theta >= tangentsByTen_1[k]) && (tan_theta < tangentsByTen_1[k + 1]))
+//                sector = k + 18;
+//          }
+//       }
+//       else if ((x_coord > 0) && (y_coord < 0)) // 4th quadrant
+//       {
+//          for(int k = 0; k < 9; k++)
+//          {
+//             if ((tan_theta >= tangentsByTen_2[k]) && (tan_theta < tangentsByTen_2[k + 1]))
+//                sector = k + 27;
+//          }
+//       }
+//       else if ((x_coord == 0) && (y_coord > 0)) // postive y axis
+//       {
+//         sector = 9;
+//       }
+//       else if ((x_coord == 0) && (y_coord < 0)) // negative y axis
+//       {
+//         sector = 27;
+//       }
+
+//       if (((sector + 36 - light_twinkle) % 36) < 9)
+//         bigDispBoard[i][j] = Color1;
+//       else if (((sector + 36 - light_twinkle) % 36) < 18)
+//         bigDispBoard[i][j] = Color2;
+//       else if (((sector + 36 - light_twinkle) % 36) < 27)
+//         bigDispBoard[i][j] = Color3;
+//       else 
+//         bigDispBoard[i][j] = Color4;
+//     }
+//   }
+  
+//   light_twinkle = (light_twinkle + 1) % 36; // degrees by 10
+
+//   displayLEDTree(true, false);
+//   delay(50);
+// }
 
 
 void display_clear()
@@ -1470,7 +1552,7 @@ void display_rows_move(unsigned char Color1, unsigned char Color2)
   for(int i = 0; i <= NUM_DISP_ROWS_TREE; i++)
   {
     unsigned char cur_row_color = Color1;
-    if ((((i + (light_twinkle / 2)) % 4) / 2) == 0)
+    if ((((i + (light_twinkle / 2)) % 4) / 2) == 0) // every 2 lines
       cur_row_color = Color2;
 
     for(int j = 0; j < ledsInRows[i]; j++)
@@ -1481,10 +1563,71 @@ void display_rows_move(unsigned char Color1, unsigned char Color2)
 
   }
 
-  light_twinkle = (light_twinkle + 1) % 8; 
+  light_twinkle = (light_twinkle + 1) % 16; 
 
   FastLED.show();
-  delay(40);
+  delay(20);
+}
+
+void display_rainbow_rows()
+{
+  unsigned int current_led = NUM_LEDS;
+
+  for(int i = 0; i <= NUM_DISP_ROWS_TREE; i++)
+  {
+    for(int j = 0; j < ledsInRows[i]; j++)
+    {
+       leds[current_led] = CHSV( (gHue - 5 * i) % 256, 200, 255);
+       current_led++;
+    }
+  }
+
+  gHue += 5;
+
+  FastLED.show();
+  delay(20);
+}
+
+void display_ju_ann(unsigned char Color1, unsigned char Color2)
+{
+  unsigned int current_led = NUM_LEDS;
+  for(int i = 0; i <= NUM_DISP_ROWS_TREE; i++)
+  {
+    unsigned char cur_row_color = Color2;
+    if (i == (light_twinkle + 1)) 
+      cur_row_color = Color1; 
+
+    if (i == ((light_twinkle + 7) % NUM_DISP_ROWS_TREE + 1)) 
+      cur_row_color = Color1;  
+
+    if (i == ((light_twinkle + 14) % NUM_DISP_ROWS_TREE + 1)) 
+      cur_row_color = Color1; 
+
+    for(int j = 0; j < ledsInRows[i]; j++)
+    {
+       leds[current_led] = numToColorTree[cur_row_color];
+       current_led++;
+    }
+
+  }
+
+  light_twinkle = (light_twinkle + NUM_DISP_ROWS_TREE - 1) % NUM_DISP_ROWS_TREE; 
+
+  FastLED.show();
+  delay(80);
+}
+
+void display_snake(unsigned char Color1, unsigned char Color2)
+{
+  if ((light_twinkle / NUM_TREE_LEDS) == 0)
+    leds[NUM_LEDS + light_twinkle] = numToColorTree[Color1];
+  else
+    leds[NUM_LEDS + light_twinkle % NUM_TREE_LEDS] = numToColorTree[Color2];
+
+  light_twinkle = (light_twinkle + 1) % (NUM_TREE_LEDS * 2); 
+
+  FastLED.show();
+  delay(1);
 }
 
 void display_cols_move(unsigned char Color1, unsigned char Color2)
@@ -1517,11 +1660,9 @@ void display_cols_move_2(unsigned char Color1, unsigned char Color2)
   for(int i = 0; i <= NUM_DISP_ROWS_TREE; i++)
   {
     unsigned int twinkle_spot = (unsigned int)(((float)(light_twinkle) / 40.0) * ledsInRows[i]);
-    unsigned int twinkle_spot_two = (twinkle_spot + ledsInRows[i] / 6) % ledsInRows[i];
-    unsigned int twinkle_spot_three = (twinkle_spot + ledsInRows[i] / 3) % ledsInRows[i];
-    unsigned int twinkle_spot_four = (twinkle_spot + ledsInRows[i] / 2) % ledsInRows[i];
-    unsigned int twinkle_spot_five = (twinkle_spot + 2 * ledsInRows[i] / 3) % ledsInRows[i];
-    unsigned int twinkle_spot_six = (twinkle_spot + 5 * ledsInRows[i] / 6) % ledsInRows[i];
+    unsigned int twinkle_spot_two = (twinkle_spot + ledsInRows[i] / 4) % ledsInRows[i];
+    unsigned int twinkle_spot_three = (twinkle_spot + ledsInRows[i] / 2) % ledsInRows[i];
+    unsigned int twinkle_spot_four = (twinkle_spot + 3 * ledsInRows[i] / 4) % ledsInRows[i];
     for(int j = 0; j < ledsInRows[i]; j++)
     {
       if ((((j >= twinkle_spot) && (j < twinkle_spot_two)) && (twinkle_spot_two > twinkle_spot)) ||
@@ -1532,12 +1673,6 @@ void display_cols_move_2(unsigned char Color1, unsigned char Color2)
         leds[current_led] = numToColorTree[Color2];
       else if ((((j >= twinkle_spot_three) && (j < twinkle_spot_four)) && (twinkle_spot_four > twinkle_spot_three)) ||
           (((j >= twinkle_spot_three) || (j < twinkle_spot_four)) && (twinkle_spot_four < twinkle_spot_three))) 
-        leds[current_led] = numToColorTree[Color1];
-      else if ((((j >= twinkle_spot_four) && (j < twinkle_spot_five)) && (twinkle_spot_five > twinkle_spot_four)) ||
-          (((j >= twinkle_spot_four) || (j < twinkle_spot_five)) && (twinkle_spot_five < twinkle_spot_four))) 
-        leds[current_led] = numToColorTree[Color2];
-      else if ((((j >= twinkle_spot_five) && (j < twinkle_spot_six)) && (twinkle_spot_six > twinkle_spot_five)) ||
-          (((j >= twinkle_spot_five) || (j < twinkle_spot_six)) && (twinkle_spot_six < twinkle_spot_five))) 
         leds[current_led] = numToColorTree[Color1];
       else
         leds[current_led] = numToColorTree[Color2];
@@ -6378,7 +6513,8 @@ void loop() {
   else if (display_mode == DISP_VORTEX)
     display_vortex(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
   else if (display_mode == DISP_ROWS_MOVE)
-    display_rows_move(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
+    //display_rows_move(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
+    display_rainbow_rows();
   else if (display_mode == DISP_COLS_MOVE)
     display_cols_move(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
   else if (display_mode == DISP_VORTEX_3)
@@ -6386,14 +6522,18 @@ void loop() {
     display_cols_move_2(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
     //display_every_other();
   else if (display_mode == DISP_SPIRAL_1)
-    display_spiral(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]), pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
+    display_spiral(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
   else if (display_mode == DISP_SPIRAL_2)
-    display_spiral(19, 8, 1, 4);
+    display_spiral_2(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
+  else if (display_mode == DISP_JU_ANN)
+    display_ju_ann(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
+  else if (display_mode == DISP_SNAKE)
+    display_snake(pgm_read_byte_near(&paintColors[color1_in]), pgm_read_byte_near(&paintColors[color2_in]));
 //  else if (digitalRead(PICTURE_INPUT_1) == HIGH)
 //    display_picture_one();
 //  else if (digitalRead(PICTURE_INPUT_2) == HIGH)
 //    display_picture_two();
     
-  delay(50);
+  delay(15);
 
 }
