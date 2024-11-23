@@ -1586,7 +1586,7 @@ void display_rainbow_rows()
   gHue += 5;
 
   FastLED.show();
-  delay(40);
+  delay(100);
 }
 
 void display_ju_ann(unsigned char Color1, unsigned char Color2)
