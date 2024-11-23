@@ -1586,7 +1586,7 @@ void display_rainbow_rows()
   gHue += 5;
 
   FastLED.show();
-  delay(20);
+  delay(40);
 }
 
 void display_ju_ann(unsigned char Color1, unsigned char Color2)
@@ -1618,19 +1618,12 @@ void display_ju_ann(unsigned char Color1, unsigned char Color2)
   delay(80);
 }
 
+#define NUMBALLS 4
 // row, col of top left of ball
-unsigned int ball1_row = 10; // rows 1 - NUM_DISP_ROWS_TREE
-unsigned int ball1_col = 0; // cols 0 - 49 (scaled by ledsInRows[ball1_row])
-int ball1_up = 1;
-int ball1_left = 1;
-unsigned int ball2_row = 5; // rows 1 - NUM_DISP_ROWS_TREE
-unsigned int ball2_col = 20; // cols 0 - 49 (scaled by ledsInRows[ball1_row])
-int ball2_up = 1;
-int ball2_left = -1;
-unsigned int ball3_row = 15; // rows 1 - NUM_DISP_ROWS_TREE
-unsigned int ball3_col = 35; // cols 0 - 49 (scaled by ledsInRows[ball1_row])
-int ball3_up = -1;
-int ball3_left = 1;
+unsigned int ball_row[NUMBALLS] = {10,5,15,3}; // rows 1 - NUM_DISP_ROWS_TREE
+unsigned int ball_col[NUMBALLS] = {0,20,35,5}; // cols 0 - 49 (scaled by ledsInRows[ball1_row])
+int ball_up[NUMBALLS] = {1,1,-1,-1};
+int ball_left[NUMBALLS] = {1,-1,1,-1};
 
 void display_balls(unsigned char Color1, unsigned char Color2)
 {
@@ -1638,158 +1631,76 @@ void display_balls(unsigned char Color1, unsigned char Color2)
   for(int i = NUM_LEDS; i < NUM_LEDS + NUM_TREE_LEDS; i++)
     leds[i] = numToColorTree[Color1];
 
-  // Move Ball 1
-  if ((ball1_col == 0) && (ball1_left < 0)) // Move right -> go down a row
+  // Move Balls
+  for(int i = 0; i < NUMBALLS; i++)
   {
-    ball1_row--;
-    ball1_col = 49 + (ball1_left + 1);
-  }
-  else if ((ball1_col == 49) && (ball1_left > 0)) // Move left -> go up a row
-  {
-    if (ball1_row < NUM_DISP_ROWS_TREE - 1)
-      ball1_row++;
-    ball1_col = ball1_left - 1;
-  }
-  else
-    ball1_col = (ball1_col + ball1_left) % 50;
+    if ((ball_col[i] == 0) && (ball_left[i] < 0)) // Move right -> go down a row
+    {
+      ball_row[i]--;
+      ball_col[i] = 49 + (ball_left[i] + 1);
+    }
+    else if ((ball_col[i] == 49) && (ball_left[i] > 0)) // Move left -> go up a row
+    {
+      if (ball_row[i] < NUM_DISP_ROWS_TREE - 1)
+        ball_row[i]++;
+      ball_col[i] = ball_left[i] - 1;
+    }
+    else
+      ball_col[i] = (ball_col[i] + ball_left[i]) % 50;
 
-  ball1_row = ball1_row + ball1_up;
-
-  // Move Ball 2
-  if ((ball2_col == 0) && (ball2_left < 0)) // Move right -> go down a row
-  {
-    ball2_row--;
-    ball2_col = 49 + (ball2_left + 1);
+    ball_row[i] = ball_row[i] + ball_up[i];
   }
-  else if ((ball2_col == 49) && (ball2_left > 0)) // Move left -> go up a row
-  {
-    if (ball2_row < NUM_DISP_ROWS_TREE - 1)
-      ball2_row++;
-    ball2_col = ball2_left - 1;
-  }
-  else
-    ball2_col = (ball2_col + ball2_left) % 50;
 
-  ball2_row = ball2_row + ball2_up;
-
-  // Move Ball 3
-  if ((ball3_col == 0) && (ball3_left < 0)) // Move right -> go down a row
-  {
-    ball3_row--;
-    ball3_col = 49 + (ball3_left + 1);
-  }
-  else if ((ball3_col == 49) && (ball3_left > 0)) // Move left -> go up a row
-  {
-    if (ball3_row < NUM_DISP_ROWS_TREE - 1)
-      ball3_row++;
-    ball3_col = ball3_left - 1;
-  }
-  else
-    ball3_col = (ball3_col + ball3_left) % 50;
-
-  ball3_row = ball3_row + ball3_up;
-
+  unsigned char ball_colors[NUMBALLS] = {Color2,DISP_COLOR_WHITE,DISP_COLOR_BLUE,DISP_COLOR_PINK};
   
-  // Display Ball 1
+  // Display Balls
   // Figure out left LED NUMs by scaling, right ones are just minus one
   unsigned int top_left_num = NUM_LEDS;
   unsigned int bottom_left_num = NUM_LEDS;
-  for(int i = 0; i < (ball1_row - 1); i++)
-    bottom_left_num += ledsInRows[i];
-  top_left_num = bottom_left_num + ledsInRows[ball1_row - 1];
-  top_left_num += (unsigned int)((((float)ball1_col) / 50.0) * ledsInRows[ball1_row]);
-  bottom_left_num += (unsigned int)((((float)ball1_col) / 50.0) * ledsInRows[ball1_row - 1]);
-  if (top_left_num >= (NUM_LEDS + NUM_TREE_LEDS))
-    top_left_num = NUM_LEDS + NUM_TREE_LEDS - 1;
-  leds[top_left_num] = numToColorTree[Color2];
-  leds[top_left_num - 1] = numToColorTree[Color2];
-  leds[bottom_left_num] = numToColorTree[Color2];
-  leds[bottom_left_num - 1] = numToColorTree[Color2];
-
-  // Display Ball 2
-  // Figure out left LED NUMs by scaling, right ones are just minus one
-  top_left_num = NUM_LEDS;
-  bottom_left_num = NUM_LEDS;
-  for(int i = 0; i < (ball2_row - 1); i++)
-    bottom_left_num += ledsInRows[i];
-  top_left_num = bottom_left_num + ledsInRows[ball2_row - 1];
-  top_left_num += (unsigned int)((((float)ball2_col) / 50.0) * ledsInRows[ball2_row]);
-  bottom_left_num += (unsigned int)((((float)ball2_col) / 50.0) * ledsInRows[ball2_row - 1]);
-  if (top_left_num >= (NUM_LEDS + NUM_TREE_LEDS))
-    top_left_num = NUM_LEDS + NUM_TREE_LEDS - 1;
-  leds[top_left_num] = numToColorTree[11];
-  leds[top_left_num - 1] = numToColorTree[11];
-  leds[bottom_left_num] = numToColorTree[11];
-  leds[bottom_left_num - 1] = numToColorTree[11];
-
-  // Display Ball 3
-  // Figure out left LED NUMs by scaling, right ones are just minus one
-  top_left_num = NUM_LEDS;
-  bottom_left_num = NUM_LEDS;
-  for(int i = 0; i < (ball3_row - 1); i++)
-    bottom_left_num += ledsInRows[i];
-  top_left_num = bottom_left_num + ledsInRows[ball3_row - 1];
-  top_left_num += (unsigned int)((((float)ball3_col) / 50.0) * ledsInRows[ball3_row]);
-  bottom_left_num += (unsigned int)((((float)ball3_col) / 50.0) * ledsInRows[ball3_row - 1]);
-  if (top_left_num >= (NUM_LEDS + NUM_TREE_LEDS))
-    top_left_num = NUM_LEDS + NUM_TREE_LEDS - 1;
-  leds[top_left_num] = numToColorTree[1];
-  leds[top_left_num - 1] = numToColorTree[1];
-  leds[bottom_left_num] = numToColorTree[1];
-  leds[bottom_left_num - 1] = numToColorTree[1];
+  for(int i = 0; i < NUMBALLS; i++)
+  {
+    top_left_num = NUM_LEDS;
+    bottom_left_num = NUM_LEDS;
+    for(int j = 0; j < (ball_row[i] - 1); j++)
+      bottom_left_num += ledsInRows[j];
+    top_left_num = bottom_left_num + ledsInRows[ball_row[i] - 1];
+    top_left_num += (unsigned int)((((float)ball_col[i]) / 50.0) * ledsInRows[ball_row[i]]);
+    bottom_left_num += (unsigned int)((((float)ball_col[i]) / 50.0) * ledsInRows[ball_row[i] - 1]);
+    if (top_left_num >= (NUM_LEDS + NUM_TREE_LEDS))
+      top_left_num = NUM_LEDS + NUM_TREE_LEDS - 1;
+    leds[top_left_num] = numToColorTree[ball_colors[i]];
+    leds[top_left_num - 1] = numToColorTree[ball_colors[i]];
+    leds[bottom_left_num] = numToColorTree[ball_colors[i]];
+    leds[bottom_left_num - 1] = numToColorTree[ball_colors[i]];
+  }
 
 
+  for(int i = 0; i < NUMBALLS; i++)
+  {
+    // Ball 1 Up Direction
+    if (ball_row[i] >= NUM_DISP_ROWS_TREE)
+      ball_up[i] = (-1);
+    else if (ball_row[i] <= 2)
+      ball_up[i] = 1;
+  }
 
-  // Ball 1 Up Direction
-  if (ball1_row >= NUM_DISP_ROWS_TREE)
-    ball1_up = (-1);
-  else if (ball1_row <= 2)
-    ball1_up = 1;
-
-  // Ball 2 Up Direction
-  if (ball2_row >= NUM_DISP_ROWS_TREE)
-    ball2_up = (-1);
-  else if (ball2_row <= 2)
-    ball2_up = 1;
-
-  // Ball 3 Up Direction
-  if (ball3_row >= NUM_DISP_ROWS_TREE)
-    ball3_up = (-1);
-  else if (ball3_row <= 2)
-    ball3_up = 1;
 
   // Collisions
-  if (((abs(ball2_row - ball1_row) < 2) % NUM_DISP_ROWS_TREE) && ((abs(ball1_col - ball2_col) % 50) == 2))
+  for(int i = 0; i < (NUMBALLS - 1); i++)
   {
-    ball2_left = -ball2_left;
-    ball1_left = -ball1_left;
-  }
-  else if (((abs(ball2_col - ball1_col) < 2) % 50) && ((abs(ball1_row - ball2_row) % NUM_DISP_ROWS_TREE) == 2))
-  {
-    ball2_up = -ball2_up;
-    ball1_up = -ball1_up;
-  }
-
-  if (((abs(ball3_row - ball1_row) < 2) % NUM_DISP_ROWS_TREE) && ((abs(ball1_col - ball3_col) % 50) == 2))
-  {
-    ball3_left = -ball3_left;
-    ball1_left = -ball1_left;
-  }
-  else if (((abs(ball3_col - ball1_col) < 2) % 50) && ((abs(ball1_row - ball3_row) % NUM_DISP_ROWS_TREE) == 2))
-  {
-    ball3_up = -ball3_up;
-    ball1_up = -ball1_up;
-  }
-
-  if (((abs(ball3_row - ball2_row) < 2) % NUM_DISP_ROWS_TREE) && ((abs(ball2_col - ball3_col) % 50) == 2))
-  {
-    ball3_left = -ball3_left;
-    ball2_left = -ball2_left;
-  }
-  else if (((abs(ball3_col - ball2_col) < 2) % 50) && ((abs(ball2_row - ball3_row) % NUM_DISP_ROWS_TREE) == 2))
-  {
-    ball3_up = -ball3_up;
-    ball2_up = -ball2_up;
+    for(int j = i; j < NUMBALLS; j++)
+    {
+      if (((abs(ball_row[j] - ball_row[i]) < 2) % NUM_DISP_ROWS_TREE) && ((abs(ball_col[i] - ball_col[j]) % 50) <= 2))
+      {
+        ball_left[j] = -ball_left[j];
+        ball_left[i] = -ball_left[i];
+      }
+      else if (((abs(ball_col[j] - ball_col[i]) < 2) % 50) && ((abs(ball_row[i] - ball_row[j]) % NUM_DISP_ROWS_TREE) <= 2))
+      {
+        ball_up[j] = -ball_up[j];
+        ball_up[i] = -ball_up[i];
+      }
+    }
   }
 
   FastLED.show();
