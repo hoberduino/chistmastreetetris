@@ -1618,13 +1618,13 @@ void display_ju_ann(unsigned char Color1, unsigned char Color2)
   delay(80);
 }
 
-#define NUMBALLS 5
+#define NUMBALLS 8
 #define NUMBALLCOLS 50
 // row, col of top left of ball
-unsigned int ball_row[NUMBALLS] = {10,5,15,3,12}; // rows 1 - NUM_DISP_ROWS_TREE
-unsigned int ball_col[NUMBALLS] = {0,20,35,5,25}; // cols 0 - 49 (scaled by ledsInRows[ball1_row])
-int ball_up[NUMBALLS] = {1,1,-1,-1,1};
-int ball_left[NUMBALLS] = {1,-1,1,-1,1};
+unsigned int ball_row[NUMBALLS] = {10, 5,15,3,12, 8,10,18}; // rows 1 - NUM_DISP_ROWS_TREE
+unsigned int ball_col[NUMBALLS] = { 0,20,35,5,25,10,20,43}; // cols 0 - 49 (scaled by ledsInRows[ball1_row])
+int ball_up[NUMBALLS] = {1,1,-1,-1,1,-1,-1,1};
+int ball_left[NUMBALLS] = {1,-1,1,-1,1,-1,1,-1};
 
 //unsigned char ball_colors[NUMBALLS] = {DISP_COLOR_GREEN,DISP_COLOR_WHITE,DISP_COLOR_BLUE,DISP_COLOR_PINK,DISP_COLOR_PURPLE};
 
@@ -1659,7 +1659,7 @@ void display_balls(unsigned char Color1, unsigned char Color2)
     ball_row[i] = ball_row[i] + ball_up[i];
   }
 
-  unsigned char ball_colors[NUMBALLS] = {Color2,DISP_COLOR_WHITE,DISP_COLOR_BLUE,DISP_COLOR_PINK,DISP_COLOR_PURPLE};
+  unsigned char ball_colors[NUMBALLS] = {Color2,DISP_COLOR_WHITE,DISP_COLOR_BLUE,DISP_COLOR_PINK,DISP_COLOR_PURPLE,DISP_COLOR_ORANGE,DISP_COLOR_CYAN,DISP_COLOR_GOLD};
   
   // Display Balls
   // Figure out left LED NUMs by scaling, right ones are just minus one
@@ -1688,8 +1688,12 @@ void display_balls(unsigned char Color1, unsigned char Color2)
   {
     for(int j = 0; j < NUMBALLS; j++) // Second Ball
     {
-      int row_diff = (ball_row[j] - ball_row[i] + NUM_DISP_ROWS_TREE) % NUM_DISP_ROWS_TREE; // Second - First
-      int col_diff = (ball_col[j] - ball_col[i] + NUMBALLCOLS) % NUMBALLCOLS; // Second - First
+      int row_diff = ball_row[j] - ball_row[i]; // Second - First
+      int col_diff = ball_col[j] - ball_col[i]; // Second - First
+      if (col_diff >= (NUMBALLCOLS - 2)) // 48 or 49
+        col_diff = col_diff - NUMBALLCOLS; // -2 or -1
+      else if (col_diff <= -(NUMBALLCOLS - 2)) // -48 or -49
+        col_diff = col_diff + NUMBALLCOLS; // 2 or 1
 
       // Left, Right
       if (abs(row_diff) <= 2)
@@ -1698,8 +1702,6 @@ void display_balls(unsigned char Color1, unsigned char Color2)
         {
           ball_left[j] = 1;//abs(ball_left[j]); // Second Ball goes left
           ball_left[i] = -1;//-abs(ball_left[i]); // First Ball goes right
-
-          //ball_colors[i] = (ball_colors[i] + 1) % 12;
         }
       }
 
