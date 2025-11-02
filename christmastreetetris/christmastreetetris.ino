@@ -193,10 +193,10 @@ const int RIGHT_BUTTON     = 7;
 /* 0th entry is num lights before start of first row */
  unsigned char ledsInRows[NUM_DISP_ROWS_TREE + 1] =
 {0,
- 49,45,45,43,38, // GOOD
- 36,35,34,31,31, // GOOD
- 27,29,27,27,27, // GOOD
- 27,25,22,19,17, // GOOD
+ 49,45,45,43,39, // GOOD
+ 37,36,34,30,28, // GOOD
+ 26,28,27,25,24, // GOOD
+ 22,19,20,19,22, // GOOD
  10,6};
 
 
